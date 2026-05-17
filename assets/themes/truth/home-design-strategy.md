@@ -16,6 +16,8 @@ We score the votes that matter: Does this give government more power — or leav
 
 Our standard is the U.S. Constitution — limited government, responsible spending, national sovereignty, and avoiding foreign entanglements.
 
+> The Freedom Index: A Congressional Scorecard Based on the U.S. Constitution” rates members of Congress based on their adherence to constitutional principles of limited government, fiscal responsibility, national sovereignty, and a traditional foreign policy of avoiding foreign entanglements. For information on the criteria we use to select the votes, go to TheFreedomIndex.org/about.
+
 
 "Government gets bigger. Your life gets smaller."
 Or the inverse we've been working with:
