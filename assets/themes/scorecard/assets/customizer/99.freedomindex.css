@@ -1,0 +1,89 @@
+#home-hero {
+  /* Constitution document feel: deep navy with very subtle warm texture */
+  background:
+    linear-gradient(160deg,
+      rgba(0,24,58,0.96) 0%,
+      rgba(0,38,80,0.93) 60%,
+      rgba(0,30,68,0.97) 100%),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px,
+      transparent 18px,
+      rgba(255,255,255,0.012) 18px,
+      rgba(255,255,255,0.012) 19px
+    ),
+    url('{{STYLE_IMG}}hero-bg-01.jpg') top left / cover no-repeat;
+  padding: 72px 24px 64px;
+  text-align: center;
+  position: relative;
+}
+
+#home-hero h1 {
+  font-size: clamp(48px, 6vw, 72px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin-bottom: 18px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  text-wrap: pretty;
+  position: relative;
+  z-index: 1;
+}
+
+
+
+
+
+.bg-anchor {
+    background-color: var(--bs-bluedk) !important;
+}
+.bg-amber{
+    background-color: var(--bs-orange) !important;
+}
+.bg-amber-light-1{
+    background-color: rgba(var(--bs-yellow-rgb), 0.1) !important;
+}
+.bg-amber-light-2{
+    background-color: rgba(var(--bs-yellow-rgb), 0.2) !important;
+}
+
+.text-warm-5{
+    color: rgba(var(--bs-warm-rgb), 0.5) !important;
+}
+.text-fade{
+    color: rgba(255,255,255,0.8) !important;
+}
+
+.btn-glass{
+	border: 1.5px solid rgba(255,255,255,0.35);
+	color: rgba(255,255,255,0.85);
+	background: rgba(255,255,255,0.1);
+}
+.btn-glass:hover {
+  border-color: rgba(255,255,255,0.6);
+  color: #fff;
+  background: rgba(255,255,255,0.16);
+}
+.btn-glass.active {
+  background: rgba(255,255,255,0.18);
+  border-color: #fff;
+  color: #fff;
+}
+.btn-amber{
+    background-color: var(--bs-orange) !important;
+    color: #000 !important;
+}
+.btn-amber:hover{
+    background-color: var(--bs-orange) !important;
+    color: #000 !important;
+}
+.btn-amber:active{
+    background-color: var(--bs-orange) !important;
+    color: #000 !important;
+}
+.search-box{
+    background-color: var(--bs-warm);
+}

@@ -1,0 +1,1004 @@
+/* Freedom Index Admin Styles */
+
+
+.freedom-index_page_fi-votes #wpcontent,
+.freedom-index_page_fi-sessions #wpcontent,
+.freedom-index_page_fi-reports #wpcontent,
+.freedom-index_page_fi-tags #wpcontent,
+.freedom-index_page_fi-districts #wpcontent,
+.freedom-index_page_fi-logs #wpcontent,
+.freedom-index_page_fi-legislators #wpcontent{
+    background-color: rgba(var(--bs-light-rgb), 1) !important;
+}
+
+
+#toplevel_page_fi-dashboard .wp-submenu li a{
+	font-size: 1em;
+	font-weight: 500;
+	color: #fff;
+	border-bottom: 1px solid #666;
+}
+
+#toplevel_page_fi-dashboard .wp-submenu li.current a{
+	font-size: 1.1em;
+	font-weight: 600;
+	color: #3eb90d;
+	border-bottom: 1px solid #3eb90d;
+	border-left: 4px solid #3eb90d;
+}
+
+.fi-scope-selector {
+	background: var(--bs-success-bg-subtle);
+    padding: 4px;
+    margin: 10px 0 0 0;
+    border: 1px solid var(--bs-success-text-emphasis);
+    border-left: 4px solid var(--bs-success-text-emphasis);
+    border-radius: 8px;
+}
+
+.fi-scope-selector h3 {
+    margin: 0 0 10px 0;
+    color: #0073aa;
+}
+
+.fi-scope-selector form {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.fi-scope-selector label {
+    font-weight: bold;
+    color: #333;
+}
+
+.fi-scope-selector select,
+.fi-scope-selector input {
+    min-width: 120px;
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.fi-scope-selector button {
+    margin-left: 10px;
+}
+
+.fi-scope-status {
+    margin-left: 15px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Dashboard Stats */
+.fi-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.fi-stat-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.fi-stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fi-stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #0073aa;
+}
+
+/* Dashboard Actions */
+.fi-dashboard-actions {
+    margin: 30px 0;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.fi-dashboard-actions .button {
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+/* Headers */
+.fi-sessions-header,
+.fi-legislators-header,
+.fi-votes-header,
+.fi-reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.fi-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.fi-filters input,
+.fi-filters select {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.fi-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Tables */
+.tablenav.top .actions{margin-bottom:10px;}
+.table td{font-size:12px;}
+
+
+/* Legislator*/
+.fi-legislator-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+}
+
+.fi-good-position {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.fi-good-position.fi-y {
+    background: #d4edda;
+    color: #155724;
+}
+
+.fi-good-position.fi-n {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Import Status */
+.fi-import-status {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-import-status h2 {
+    margin: 0 0 15px 0;
+    color: #0073aa;
+}
+
+.fi-status {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.fi-status.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.fi-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.fi-import-results {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-import-results h2 {
+    margin: 0 0 15px 0;
+    color: #0073aa;
+}
+
+.fi-import-results ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.fi-import-results li {
+    margin: 5px 0;
+}
+
+/* Import Actions */
+.fi-import-actions {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-import-actions h2 {
+    margin: 0 0 20px 0;
+    color: #0073aa;
+}
+
+.fi-import-phase {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.fi-import-phase h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.fi-import-phase p {
+    margin: 0 0 15px 0;
+    color: #666;
+}
+
+.fi-import-validation {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-import-validation h2 {
+    margin: 0 0 15px 0;
+    color: #0073aa;
+}
+
+/* Settings */
+.fi-settings-tabs {
+    margin: 20px 0;
+}
+
+.fi-settings-tabs .nav-tab {
+    margin-right: 5px;
+}
+
+.fi-settings-form {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.form-check-input[type=radio],.form-check-input[type=checkbox] {margin-top:4px;}
+
+.fi-chamber-labels table {
+    width: 100%;
+}
+
+.fi-chamber-labels td {
+    padding: 5px 10px 5px 0;
+}
+
+.fi-chamber-labels input {
+    width: 150px;
+}
+
+/* Member Dashboard */
+.fi-member-dashboard {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-member-dashboard h2 {
+    margin: 0 0 20px 0;
+    color: #0073aa;
+}
+
+.fi-address-info {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.fi-officials-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.fi-official-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.fi-official-image {
+    flex-shrink: 0;
+}
+
+.fi-official-image img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+}
+
+.fi-official-info {
+    flex: 1;
+}
+
+.fi-official-info h3 {
+    margin: 0 0 5px 0;
+    color: #333;
+}
+
+.fi-official-title {
+    margin: 0 0 5px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.fi-official-party {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.fi-official-score {
+    margin: 10px 0 0 0;
+}
+
+.fi-score-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0073aa;
+}
+
+.fi-score-grade {
+    font-size: 14px;
+    color: #666;
+    margin-left: 5px;
+}
+
+.fi-official-actions {
+    flex-shrink: 0;
+}
+
+.fi-no-address {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.fi-address-form {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-address-form .form-table {
+    margin: 0;
+}
+
+.fi-address-form .form-table th {
+    width: 120px;
+    padding: 10px 0;
+}
+
+.fi-address-form .form-table td {
+    padding: 10px 0;
+}
+
+.fi-address-form .regular-text {
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Bootstrap form builder helpers */
+.fi-form-section .card-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.fi-form-section .form-label {
+    font-weight: 500;
+    color: #111;
+}
+
+.fi-form-section .form-text {
+    font-size: 0.85rem;
+}
+
+.fi-form-section + .fi-form-section {
+    margin-top: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .fi-scope-selector form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fi-scope-selector form > * {
+        margin: 5px 0;
+    }
+    
+    .fi-dashboard-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .fi-dashboard-actions {
+        flex-direction: column;
+    }
+    
+    .fi-sessions-header,
+    .fi-legislators-header,
+    .fi-votes-header,
+    .fi-reports-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fi-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fi-officials-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .fi-official-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* Loading States */
+.fi-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.fi-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #0073aa;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: fi-spin 1s linear infinite;
+}
+
+@keyframes fi-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Notifications */
+.fi-notification {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 9999;
+    max-width: 300px;
+}
+
+.fi-notification.success {
+    border-left: 4px solid #46b450;
+}
+
+.fi-notification.error {
+    border-left: 4px solid #dc3232;
+}
+
+.fi-notification.warning {
+    border-left: 4px solid #ffb900;
+}
+
+.fi-notification.info {
+    border-left: 4px solid #0073aa;
+}
+
+/* Roll Call Edit Interface */
+.fi-roll-call-tabs {
+    margin: 20px 0;
+}
+
+.fi-roll-call-tabs .nav-tab {
+    margin-right: 5px;
+}
+
+.fi-roll-call-content {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.fi-vote-info {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 0 0 20px 0;
+}
+
+.fi-vote-info h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.fi-vote-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.fi-roll-call-actions {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.fi-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fi-modal-content {
+    background: #fff;
+    border-radius: 4px;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+}
+
+.fi-modal-content h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.fi-modal-content p {
+    margin: 0 0 15px 0;
+    color: #666;
+}
+
+.fi-modal-content textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.fi-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0 0 0;
+    justify-content: flex-end;
+}
+
+.fi-roll-call-table {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.fi-roll-call-table table {
+    width: 100%;
+    min-width: 800px;
+}
+
+.fi-vote-position {
+    min-width: 100px;
+}
+
+.fi-override {
+    margin: 0;
+}
+
+.fi-roll-call-summary {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.fi-roll-call-summary h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.fi-vote-counts {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.fi-count-yes,
+.fi-count-no,
+.fi-count-present,
+.fi-count-absent,
+.fi-count-novote {
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.fi-count-yes {
+    background: #d4edda;
+    color: #155724;
+}
+
+.fi-count-no {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.fi-count-present {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.fi-count-absent {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.fi-count-novote {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Roll Call Table Enhancements */
+.fi-roll-call-table tr:hover {
+    background: #f9f9f9;
+}
+
+.fi-roll-call-table .fi-vote-position:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.fi-roll-call-table .fi-override:checked {
+    background: #0073aa;
+    border-color: #0073aa;
+}
+
+/* Responsive Roll Call */
+@media (max-width: 768px) {
+    .fi-roll-call-actions {
+        flex-direction: column;
+    }
+    
+    .fi-modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .fi-vote-counts {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .fi-roll-call-table {
+        font-size: 12px;
+    }
+    
+    .fi-roll-call-table th,
+    .fi-roll-call-table td {
+        padding: 8px 4px;
+    }
+}
+
+/* Report Builder */
+.fi-report-builder {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.fi-report-main {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.fi-report-section {
+    margin: 30px 0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.fi-report-section:last-child {
+    border-bottom: none;
+}
+
+.fi-report-section h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.fi-vote-filters {
+    display: flex;
+    gap: 20px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.fi-vote-filters label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.fi-votes-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background: #f9f9f9;
+}
+
+.fi-vote-item {
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+.fi-vote-item label {
+    display: block;
+    cursor: pointer;
+    margin: 0;
+}
+
+.fi-vote-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.fi-vote-meta {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.fi-report-sidebar {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    height: fit-content;
+}
+
+.fi-report-preview {
+    margin-bottom: 30px;
+}
+
+.fi-report-preview h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+#fi-preview-content {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.fi-report-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fi-report-actions .button {
+    width: 100%;
+    text-align: center;
+}
+
+/* Report Preview Styles */
+.fi-report-preview-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+.fi-report-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #0073aa;
+}
+
+.fi-report-header h1 {
+    margin: 0 0 10px 0;
+    color: #0073aa;
+    font-size: 24px;
+}
+
+.fi-report-meta {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.fi-report-intro {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-left: 4px solid #0073aa;
+    border-radius: 0 4px 4px 0;
+}
+
+.fi-report-votes {
+    margin: 30px 0;
+}
+
+.fi-report-votes .fi-vote-item {
+    margin: 20px 0;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.fi-report-votes h3 {
+    margin: 0 0 10px 0;
+    color: #0073aa;
+    font-size: 16px;
+}
+
+.fi-report-contact {
+    margin: 30px 0;
+    padding: 20px;
+    background: #e7f3ff;
+    border: 1px solid #0073aa;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.fi-report-contact h3 {
+    margin: 0 0 10px 0;
+    color: #0073aa;
+}
+
+/* Responsive Report Builder */
+@media (max-width: 1024px) {
+    .fi-report-builder {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .fi-report-sidebar {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .fi-vote-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .fi-votes-list {
+        max-height: 300px;
+    }
+    
+    .fi-report-section {
+        margin: 20px 0;
+        padding-bottom: 15px;
+    }
+    
+    .fi-report-section h2 {
+        font-size: 16px;
+    }
+}
+
+/* Party Colors*/
+.bg-party-d, .party-Democrat{background:#0015BC; color:#fff;}
+.bg-party-dl, .party-Democrat-Liberal{background:#0015BC; color:#fff;}
+.bg-party-r, .party-Republican{background:#E9141D; color:#fff;}
+.bg-party-rc, .party-Republican-Conservative{background:#E9141D; color:#fff;}
+.bg-party-l, .party-Libertarian{background:#FFDF00; color:#000;}
+.bg-party-i, .party-Independent{background:#666; color:#fff;}
+.bg-party-o, .party-Other{background:#888; color:#fff;}
+
+.fi-party-d{color:#0015BC;}
+.fi-party-dl{color:#0015BC;}
+.fi-party-r{color:#E9141D;}
+.fi-party-rc{color:#E9141D;}
+.fi-party-l{color:#FFDF00;}
+.fi-party-i{color:#666;}
+.fi-party-o{color:#888;}
+
+/* BOOTSTRAP 5 OVERRIDES */
+.card{max-width: 100% !important; margin-top:0 !important; padding: 0 !important; }
+
+/* Bright white checkmark on checked box */
+.form-check-input:checked[type=checkbox] {
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3 6-6'/%3e%3c/svg%3e");
+}
+.form-check-input:checked {background-color: var(--bs-gray-300);}
+#display_name {width: 100%;}
+
+/* TINYMCE */
+.wp-editor-wrap{margin-top:-30px; !important; }
