@@ -1737,7 +1737,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	let mapInstance = null;
 
 	/** Force map container height to 70% of width so map is shorter than square; call updateSize so library redraws. */
-	function fs_apply_map_aspect() {
+	function fi_apply_map_aspect() {
 		if (!element) return;
 		var w = element.offsetWidth;
 		if (w <= 0) return;
@@ -1759,7 +1759,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	 * - Uses getBBox() which is stable for centered labels.
 	 * - Rebuilds on load + resize to keep positions correct for responsive scaling.
 	 */
-	function fs_draw_state_labels() {
+	function fi_draw_state_labels() {
 		if (!mapInstance || !element) return;
 		// Append to the transformed group so labels use same coordinate system as paths (scale/translate)
 		const group = element.querySelector("#jvm-regions-group");
@@ -1809,7 +1809,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		});
 	}
 
-	function fs_init_map() {
+	function fi_init_map() {
 		if (!element || mapInstance || element.offsetWidth <= 0) return;
 		mapInstance = new jsVectorMap({
 			selector: element,
@@ -1830,13 +1830,13 @@ document.addEventListener("DOMContentLoaded", function () {
 			},
 
 			onLoaded: function () {
-				fs_apply_map_aspect();
-				fs_draw_state_labels();
+				fi_apply_map_aspect();
+				fi_draw_state_labels();
 				if (element.offsetWidth > 0) {
 					requestAnimationFrame(function () {
 						requestAnimationFrame(function () {
-							fs_apply_map_aspect();
-							fs_draw_state_labels();
+							fi_apply_map_aspect();
+							fi_draw_state_labels();
 						});
 					});
 				}
@@ -1847,8 +1847,8 @@ document.addEventListener("DOMContentLoaded", function () {
 						roScheduled = true;
 						requestAnimationFrame(function () {
 							roScheduled = false;
-							fs_apply_map_aspect();
-							fs_draw_state_labels();
+							fi_apply_map_aspect();
+							fi_draw_state_labels();
 						});
 					});
 					ro.observe(element);
@@ -1866,26 +1866,26 @@ document.addEventListener("DOMContentLoaded", function () {
 	}
 
 	if (element) {
-		var fs_modal = element.closest('.modal');
-		if (fs_modal) {
-			fs_modal.addEventListener('shown.bs.modal', function () {
+		var fi_modal = element.closest('.modal');
+		if (fi_modal) {
+			fi_modal.addEventListener('shown.bs.modal', function () {
 				setTimeout(function () {
-					fs_init_map();
-					fs_apply_map_aspect();
-					fs_draw_state_labels();
+					fi_init_map();
+					fi_apply_map_aspect();
+					fi_draw_state_labels();
 				}, 50);
 			});
 		} else {
-			fs_init_map();
+			fi_init_map();
 		}
 
 		// On window resize: reapply 70% aspect and redraw labels
-		var fs_resize_timer = null;
+		var fi_resize_timer = null;
 		window.addEventListener("resize", function () {
-			clearTimeout(fs_resize_timer);
-			fs_resize_timer = setTimeout(function () {
-				fs_apply_map_aspect();
-				fs_draw_state_labels();
+			clearTimeout(fi_resize_timer);
+			fi_resize_timer = setTimeout(function () {
+				fi_apply_map_aspect();
+				fi_draw_state_labels();
 			}, 120);
 		});
 	}
@@ -2086,7 +2086,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	let mapInstance = null;
 
 	/** Force map container height to 70% of width so map is shorter than square; call updateSize so library redraws. */
-	function fs_apply_map_aspect() {
+	function fi_apply_map_aspect() {
 		if (!element) return;
 		var w = element.offsetWidth;
 		if (w <= 0) return;
@@ -2108,7 +2108,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	 * - Uses getBBox() which is stable for centered labels.
 	 * - Rebuilds on load + resize to keep positions correct for responsive scaling.
 	 */
-	function fs_draw_state_labels() {
+	function fi_draw_state_labels() {
 		if (!mapInstance || !element) return;
 		// Append to the transformed group so labels use same coordinate system as paths (scale/translate)
 		const group = element.querySelector("#jvm-regions-group");
@@ -2158,7 +2158,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		});
 	}
 
-	function fs_init_map() {
+	function fi_init_map() {
 		if (!element || mapInstance || element.offsetWidth <= 0) return;
 		mapInstance = new jsVectorMap({
 			selector: element,
@@ -2179,13 +2179,13 @@ document.addEventListener("DOMContentLoaded", function () {
 			},
 
 			onLoaded: function () {
-				fs_apply_map_aspect();
-				fs_draw_state_labels();
+				fi_apply_map_aspect();
+				fi_draw_state_labels();
 				if (element.offsetWidth > 0) {
 					requestAnimationFrame(function () {
 						requestAnimationFrame(function () {
-							fs_apply_map_aspect();
-							fs_draw_state_labels();
+							fi_apply_map_aspect();
+							fi_draw_state_labels();
 						});
 					});
 				}
@@ -2196,8 +2196,8 @@ document.addEventListener("DOMContentLoaded", function () {
 						roScheduled = true;
 						requestAnimationFrame(function () {
 							roScheduled = false;
-							fs_apply_map_aspect();
-							fs_draw_state_labels();
+							fi_apply_map_aspect();
+							fi_draw_state_labels();
 						});
 					});
 					ro.observe(element);
@@ -2215,26 +2215,26 @@ document.addEventListener("DOMContentLoaded", function () {
 	}
 
 	if (element) {
-		var fs_modal = element.closest('.modal');
-		if (fs_modal) {
-			fs_modal.addEventListener('shown.bs.modal', function () {
+		var fi_modal = element.closest('.modal');
+		if (fi_modal) {
+			fi_modal.addEventListener('shown.bs.modal', function () {
 				setTimeout(function () {
-					fs_init_map();
-					fs_apply_map_aspect();
-					fs_draw_state_labels();
+					fi_init_map();
+					fi_apply_map_aspect();
+					fi_draw_state_labels();
 				}, 50);
 			});
 		} else {
-			fs_init_map();
+			fi_init_map();
 		}
 
 		// On window resize: reapply 70% aspect and redraw labels
-		var fs_resize_timer = null;
+		var fi_resize_timer = null;
 		window.addEventListener("resize", function () {
-			clearTimeout(fs_resize_timer);
-			fs_resize_timer = setTimeout(function () {
-				fs_apply_map_aspect();
-				fs_draw_state_labels();
+			clearTimeout(fi_resize_timer);
+			fi_resize_timer = setTimeout(function () {
+				fi_apply_map_aspect();
+				fi_draw_state_labels();
 			}, 120);
 		});
 	}
@@ -3038,7 +3038,7 @@ document.getElementById('hero-search').addEventListener('keydown', e => {
 
 // Restore saved state chip from localStorage
 (function() {
-  const state = localStorage.getItem('fs_last_state');
+  const state = localStorage.getItem('fi_last_state');
   if (state) {
     const chip = document.getElementById('saved-chip');
     const label = document.getElementById('saved-chip-label');

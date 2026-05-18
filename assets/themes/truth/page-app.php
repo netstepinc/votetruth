@@ -301,7 +301,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const isIOS = /iphone|ipad|ipod/.test(ua);
   const isAndroid = ua.includes("android");
   const isMobile = isIOS || isAndroid;
-  const canUseInstallPrompt = !!(window.FS_PWA && window.FS_PWA.hasPrompt);
+  const canUseInstallPrompt = !!(window.FI_PWA && window.FI_PWA.hasPrompt);
   const isEdge = ua.includes("edg/");
   const isChrome = ua.includes("chrome/") && !isEdge && !ua.includes("opr/");
   const isSafari = ua.includes("safari/") && !ua.includes("chrome/") && !isEdge && !ua.includes("android");
@@ -344,12 +344,12 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   installButton.addEventListener("click", async function() {
-    if (!window.FS_PWA || typeof window.FS_PWA.install !== "function") {
+    if (!window.FI_PWA || typeof window.FI_PWA.install !== "function") {
       if (installNote) installNote.textContent = "Install prompt not ready yet. Please refresh and try again.";
       return;
     }
 
-    const result = await window.FS_PWA.install();
+    const result = await window.FI_PWA.install();
     if (result && result.ok) {
       if (installNote) installNote.textContent = "Install request accepted. Follow your browser prompts.";
       return;

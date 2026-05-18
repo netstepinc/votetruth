@@ -36,12 +36,11 @@ Promises are easy. Votes are proof.
 Find your legislators.
 [Enter ZIP code or legislator name] [Find My Legislators]
 Ignore their slogans. See their record.
-[Federal Legislators] [State Legislators]
 
+STATEMENT BAND
+The Constitution was written to keep the government small and your life big.
+Their votes show whether they still believe that.
 
-Do you believe your legislators represent you?
-Ever feel like politicians say one thing and do another?
-"Your legislators swore to represent you. Are they?"
 
 
 ## Agitation: Feeling unrepresented, wasted money, lost freedom
@@ -51,11 +50,26 @@ Does this protect your freedom — or give government more power?
 
 That standard is rooted in the U.S. Constitution.
 
+For the Problem section voter portrait:
+"Candid portrait of a middle-aged American man or woman, thoughtful and tired expression, looking slightly off-camera, neutral clothing, soft natural light, photorealistic, no political symbols, no flags, no campaign materials, shallow depth of field, muted color palette"
+
+
 ## Empathy: We get the frustration
 
+You're not imagining it.
+Most Americans feel like their legislators stopped working for them a long time ago. Campaigns full of promises. Terms full of excuses. A government that keeps growing regardless of who wins.
+That's not representation. That's performance.
+
+We get it. And we built something about it.
+A campaign can make any politician sound good.
 
 
 ## Answer: Freedom Index = clarity on actual votes
+
+A voting record shows the pattern.
+The Freedom Index scores every legislator against one standard: the Constitution. Not speeches. Not slogans. Not party labels. Recorded votes.
+
+
 
 CurrentSharper
 Constitutional Champion = Constitutional Champion ✓
@@ -66,36 +80,6 @@ Failing the Constitution = Failing the Constitution ✓
 
 ## Change: Simple 3-step process
 
-
-
-## End Result: Informed voters → better accountability → better legislators (implied, not hyped)
-
-
-
-HERO
-Votes Tell the Truth
-Ever feel like politicians say one thing and do another?
-Promises are easy. Votes are proof.
-[Search bar + Find My Legislators]
-Ignore their slogans. See their record.
-
-STATEMENT BAND
-The Constitution was written to keep the government small and your life big.
-Their votes show whether they still believe that.
-
-PROBLEM
-You're not imagining it.
-Most Americans feel like their legislators stopped working for them a long time ago. Campaigns full of promises. Terms full of excuses. A government that keeps growing regardless of who wins.
-That's not representation. That's performance.
-
-EMPATHY + ANSWER
-We get it. And we built something about it.
-A campaign can make any politician sound good.
-A voting record shows the pattern.
-The Freedom Index scores every legislator against one standard: the Constitution. Not speeches. Not slogans. Not party labels. Recorded votes.
-[Find My Legislators →]
-
-CHANGE
 This is how it works.
 Find your legislators
 Search by name, ZIP code, or state.
@@ -104,11 +88,19 @@ One score. Based entirely on recorded votes.
 Share what you find
 When voters know the record, slogans lose power.
 
-STAKES
+The Change section — the three-step cards — benefits from simple iconography rather than photography. A search icon, a scorecard icon, a share icon. Clean and functional. No stock photo risk.
+
+
+## End Result: Informed voters → better accountability → better legislators (implied, not hyped)
+
+STAKES (END RESULT)
 Your money. Your freedom. Their votes.
 Every vote for bigger government reaches your paycheck, your family, and your future.
 Knowing the record doesn't just inform your vote.
 It changes what politicians dare to do with theirs.
+
+The Stakes section could use an abstract visual representing scale — national debt clock imagery, or simply a strong typographic treatment of "Your money. Your freedom. Their votes." large enough to be a visual element in itself.
+
 
 CLOSING
 Promises are easy. Votes are proof.
@@ -116,16 +108,17 @@ Find your legislators. Check their record.
 Hold them to the standard they swore to uphold.
 [Find My Legislators]
 
+======================
+======================
+
+
+
 
 
 
 Where images actually help
 Not the hero. The sections below it. Specifically three places where a visual element would advance the story rather than decorate it:
 The Problem section benefits from a human face — not a politician, a voter. The feeling of being unheard has a face. A thoughtful middle-aged American looking at a phone or a ballot, not angry, just tired. That's your target audience seeing themselves.
-
-The Change section — the three-step cards — benefits from simple iconography rather than photography. A search icon, a scorecard icon, a share icon. Clean and functional. No stock photo risk.
-
-The Stakes section could use an abstract visual representing scale — national debt clock imagery, or simply a strong typographic treatment of "Your money. Your freedom. Their votes." large enough to be a visual element in itself.
 
 
 Image generation prompts for ChatGPT or Midjourney

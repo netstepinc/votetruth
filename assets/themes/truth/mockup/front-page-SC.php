@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {exit;}
 /*
 Custom Front Page Dashboard Style Template - Mobile First - All content in responsive columns and widget blocks.
 */
-function fs_front_page_content($args = array()) {
+function fi_front_page_content($args = array()) {
 	$content = scorecard_static_block($args['id']);
 	$class = $args['class'] ?? '';
 	echo '<div class="card rounded-4 shadow bg-white mb-4 gsap-duration-1 gsap-zoom-in '.$class.'"><div class="card-body p-3 p-lg-4"><h2>'.$content['title'].'</h2>'.$content['content'].'</div></div>';
@@ -11,7 +11,7 @@ function fs_front_page_content($args = array()) {
 
 get_header();
 //get_template_part('template-parts/sc','find-my-bar');
-fs_legislators_find_mine();
+fi_legislators_find_mine();
 ?>
 <div class="container-xl p-0 m-0 mx-auto">
 	<div id="legislator-search-results"></div>
@@ -34,12 +34,12 @@ fs_legislators_find_mine();
 				<?php get_template_part('template-parts/sc','stats');?>
 				<?php get_template_part('template-parts/sc','map-vector');?>
 				<?php get_template_part('template-parts/us-debt-clock');?>
-				<?php fs_front_page_content(['id' => 2076]); //Features ?>
+				<?php fi_front_page_content(['id' => 2076]); //Features ?>
 			</div>
 			<div class="col-12 col-md-6">
-				<?php fs_front_page_content(['id' => 2074,'class' => 'bg-light']); //about ?>
-				<?php fs_front_page_content(['id' => 2075]); //Video ?>
-				<?php fs_front_page_content(['id' => 2079,'class' => 'border-primary text-primary']); //History ?>
+				<?php fi_front_page_content(['id' => 2074,'class' => 'bg-light']); //about ?>
+				<?php fi_front_page_content(['id' => 2075]); //Video ?>
+				<?php fi_front_page_content(['id' => 2079,'class' => 'border-primary text-primary']); //History ?>
 			</div>
 		</div>
 	</div>

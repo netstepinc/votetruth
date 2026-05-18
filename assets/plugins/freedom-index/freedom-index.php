@@ -57,6 +57,7 @@ define('FI_PATH_IMAGES', ABSPATH . 'assets/sites/5/fi/');
 define('FI_DIR_IMAGES', FI_URL_IMAGES);
 
 //Icon images for PDF scorecards
+/*
 define('FII_UPB', 'thumbs-up-black.png');
 define('FII_UPW', 'thumbs-up-white.png');
 define('FII_UPR', 'thumbs-up-red.png');
@@ -65,11 +66,14 @@ define('FII_DNB', 'thumbs-down-black.png');
 define('FII_DNW', 'thumbs-down-white.png');
 define('FII_DNR', 'thumbs-down-red.png');
 define('FII_DNG', 'thumbs-down-green.png');
+*/
 
 // Default local image directory lookup used by migration + queued image importer.
+/* This should be obsolete.
 add_filter('fi_migrate_images_local_dir', function ($dir, $gov) {
 	return (defined('FI_PATH_IMAGES') ? FI_PATH_IMAGES : $dir);
 }, 10, 2);
+*/
 
 // Capabilities/Roles (internal plugin access control)
 define('FI_ROLE_MANAGER', 'fi_manager');
@@ -77,7 +81,7 @@ define('FI_CAP_MANAGE', 'fi_manage_freedom_index');
 
 //1-site's tables will be used for all sites so WP site prefix is not needed.
 //Admin module can use standard WP prefix, but the public module must use the 1-site prefix.
-$tbl_prefix = 'jbsw_5_fi_';
+$tbl_prefix = 'vtttus_fi_';
 // Freedom Index Table Names - Strictly follows schema in admin/autoload/schema.php
 
 define('TBFI_LEGISLATORS',            $tbl_prefix . 'legislators');            // Legislators (core person identities)
@@ -123,17 +127,13 @@ define('FI_PRIVACY_PROMISE', 'We will <b>NEVER</b> share your information with a
 
 define('FI_BID',get_current_blog_id());
 
-define('FI_SCORE_EVAL', false);
-$fi_dir_core_dev = '';
-$fi_dir_public_dev = '';
-$fi_dir_core = FI_DIR . 'core/';
-$fi_dir_public = FI_DIR . 'public/autoload/';
+define('FI_SCORE_EVAL', true);
 
 // Autoload global resources
-fi_autoload_module($fi_dir_core,$fi_dir_core_dev);
+fi_autoload_module(FI_DIR . 'core/');
 
 //public is always loaded if plugin is active
-fi_autoload_module($fi_dir_public,$fi_dir_public_dev);
+fi_autoload_module(FI_DIR . 'public/autoload/');
 
 // Autoload modules
 if(is_admin() && FI_BID == 5) {
@@ -206,14 +206,6 @@ function fi_autoload_module($autoload_dir,$override_dir='') {
 			//if (function_exists('fi_boot_trace')) {
 			//	fi_boot_trace('include:module:file', ['dir' => basename(rtrim($autoload_dir, "/\\")), 'file' => $base]);
 			//}
-
-			//Is there an override file? This enables us to only duplicate/fork specific files instead of the whole directory.
-			if(in_array(FI_BID, FI_SITES_DEV) && $override_dir != '') {
-				$override_file = str_replace($autoload_dir, $override_dir, $file);
-				if(file_exists($override_file)) {
-					$file = $override_file;
-				}
-			}
 			include_once $file; // modules register hooks on load
 		}
 	}

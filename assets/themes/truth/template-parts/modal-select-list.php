@@ -1,5 +1,5 @@
 <?php if(!defined('ABSPATH')) exit;
-$govs = defined('FS_GOVERNMENTS') ? FS_GOVERNMENTS : [];
+$govs = defined('FI_GOVERNMENTS') ? FI_GOVERNMENTS : [];
 unset($govs['US']);
 
 if(isset($args['type']) && $args['type'] == 'federal') {

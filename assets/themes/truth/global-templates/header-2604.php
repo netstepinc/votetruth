@@ -35,10 +35,10 @@ $account_url = $logged_in
 
 
 // Get governments from Freedom Index plugin - core/references.php
-$gov_links = function_exists('get_fs_gov_links') ? get_fs_gov_links() : '';
+$gov_links = function_exists('get_fi_gov_links') ? get_fi_gov_links() : '';
 
 // Check if Freedom Index page
-$is_fs_page = get_query_var('fs_view') || get_query_var('fs_gov') || get_query_var('fs_entity');
+$is_fi_page = get_query_var('fi_view') || get_query_var('fi_gov') || get_query_var('fi_entity');
 
 // Check if admin bar is showing and get its height
 $admin_bar_top = '';
@@ -99,10 +99,11 @@ $nav_links[] = [
 			</a>
 
 <!-- Inline Search (Desktop) from old template. Must make work with new template -->
+<?php if(!is_front_page()): ?>
 <div class="d-none d-lg-block top-search-form">
 	<form id="header-legislator-search-form" class="d-flex mb-0" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
 		<div class="input-group position-relative">
-			<input id="header-legislator-search-input" class="form-control search-box" name="fs_search" type="search" placeholder="<?= FS_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fs_search'] ) ? $_GET['fs_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
+			<input id="header-legislator-search-input" class="form-control search-box" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
 			<div id="header-search-suggestions" class="position-absolute top-100 start-0 w-100 bg-white border rounded shadow-lg d-none" style="z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
 			<button id="header-search-clear-btn" class="btn btn-warning p-2 d-none" type="button" aria-label="Clear search" title="Clear search">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -119,6 +120,7 @@ $nav_links[] = [
 		</div>
 	</form>
 </div>
+<?php endif; ?>
 
 			<!-- Search Icon (Mobile) -->
 			<?php if ( ! is_front_page() ):?>
@@ -158,7 +160,7 @@ $nav_links[] = [
 	<div class="collapse mt-2" id="mobileSearch">
 		<form id="mobile-legislator-search-form" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
 			<div class="input-group shadow position-relative">
-				<input id="mobile-legislator-search-input" class="form-control rounded-0 search-box" name="fs_search" type="search" placeholder="<?= FS_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fs_search'] ) ? $_GET['fs_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
+				<input id="mobile-legislator-search-input" class="form-control rounded-0 search-box" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
 				<div id="mobile-search-suggestions" class="position-absolute top-100 start-0 w-100 bg-white border rounded shadow-lg d-none" style="z-index: 1050; max-height: 300px; overflow-y: auto;"></div>
 				<button id="mobile-search-clear-btn" class="btn btn-outline-light rounded-0 d-none" type="button" aria-label="Clear search" title="Clear search">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -178,7 +180,7 @@ $nav_links[] = [
 /**
  * Bottom Navigation Bar — Mobile / Standalone PWA only (hidden on lg+)
  * Carried over from v2603. Hidden when running as installed PWA via
- * window.FS_PWA.isStandalone (the App tab specifically; full bar still
+ * window.FI_PWA.isStandalone (the App tab specifically; full bar still
  * visible to give thumb-friendly nav on phones).
  */
 ?>
@@ -328,7 +330,7 @@ $nav_links[] = [
 document.addEventListener('DOMContentLoaded', function() {
 	// Hide the App tab when already running as an installed PWA.
 	var appTab = document.getElementById('fi-bnav-app');
-	if (appTab && window.FS_PWA && window.FS_PWA.isStandalone) {
+	if (appTab && window.FI_PWA && window.FI_PWA.isStandalone) {
 		appTab.style.display = 'none';
 	}
 

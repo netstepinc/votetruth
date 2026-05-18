@@ -2,7 +2,7 @@
 
 // Household count is a stable hardcoded value (~134.79M as of 2025).
 // JS fetches live debt data directly from Treasury API.
-$households = fs_api_census_households() ?: 134790000;
+$households = fi_api_census_households() ?: 134790000;
 ?>
 <div class="card rounded-4 shadow bg-white gsap-duration-1 mb-4 gsap-slide-right">
 	<div class="card-body p-3 p-sm-4">

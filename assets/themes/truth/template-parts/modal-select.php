@@ -27,14 +27,14 @@ if(isset($args['type']) && $args['type'] == 'federal') {
 <div class="modal fade" id="<?php echo $attrID; ?>" tabindex="-1" aria-labelledby="<?php echo $attrID; ?>-label" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header bg-amber-light py-1">
         <h1 class="modal-title fs-5" id="<?php echo $attrID; ?>-label"><?php echo $title; ?></h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-2">
 <?php
 if($type == 'federal') {
-	echo '<a href="' . esc_url(home_url('/us/legislators/')) . '" class="btn btn-sm btn-primary fs-5 fw-bold w-100 rounded-3 mb-4 shadow">View All Congressional Legislators</a>';
+	echo '<a href="' . esc_url(home_url('/us/legislators/')) . '" class="btn btn-sm btn-amber fs-6 fw-bold w-100 rounded-3 mb-4 shadow">View All Congressional Legislators</a>';
 }
 //Switch to state list on xsmobile / hide map
 ?>
@@ -57,7 +57,7 @@ if($type == 'federal') {
 ?>
 </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer py-1">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>

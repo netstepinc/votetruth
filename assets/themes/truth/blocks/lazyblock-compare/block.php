@@ -232,11 +232,11 @@ $sc_rows = [
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 // Freedom Index vote graphics (already in the plugin)
-$_fs_yes = STYLE_IMG.'compare/fs_vote-good.png';
-$_fs_no  = STYLE_IMG.'compare/fs_vote-bad.png';
+$_fi_yes = STYLE_IMG.'compare/fi_vote-good.png';
+$_fi_no  = STYLE_IMG.'compare/fi_vote-bad.png';
 
 // Closure avoids fatal "Cannot redeclare" if block renders more than once per request.
-$sc_cell = function( $val, $is_our = false ) use ( $_fs_yes, $_fs_no ) {
+$sc_cell = function( $val, $is_our = false ) use ( $_fi_yes, $_fi_no ) {
 
     if ( $val === '' ) return '<span class="text-muted">—</span>';
 
@@ -247,10 +247,10 @@ $sc_cell = function( $val, $is_our = false ) use ( $_fs_yes, $_fs_no ) {
     $is_high = in_array( $lower, [ 'very high', 'high', 'strong', 'strong and easy — built for printable, shareable, personalized scorecards and handouts' ] );
 
     if ( $is_yes ) {
-        return '<span class="sc-yes"><img src="' . esc_url( $_fs_yes ) . '" alt="Yes" class="sc-vote-icon"> Yes</span>';
+        return '<span class="sc-yes"><img src="' . esc_url( $_fi_yes ) . '" alt="Yes" class="sc-vote-icon"> Yes</span>';
     }
     if ( $is_no ) {
-        return '<span class="sc-no"><img src="' . esc_url( $_fs_no ) . '" alt="No" class="sc-vote-icon"> No</span>';
+        return '<span class="sc-no"><img src="' . esc_url( $_fi_no ) . '" alt="No" class="sc-vote-icon"> No</span>';
     }
     if ( $is_high && $is_our ) {
         return '<span class="sc-highlight fw-semibold">' . esc_html( $val ) . '</span>';

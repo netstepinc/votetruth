@@ -1,7 +1,7 @@
 <?php if ( ! defined( 'ABSPATH' ) ) {exit;}
 get_header();
 
-$termConf = fs_term_config();
+$termConf = fi_term_config();
 
 get_template_part('global-templates/page','top',$termConf);
 ?>

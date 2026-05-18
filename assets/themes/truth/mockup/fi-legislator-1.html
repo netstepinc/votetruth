@@ -1314,7 +1314,7 @@
           </button>
 		-->
           <!-- PHP: foreach issue: name, score, vote_count, slug -->
-          <!-- --fi-issue-color: result of fs_grade_color($issue->score) -->
+          <!-- --fi-issue-color: result of fi_grade_color($issue->score) -->
 
           <button class="fi-issue-cell" type="button" data-issue="federalism" role="tab" aria-selected="false" style="--fi-issue-color: var(--fi-g-a);">
             <span class="fi-issue-cell-name">Federalism</span>
@@ -1448,7 +1448,7 @@
          For the data-* attributes:
            data-vote-id={id}  data-issue={slug}
 
-         Verdict logic (server-side helper, e.g. fs_vote_verdict):
+         Verdict logic (server-side helper, e.g. fi_vote_verdict):
            if constitutional === 'None'         → 'neutral'
            else if constitutional === vote_cast → 'good'
            else                                 → 'bad'
@@ -2318,35 +2318,35 @@ This file is a static design preview. Translation to WordPress:
 
 3. SHARED HELPER FUNCTIONS (recommend in core/legislator-helpers.php)
 
-   fs_grade_color($score):
+   fi_grade_color($score):
      >= 90  → 'var(--fi-g-a)'
      >= 80  → 'var(--fi-g-b)'
      >= 70  → 'var(--fi-g-c)'
      >= 60  → 'var(--fi-g-d)'
      else   → 'var(--fi-g-f)'
 
-   fs_score_to_grade($score): same brackets, returns 'A'/'B'/'C'/'D'/'F'
+   fi_score_to_grade($score): same brackets, returns 'A'/'B'/'C'/'D'/'F'
 
-   fs_party_class($party):
+   fi_party_class($party):
      'R' → 'party-r'   'D' → 'party-d'   'I' → 'party-i'   else → ''
 
-   fs_vote_verdict($vote):
+   fi_vote_verdict($vote):
      if $vote->constitutional === 'None'                  → 'neutral'
      elseif $vote->constitutional === $vote->vote_cast    → 'good'
      else                                                 → 'bad'
 
-   fs_cost_class($cost):
+   fi_cost_class($cost):
      null            → null
      str_starts_with($cost, '+') → 'bad'
      else                        → 'good'
 
-   fs_filter_diagnostic_issues($per_issue, $min_votes = 3, $cap = 6):
+   fi_filter_diagnostic_issues($per_issue, $min_votes = 3, $cap = 6):
      filter where vote_count >= $min_votes
      usort by score desc
      array_slice 0..$cap
      return — used by issue strip in hero
 
-   fs_status_icon($verdict):
+   fi_status_icon($verdict):
      'good' → 'bi-check-lg'   'bad' → 'bi-x-lg'   'neutral' → 'bi-dash-lg'
 
 4. THE VOTE MODAL

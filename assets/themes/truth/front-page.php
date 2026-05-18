@@ -2,36 +2,25 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 /*
  * Front Page Template — Freedom Index Home v2
- *
- * Hero-led civic accountability landing page. Replaces the legacy
- * dashboard-style two-column front page.
- *
- * Header: global-templates/header-2604.php
- * Footer: global-templates/footer-2604.php
- *
- * @package bootnews
+ * PEACE stands for Problem, Empathy, Answer, Change, and End Result.
  */
 
 get_header();
-if(defined('FS_VERSION')):
 
-get_template_part('template-parts/home','hero');
-
-//Legislators + Votes + Rollcalls
-get_template_part('template-parts/home','stats');
-
-//Spending/Debt
-get_template_part('template-parts/home','debt');
-
-//CTA?
+get_template_part('template-parts/home','0hero');
+get_template_part('template-parts/home','0stats');
+get_template_part('template-parts/home','1problem'); 	//Problem: Agitate
+get_template_part('template-parts/home','2empathy'); 	//Empathy
+get_template_part('template-parts/home','3answer'); 	//Answer
+get_template_part('template-parts/home','4change'); 	//Change
+get_template_part('template-parts/home','5end-result');	//End Result
 get_template_part('template-parts/home','cta');
-
-//Scoring methodology
-get_template_part('template-parts/home','method');
-
-//Secondary action cards
 get_template_part('template-parts/home','actions');
 
-endif;
-
 get_footer();
+
+/*
+"Government gets bigger. Your life gets smaller."
+Or the inverse we've been working with:
+"Keep government small and your life big."
+*/

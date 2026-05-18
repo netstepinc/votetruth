@@ -207,3 +207,22 @@ function fi_legislator_modal(array $args = array()) {
 	</div>
 	<?php
 }
+
+
+function fi_content_stats(){
+	global $wpdb;
+	//Get total published votes from #_fs_legislators table
+	$legislators_tracked = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_LEGISLATORS);
+	$tracked = number_format($legislators_tracked);
+	//Get total publish votes from #_fs_votes table
+	$votes_scored = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_VOTES." WHERE status = 'publish'");
+	$scored = number_format($votes_scored);
+	//Get total published rollcalls from #_fs_voterc table
+	$rollcalls_counted = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_VOTERC);
+	$counted = number_format($rollcalls_counted);
+	return array(
+		'tracked' => $tracked,
+		'scored' => $scored,
+		'counted' => $counted
+	);
+}

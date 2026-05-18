@@ -13,13 +13,13 @@ https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od
 Returns: $data = ['amount' => $debt_amount,'date' => $debt_date,];
 */
 
-$debt_data = fs_api_treasurygov_debt_now(); 
+$debt_data = fi_api_treasurygov_debt_now(); 
 //Format into text like: $38.97 Trillion
 $debt_national = '$'.number_format(round( ($debt_data['amount'] / 1000000000000),2),2).' Trillion';
 
 
 // Household count is a stable hardcoded value (~134.79M as of 2025).
-$households = fs_api_census_households() ?: 134790000;
+$households = fi_api_census_households() ?: 134790000;
 $debt_household = '$'.number_format(round(($debt_data['amount'] / $households),2),2);
 
 

@@ -4,14 +4,21 @@ US Vector Map
 Interactive vector map of the United States with state-level details.
 CT,DE,MA,MD,NH,NJ,RI,VT
 */
+$map_bg = '#F5C87A';
+$map_bg_hover = '#E8934A';
+$map_bg_active = '#D6813D';
+$map_text_hover = '#F8F5F0';
+$map_text = '#333';
+$map_border = '#333';
 
 //Switch between federal and state links based on template args.
 if(isset($args['type']) && $args['type'] === 'federal') {
 	$type = 'federal';
+	echo '<p class="text-center">Select a state to view U.S. Congressional legislators representing that state.</p>';
 } else {
 	$type = 'state';
+	echo '<p class="text-center">Select a state to view state legislators.</p>';
 }
-
 
 $states = ['AL'=>'Alabama','AK'=>'Alaska','AZ'=>'Arizona','AR'=>'Arkansas','CA'=>'California','CO'=>'Colorado','CT'=>'Connecticut','DE'=>'Delaware','FL'=>'Florida','GA'=>'Georgia','HI'=>'Hawaii','ID'=>'Idaho','IL'=>'Illinois','IN'=>'Indiana','IA'=>'Iowa','KS'=>'Kansas','KY'=>'Kentucky','LA'=>'Louisiana','ME'=>'Maine','MD'=>'Maryland','MA'=>'Massachusetts','MI'=>'Michigan','MN'=>'Minnesota','MS'=>'Mississippi','MO'=>'Missouri','MT'=>'Montana','NE'=>'Nebraska','NV'=>'Nevada','NH'=>'New Hampshire','NJ'=>'New Jersey','NM'=>'New Mexico','NY'=>'New York','NC'=>'North Carolina','ND'=>'North Dakota','OH'=>'Ohio','OK'=>'Oklahoma','OR'=>'Oregon','PA'=>'Pennsylvania','RI'=>'Rhode Island','SC'=>'South Carolina','SD'=>'South Dakota','TN'=>'Tennessee','TX'=>'Texas','UT'=>'Utah','VA'=>'Virginia','VT'=>'Vermont','WA'=>'Washington','WV'=>'West Virginia','WI'=>'Wisconsin','WY'=>'Wyoming'];
 
@@ -51,18 +58,18 @@ svg{-ms-touch-action:none; touch-action:none;}
 	visibility: visible;
 }
 .fi-us-map-tiny button {
-	background: #c41425;
+	background: <?= $map_bg?>;
 	font-weight: 500;
 	font-size: 14px;
 	border-radius: 8px;
-	border: 1px solid #ccc;
-	color: #fff;
+	border: 1px solid <?= $map_border ?>;
+	color: <?=$map_text?>;
 	padding: 2px 4px;
 	cursor: pointer;
 	transition: background 0.2s;
 	box-shadow: 0 1px 4px rgba(30,40,80,0.07);
 }
-.fi-us-map-tiny button:hover {background: #ccc; color: #000;}
+.fi-us-map-tiny button:hover {background: <?= $map_bg_hover?>; color: <?= $map_text_hover?>;}
 
 /* jsVectorMap tooltip (this is the missing piece for hover) */
 .jvm-tooltip{
@@ -71,7 +78,7 @@ svg{-ms-touch-action:none; touch-action:none;}
 	padding:6px 8px;
 	border-radius:10px;
 	background:#111827;
-	color:#fff;
+	color:<?=$map_text?>;
 	font-size:13px;
 	line-height:1.2;
 	white-space:nowrap;
@@ -80,7 +87,7 @@ svg{-ms-touch-action:none; touch-action:none;}
 }
 .jvm-tooltip.active{display:block;}
 /* State abbreviation labels (centered in each state); white so visible on red fill */
-.fi-map-state-label { fill: #fff !important; }
+.fi-map-state-label { fill: <?=$map_text?> !important; }
 
 @media (min-width: 1400px) {}
 @media (min-width: 1200px) and (max-width: 1399.98px) {
@@ -158,16 +165,16 @@ foreach($states as $abbr => $name) {
 	};
 
 	const regionStyle = {
-		initial: { fill: '#c41425', 'fill-opacity': 1, stroke: '#fff', 'stroke-width': 1 },
-		hover:   { fill: '#cccccc' },
-		selected:{ fill: '#228B22' }
+		initial: { fill: '<?= $map_bg?>', 'fill-opacity': 1, stroke: '<?= $map_border?>', 'stroke-width': 1 },
+		hover:   { fill: '<?= $map_bg_hover?>' },
+		selected:{ fill: '<?= $map_bg_hover?>' }
 	};
 
 	const element = document.querySelector("#map-<?= $type ?>");
 	let mapInstance = null;
 
 	/** Force map container height to 70% of width so map is shorter than square; call updateSize so library redraws. */
-	function fs_apply_map_aspect() {
+	function fi_apply_map_aspect() {
 		if (!element) return;
 		var w = element.offsetWidth;
 		if (w <= 0) return;
@@ -189,7 +196,7 @@ foreach($states as $abbr => $name) {
 	 * - Uses getBBox() which is stable for centered labels.
 	 * - Rebuilds on load + resize to keep positions correct for responsive scaling.
 	 */
-	function fs_draw_state_labels() {
+	function fi_draw_state_labels() {
 		if (!mapInstance || !element) return;
 		// Append to the transformed group so labels use same coordinate system as paths (scale/translate)
 		const group = element.querySelector("#jvm-regions-group");
@@ -225,7 +232,7 @@ foreach($states as $abbr => $name) {
 			label.setAttribute("y", cy);
 			label.setAttribute("text-anchor", "middle");
 			label.setAttribute("dominant-baseline", "central");
-			label.setAttribute("fill", "#fff");
+			label.setAttribute("fill", "<?=$map_text?>");
 			label.setAttribute("font-size", "20");
 			label.setAttribute("font-family", "inherit, sans-serif");
 			label.setAttribute("font-weight", "500");
@@ -239,7 +246,7 @@ foreach($states as $abbr => $name) {
 		});
 	}
 
-	function fs_init_map() {
+	function fi_init_map() {
 		if (!element || mapInstance || element.offsetWidth <= 0) return;
 		mapInstance = new jsVectorMap({
 			selector: element,
@@ -260,13 +267,13 @@ foreach($states as $abbr => $name) {
 			},
 
 			onLoaded: function () {
-				fs_apply_map_aspect();
-				fs_draw_state_labels();
+				fi_apply_map_aspect();
+				fi_draw_state_labels();
 				if (element.offsetWidth > 0) {
 					requestAnimationFrame(function () {
 						requestAnimationFrame(function () {
-							fs_apply_map_aspect();
-							fs_draw_state_labels();
+							fi_apply_map_aspect();
+							fi_draw_state_labels();
 						});
 					});
 				}
@@ -277,8 +284,8 @@ foreach($states as $abbr => $name) {
 						roScheduled = true;
 						requestAnimationFrame(function () {
 							roScheduled = false;
-							fs_apply_map_aspect();
-							fs_draw_state_labels();
+							fi_apply_map_aspect();
+							fi_draw_state_labels();
 						});
 					});
 					ro.observe(element);
@@ -296,26 +303,26 @@ foreach($states as $abbr => $name) {
 	}
 
 	if (element) {
-		var fs_modal = element.closest('.modal');
-		if (fs_modal) {
-			fs_modal.addEventListener('shown.bs.modal', function () {
+		var fi_modal = element.closest('.modal');
+		if (fi_modal) {
+			fi_modal.addEventListener('shown.bs.modal', function () {
 				setTimeout(function () {
-					fs_init_map();
-					fs_apply_map_aspect();
-					fs_draw_state_labels();
+					fi_init_map();
+					fi_apply_map_aspect();
+					fi_draw_state_labels();
 				}, 50);
 			});
 		} else {
-			fs_init_map();
+			fi_init_map();
 		}
 
 		// On window resize: reapply 70% aspect and redraw labels
-		var fs_resize_timer = null;
+		var fi_resize_timer = null;
 		window.addEventListener("resize", function () {
-			clearTimeout(fs_resize_timer);
-			fs_resize_timer = setTimeout(function () {
-				fs_apply_map_aspect();
-				fs_draw_state_labels();
+			clearTimeout(fi_resize_timer);
+			fi_resize_timer = setTimeout(function () {
+				fi_apply_map_aspect();
+				fi_draw_state_labels();
 			}, 120);
 		});
 	}

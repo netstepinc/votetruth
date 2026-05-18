@@ -21,11 +21,29 @@ When voters know the score, politicians start answering for results.
 
 ROUGH DRAFT - NEEDS FORMATTING
 */
+
+/*
+CTA: CLOSING
+Promises are easy. Votes are proof.
+Find your legislators. Check their record.
+Hold them to the standard they swore to uphold.
+[Find My Legislators]
+*/
 ?>
 <div class="container-fluid">
 	<div class="container">
 		<div class="row">
-			<div class="col-12">
+<div class="col-12 col-md-6">
+	<h2>CTA: CLOSING</h2>
+	<p>Promises are easy. Votes are proof.</p>
+	<p>Find your legislators. Check their record.</p>
+	<p>Hold them to the standard they swore to uphold.</p>
+	<p>[Find My Legislators]</p>
+</div>
+
+<h2>OR/alternatively</h2>
+
+		<div class="col-12">
 				<div>The Constitution was designed to keep the government small and your life big.</div>
 				<div>When voters know the score, politicians focus on results instead of rhetoric.</div>
 				<div>Remind them who they work for.</div>
@@ -44,6 +62,19 @@ ROUGH DRAFT - NEEDS FORMATTING
   <p>When legislators vote to spend money they don’t have, it ends up on your household’s tab — while your freedoms shrink.</p>
   <p><strong>Know their score. Share it. Elect better ones.</strong></p>
 </div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<h2>NOTES</h2>
+<div class="container-fluid">
+	<div class="container">
+		<div class="row">
+			<div class="col-12">
+				<h2>Government gets bigger. Your life gets smaller.</h2>
+				<h2>Or the inverse we've been working with:</h2>
+				<h2>Keep government small and your life big.</h2>
 			</div>
 		</div>
 	</div>

@@ -30,7 +30,7 @@ https://thenewamerican.com/freedom-index/*
 https://thenewamerican.com/freedom-index/legislator/congress/119/
 https://thenewamerican.com/freedom-index/legislator/a000055/votes/report-scorecard-119-1/
 */
-$fs_redirect = false;
+$fi_redirect = false;
 $legacy_domain = $_SERVER['HTTP_HOST'];
 $legacy_path = $_SERVER['REQUEST_URI'];
 
@@ -51,29 +51,29 @@ if(substr($legacy_path, -3,3) == 'jpg' || substr($legacy_path, -4,4) == 'jpeg' |
 
 /* Need to test with current domain so we should go ahead and set up a more robust version
 if(strpos($legacy_path, 'https://thefreedomindex.org/') !== false) {
-	$fs_redirect = true;
+	$fi_redirect = true;
 }
 */
 if(strpos($legacy_path, '/legislator/') !== false
  || strpos($legacy_path, '/report/') !== false
  || strpos($legacy_path, '/vote/') !== false
 ) {
-	$fs_redirect = true;
+	$fi_redirect = true;
 }
 
 
 //Don't redirect or save /wp-admin redirects - skip to normal 404 page
-if($fs_redirect):
+if($fi_redirect):
 	$path = trim(parse_url($legacy_path, PHP_URL_PATH), '/');
 	$redirect_to = null;
 	// STEP 1: Check for exact match in legacy redirects table (FAST - cached from previous matches)
 	// This is the caching mechanism - successful pattern matches are saved here so future requests can skip expensive pattern matching and go straight to database
-	$redirect = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}fs_legacy_redirects WHERE legacy_path = %s AND status = 301 LIMIT 1",$legacy_path));
+	$redirect = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}fi_legacy_redirects WHERE legacy_path = %s AND status = 301 LIMIT 1",$legacy_path));
 	if ($redirect) {
 		$id = $redirect->id;
 		$redirect_to = $redirect->target_slug;
 		// Update existing record: increment hits by 1
-		$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}fs_legacy_redirects SET hits = hits + 1 WHERE id = %d",$id));
+		$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}fi_legacy_redirects SET hits = hits + 1 WHERE id = %d",$id));
 	}else{
 		/*STEP 2: Check for pattern matches (SLOWER - only runs if not in cache)
 		* Match legacy URL patterns using parsing + lookup approach
@@ -186,8 +186,8 @@ if($fs_redirect):
 						$redirect_to = '/' . $gov_arg . '/legislators/';
 					}else{
 						$value = strtoupper($value);
-						// Query fs_legislators for ID where either bioguid_id(V1) or legiscan_id(V2) = strtoupper($value)
-						$legislator = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fs_legislators WHERE (bioguide_id = %s OR legiscan_id = %s) LIMIT 1",$value,$value));
+						// Query fi_legislators for ID where either bioguid_id(V1) or legiscan_id(V2) = strtoupper($value)
+						$legislator = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fi_legislators WHERE (bioguide_id = %s OR legiscan_id = %s) LIMIT 1",$value,$value));
 						if ($legislator) {
 							$redirect_to .= '/legislator/'.$legislator->id;
 						}
@@ -199,22 +199,22 @@ if($fs_redirect):
 					// https://freedomindex.us/legislator/a000055/votes/congress-119/
 					if (strpos($value, 'report-') !== false) {
 						$value = str_replace('report-','',$value);
-						//Query fs_reports for ID where slug = $value
-						$report = $wpdb->get_row($wpdb->prepare("SELECT id,session_id FROM {$wpdb->prefix}fs_reports WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
+						//Query fi_reports for ID where slug = $value
+						$report = $wpdb->get_row($wpdb->prepare("SELECT id,session_id FROM {$wpdb->prefix}fi_reports WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
 						if ($report) {
 							$redirect_to .= '/session/'.$report->session_id.'/report/'.$report->id;
 						}
 					}else if (strpos($value, 'session-') !== false) {
 						$value = str_replace('session-','',$value);
-						//Query fs_sessions for ID where slug = $value
-						$session = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fs_sessions WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
+						//Query fi_sessions for ID where slug = $value
+						$session = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fi_sessions WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
 						if ($session) {
 							$redirect_to .= '/session/'.$session->id;
 						}
 					}else if (strpos($value, 'congress-') !== false) {
 						$value = str_replace('congress-','',$value);
-						//Query fs_sessions for ID where slug = $value
-						$session = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fs_sessions WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
+						//Query fi_sessions for ID where slug = $value
+						$session = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fi_sessions WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
 						if ($session) {
 							$redirect_to .= '/session/'.$session->id;
 						}
@@ -231,8 +231,8 @@ if($fs_redirect):
 					if($value == '') {
 						$redirect_to .= '/votes/';
 					}else{
-						// Query fs_votes for ID where slug = $value
-						$vote = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fs_votes WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
+						// Query fi_votes for ID where slug = $value
+						$vote = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fi_votes WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
 						if ($vote) {
 							$redirect_to .= '/vote/'.$vote->id;
 						}
@@ -242,14 +242,14 @@ if($fs_redirect):
 				case 'report':
 					// https://thefreedomindex.org/co/report/2024/ => https://freedomindex.us/co/report/59/
 					// https://thefreedomindex.org/report/scorecard-119-1/ => https://freedomindex.us/us/report/37/
-					// Query fs_reports for ID where slug = $value
+					// Query fi_reports for ID where slug = $value
 
 					//Handle if blog view on old site /report/ or /wi/report/ {no slug = show all reports}
 					if($value == '') {
 						$redirect_to .= '/reports/';
 					}else{
-						// Query fs_reports for ID where slug = $value
-						$report = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fs_reports WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
+						// Query fi_reports for ID where slug = $value
+						$report = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fi_reports WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
 						if ($report) {
 							$redirect_to .= '/report/'.$report->id;
 						}
@@ -257,8 +257,8 @@ if($fs_redirect):
 					break;
 				case 'congress':
 				case 'session':
-					//Query fs_sessions for ID where slug = $value
-					$session = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fs_sessions WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
+					//Query fi_sessions for ID where slug = $value
+					$session = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$wpdb->prefix}fi_sessions WHERE gov = %s AND slug = %s LIMIT 1",$gov,$value));
 					if ($session) {
 						$redirect_to .= '/session/'.$session->id;
 					}
@@ -316,7 +316,7 @@ if($fs_redirect):
 		//Save the redirect to the database
 		if($redirect_to) {
 			$result = $wpdb->insert(
-				"{$wpdb->prefix}fs_legacy_redirects",
+				"{$wpdb->prefix}fi_legacy_redirects",
 				[
 					'gov' => $gov,
 					'legacy_path' => $legacy_path,
@@ -328,7 +328,7 @@ if($fs_redirect):
 		}
 	}
 
-	fs_log('404: '.$legacy_path.' TO '.$redirect_to);
+	fi_log('404: '.$legacy_path.' TO '.$redirect_to);
 
 	if($redirect_to) {
 		wp_redirect($redirect_to);

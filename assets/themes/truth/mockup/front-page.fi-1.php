@@ -41,16 +41,16 @@ get_header();
 
 /**
  * Initialize the legislator-search infrastructure (filters, results target,
- * AJAX handlers). Hero search input below uses the same `fs_search`
+ * AJAX handlers). Hero search input below uses the same `fi_search`
  * parameter it expects.
  */
-if ( function_exists( 'fs_legislators_find_mine' ) ) {
-	fs_legislators_find_mine();
+if ( function_exists( 'fi_legislators_find_mine' ) ) {
+	fi_legislators_find_mine();
 }
 
 // Stat values — pull from helper if available, else fall back to design copy.
-$fs_stats = function_exists( 'fs_get_home_stats' )
-	? fs_get_home_stats()
+$fi_stats = function_exists( 'fi_get_home_stats' )
+	? fi_get_home_stats()
 	: array(
 		'legislators' => '12,909',
 		'votes'       => '3,622',
@@ -75,12 +75,12 @@ $fs_stats = function_exists( 'fs_get_home_stats' )
 				<input
 					type="search"
 					id="fi-hero-search"
-					name="fs_search"
+					name="fi_search"
 					class="form-control"
 					placeholder="Enter legislator name or ZIP code"
 					aria-label="Search for a legislator by name or ZIP code"
 					autocomplete="off"
-					value="<?php echo esc_attr( isset( $_GET['fs_search'] ) ? $_GET['fs_search'] : '' ); ?>" />
+					value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" />
 				<button type="submit" class="fi-search-btn">See Their Score</button>
 			</form>
 		</div>
@@ -94,7 +94,7 @@ $fs_stats = function_exists( 'fs_get_home_stats' )
 			</button>
 		</div>
 
-		<!-- Hidden target for AJAX legislator search results (populated by fs_legislators_find_mine()) -->
+		<!-- Hidden target for AJAX legislator search results (populated by fi_legislators_find_mine()) -->
 		<div id="legislator-search-results" class="container-xl"></div>
 	</section>
 
@@ -113,19 +113,19 @@ $fs_stats = function_exists( 'fs_get_home_stats' )
 			<div class="row g-0">
 				<div class="col-12 col-sm-4">
 					<div class="fi-stat">
-						<div class="fi-stat-num"><?php echo esc_html( $fs_stats['legislators'] ); ?></div>
+						<div class="fi-stat-num"><?php echo esc_html( $fi_stats['legislators'] ); ?></div>
 						<div class="fi-stat-lbl">Legislators Scored</div>
 					</div>
 				</div>
 				<div class="col-12 col-sm-4">
 					<div class="fi-stat">
-						<div class="fi-stat-num"><?php echo esc_html( $fs_stats['votes'] ); ?></div>
+						<div class="fi-stat-num"><?php echo esc_html( $fi_stats['votes'] ); ?></div>
 						<div class="fi-stat-lbl">Votes Analyzed</div>
 					</div>
 				</div>
 				<div class="col-12 col-sm-4">
 					<div class="fi-stat">
-						<div class="fi-stat-num"><?php echo esc_html( $fs_stats['roll_calls'] ); ?></div>
+						<div class="fi-stat-num"><?php echo esc_html( $fi_stats['roll_calls'] ); ?></div>
 						<div class="fi-stat-lbl">Roll Calls Counted</div>
 					</div>
 				</div>
@@ -729,7 +729,7 @@ $fs_stats = function_exists( 'fs_get_home_stats' )
 
 	/* ── Restore saved state chip from localStorage ────── */
 	try {
-		var savedState = localStorage.getItem('fs_last_state');
+		var savedState = localStorage.getItem('fi_last_state');
 		if (savedState) {
 			var chip  = document.getElementById('fi-saved-chip');
 			var label = document.getElementById('fi-saved-chip-label');
