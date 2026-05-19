@@ -36,6 +36,14 @@
 .bg-amber-light-1{background-color: rgba(var(--bs-yellow-rgb), 0.1) !important;}
 .bg-amber-light-2{background-color: rgba(var(--bs-yellow-rgb), 0.2) !important;}
 
+.text-logo{
+    font-size: 2rem;
+    font-weight: 800;
+	font-family: var(--bs-font-headings);
+	line-height: 1;
+	white-space: nowrap;
+}
+.text-anchor{color: var(--bs-bluedk) !important;}
 .text-amber{color: var(--bs-orange) !important;}
 .text-amber-light{color: var(--bs-yellow) !important;}
 .text-warm-5{color: rgba(var(--bs-warm-rgb), 0.5) !important;}

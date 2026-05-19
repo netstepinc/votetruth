@@ -50,58 +50,51 @@ p{color: var(--bs-post-color);}
 
 small, .small {font-size: .875em !important;}
 
-/*
-.fs-1-big{font-size: 12rem !important; font-weight: 600 !important; line-height: 1 !important;}
-.fs-2-big{font-size: 10rem !important; font-weight: 600 !important; line-height: 1 !important;}
-.fs-3-big{font-size: 8rem !important; font-weight: 600 !important; line-height: 1 !important;}
-.fs-4-big{font-size: 6rem !important; font-weight: 600 !important; line-height: 1 !important;}
-.fs-5-big{font-size: 5rem !important; font-weight: 600 !important; line-height: 1 !important;}
-.fs-6-big{font-size: 4rem !important; font-weight: 600 !important; line-height: 1 !important;}
-*/
-.fs-1 {font-size: 3rem !important;}
-.fs-2 {font-size: 2.5rem !important;}
-.fs-3 {font-size: 2rem !important;}
-.fs-4 {font-size: 1.75rem !important;}
-.fs-5 {font-size: 1.5rem !important;}
-.fs-6 {font-size: 1.25rem !important;}
-.fs-7 {font-size: 1.125rem !important;}
-.fs-8 {font-size: 1.0625rem !important;}
+/* XXL=1440 */
+.fs-1 {font-size: 6rem !important;}
+.fs-2 {font-size: 5rem !important;}
+.fs-3 {font-size: 4rem !important;}
+.fs-4 {font-size: 3rem !important;}
+.fs-5 {font-size: 2.5rem !important;}
+.fs-6 {font-size: 2rem !important;}
+.fs-7 {font-size: 1.75rem !important;}
+.fs-8 {font-size: 1.5rem !important;}
 @media (max-width: 1200px) {
-	.fs-1 {font-size: 2.25rem !important;}
-	.fs-2 {font-size: 2rem !important;}
-	.fs-3 {font-size: 1.75rem !important;}
-	.fs-4 {font-size: 1.5rem !important;}
-	.fs-5 {font-size: 1.375rem !important;}
-	.fs-6 {font-size: 1.25rem !important;}
-	.fs-7 {font-size: 1.125rem !important;}
+	.fs-1 {font-size: 5rem !important;}
+	.fs-2 {font-size: 4rem !important;}
+	.fs-3 {font-size: 3rem !important;}
+	.fs-4 {font-size: 2.5rem !important;}
+	.fs-5 {font-size: 2rem !important;}
+	.fs-6 {font-size: 1.75rem !important;}
+	.fs-7 {font-size: 1.5rem !important;}
 	.fs-8 {font-size: 1rem !important;}
 }
 @media (max-width: 992px) {
-	.fs-1 {font-size: 2rem !important;}
-	.fs-2 {font-size: 1.75rem !important;}
-	.fs-3 {font-size: 1.5rem !important;}
-	.fs-4 {font-size: 1.375rem !important;}
-	.fs-5 {font-size: 1.25rem !important;}
-	.fs-6 {font-size: 1.125rem !important;}
+	.fs-1 {font-size: 4.5rem !important;}
+	.fs-2 {font-size: 3.5rem !important;}
+	.fs-3 {font-size: 2.5rem !important;}
+	.fs-4 {font-size: 2rem !important;}
+	.fs-5 {font-size: 1.5rem !important;}
+	.fs-6 {font-size: 1rem !important;}
 	.fs-7 {font-size: 1rem !important;}
 	.fs-8 {font-size: 0.9375rem !important;}
 }
 @media (max-width: 768px) {
-	.fs-1 {font-size: 1.75rem !important;}
-	.fs-2 {font-size: 1.5rem !important;}
-	.fs-3 {font-size: 1.375rem !important;}
-	.fs-4 {font-size: 1.25rem !important;}
-	.fs-5 {font-size: 1.125rem !important;}
+	.fs-1 {font-size: 4rem !important;}
+	.fs-2 {font-size: 3rem !important;}
+	.fs-3 {font-size: 2.5rem !important;}
+	.fs-4 {font-size: 2rem !important;}
+	.fs-5 {font-size: 1.5rem !important;}
 	.fs-6 {font-size: 1rem !important;}
 	.fs-7 {font-size: 0.9375rem !important;}
 }
 @media (max-width: 576px) {
-	.fs-1 {font-size: 1.5rem !important;}
-	.fs-2 {font-size: 1.375rem !important;}
-	.fs-3 {font-size: 1.25rem !important;}
-	.fs-4 {font-size: 1.125rem !important;}
-	.fs-5 {font-size: 1rem !important;}
-	.fs-6 {font-size: 0.9375rem !important;}
+	.fs-1 {font-size: 4rem !important;}
+	.fs-2 {font-size: 3rem !important;}
+	.fs-3 {font-size: 2rem !important;}
+	.fs-4 {font-size: 1.5rem !important;}
+	.fs-5 {font-size: 1.25rem !important;}
+	.fs-6 {font-size: 1rem !important;}
 }
 /*Font Family*/
 .ff-p{font-family: var(--bs-font-primary);}

@@ -1,19 +1,21 @@
-<?php if ( ! defined( 'ABSPATH' ) ) { exit; }
-
-
-?>
-<div class="container-fluid p-0 border-bottom bg-amber-light-1">
-	<div class="container py-5">
-		<div class="row g-0">
-			<div class="col-12 col-md-6">
-<p>You're not imagining it.</p>
-<p>Most Americans feel like their legislators stopped working for them a long time ago. Campaigns full of promises. Terms full of excuses. A government that keeps growing regardless of who wins.</p>
-<p>That's not representation. That's performance.</p>
-
-<p>We get it. And we built something about it.</p>
-<p>A campaign can make any politician sound good.</p>
-
-			</div>
+<?php if ( ! defined( 'ABSPATH' ) ) { exit; }?>
+<!--
+<div class="container-fluid p-5">
+	<div class="container pb-5">
+		<div class="mx-auto col-12 col-md-11 col-lg-10 col-xl-9 col-xxl-8">
+			<p class="fs-4 mb-5 text-anchor text-center">We know it's frustrating when politicians say one thing then do another.</p>
 		</div>
+		<p class="fs-4 fw-7 text-center">That's why we made <span class="text-anchor text-nowrap">the Freedom Score</span>.</p>
+	</div>
+</div>
+-->
+
+<div class="container-fluid py-5 bg-black">
+	<div class="container">
+		<div class="mx-auto col-12 col-md-11 col-lg-10 col-xl-9 col-xxl-8">
+			<p class="fs-4 mb-5 text-white text-center">We know it's frustrating when politicians say one thing then do another.</p>
+		</div>
+		<p class="fs-3 fw-6 text-center text-white">That's why we made</p>
+		<p class="fs-3 fw-7 ff-h lh-1 text-center text-amber">The Freedom Score</p>
 	</div>
 </div>

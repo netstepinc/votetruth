@@ -10,6 +10,6 @@
     <div class="bg-image"></div>
     <div class="wrapper">
 <?php
-if(defined('FI_VERSION')):
+if(!is_front_page()):
 get_template_part( 'global-templates/header','2604' );
 endif;

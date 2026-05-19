@@ -13,15 +13,15 @@ Ignore their slogans. See their record.
 	<div class="container">
 		<div class="row">
 			<div class="col-12 px-0 px-md-3 px-lg-5">
-				<h1 class="text-center mx-auto mt-4">Votes Tell the <span class="text-amber">Truth</span></h1>
-				<div class="my-3">
-					<p class="fs-3 mb-2 text-fade-amber fw-7 text-center">Are your legislators working for you?</p>
-					<p class="fs-3 mb-2 text-fade fw-7 text-center">Promises are easy. Votes are proof.</p>
-					<p class="fs-3 mb-2 text-fade fw-7 text-center">Find your legislators.</p>
+				<h1 class="text-center mx-auto fs-1 mt-4"><span class="text-amber">Votes</span> Tell <span class="text-nowrap">the <span class="text-amber">Truth</span></span></h1>
+				<div class="my-4">
+					<p class="fs-3 mb-3 text-fade-amber fw-7 text-center">Are your legislators <span class="text-nowrap">working for you?</span></p>
+					<p class="fs-5 mb-3 text-fade fw-5 text-center">Promises are easy. <span class="text-nowrap">Votes are proof.</span></p>
+					<p class="fs-4 mb-3 text-fade fw-7 text-center">Find your legislators.</p>
 				</div>
-				<form id="header-legislator-search-form" class="mb-4 col-12 col-lg-10 col-xl-8 mx-auto" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
+				<form id="header-legislator-search-form" class="mb-4 col-12 col-md-11 col-lg-10 col-xl-9 col-xxl-8 mx-auto" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
 					<div class="input-group position-relative">
-						<input id="header-legislator-search-input" class="form-control form-control-lg fs-4 bg-white" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
+						<input id="header-legislator-search-input" class="form-control form-control-lg fs-6 bg-white" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
 						<div id="header-search-suggestions" class="position-absolute bg-white border rounded shadow d-none" style="z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
 						<button id="header-search-clear-btn" class="btn btn-warning p-2 d-none" type="button" aria-label="Clear search" title="Clear search">
 							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -29,34 +29,20 @@ Ignore their slogans. See their record.
 								<line x1="6" y1="6" x2="18" y2="18"></line>
 							</svg>
 						</button>
-						<button class="btn btn-amber fw-4 fs-4" type="submit" aria-label="Search">
-							<span class="d-none d-xl-inline">Find My Legislator</span>
+						<button class="btn btn-amber fw-4 fs-6" type="submit" aria-label="Search">
+							<span class="d-none d-xl-inline">Find a Legislator</span>
 							<span class="d-none d-lg-inline d-xl-none">Find Legislator</span>
 							<span class="d-lg-none">Search</span>
 						</button>
 					</div>
 				</form>
-				<p class="fs-5 text-fade fw-7 text-center">Ignore their slogans. See their record.</p>
+				<p class="fs-6 text-fade fw-5 text-center mb-0">Ignore their slogans. <span class="text-nowrap">See their record.</span></p>
 			</div>
 		</div>
-<!--
-		<div class="row">
-			<div class="col-12 col-md-10 col-lg-8 col-xl-6 py-4 mx-auto">
-				<div class="row">
-					<div class="col-12 col-md-6 pb-3">
-						<button type="button" class="btn btn-sm btn-glass px-4 fw-5 fs-7" data-bs-toggle="modal" data-bs-target="#fi-modal-federal">Federal Legislators</button>
-					</div>
-					<div class="col-12 col-md-6 pb-3">
-						<button type="button" class="btn btn-sm btn-glass px-4 fw-5 fs-7" data-bs-toggle="modal" data-bs-target="#fi-modal-state">State Legislators</button>
-					</div>
-				</div>
-			</div>
-		</div>
--->
 	</div>
-	<div class="container text-center pt-3 pb-5">
-		<button type="button" class="btn btn-sm btn-glass px-4 fw-5 fs-7 m-2" data-bs-toggle="modal" data-bs-target="#fi-modal-federal">Federal Legislators</button>
-		<button type="button" class="btn btn-sm btn-glass px-4 fw-5 fs-7 m-2" data-bs-toggle="modal" data-bs-target="#fi-modal-state">State Legislators</button>
+	<div class="container text-center py-5">
+		<button type="button" class="btn btn-sm btn-glass px-3 fw-5 fs-8 m-2" data-bs-toggle="modal" data-bs-target="#fi-modal-federal">View Federal Legislators</button>
+		<button type="button" class="btn btn-sm btn-glass px-3 fw-5 fs-8 m-2" data-bs-toggle="modal" data-bs-target="#fi-modal-state">View State Legislators</button>
 	</div>
 </div>
 <script>

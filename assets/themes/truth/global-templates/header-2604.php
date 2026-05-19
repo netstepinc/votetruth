@@ -95,7 +95,10 @@ $nav_links[] = [
 	<nav class="navbar navbar-expand-lg fi-navbar" aria-label="Main navigation">
 		<div class="container-xl">
 			<a class="navbar-brand" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
-				<img src="<?php echo esc_url( $img_logo ); ?>" alt="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
+<!--
+			<img src="<?php //echo esc_url( $img_logo ); ?>" alt="<?php //echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
+ -->
+<div class="text-logo"><span class="text-amber">Votes</span><span class="text-white">Tellthe</span><span class="text-amber">Truth</span></div>
 			</a>
 
 <!-- Inline Search (Desktop) from old template. Must make work with new template -->

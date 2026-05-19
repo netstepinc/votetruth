@@ -24,6 +24,36 @@ Or the inverse we've been working with:
 "Keep government small and your life big."
 
 
+# Strategic/Design Notes
+
+About page: 
+	Are these people credible? Do they understand my problem? Have they solved it before?
+	Instead of talking about yourself, talk about what you've done for poeple.
+You should respect the visitor
+- The visitor's time by being clear.
+- Their intelligence by providing a thoughtful experience.
+- Their goals by showing exactly how you can help them get there.
+
+What you leave out is often louder than what you leave in.
+
+Goal Setting
+- Who is landing on the site and what do they already know?
+- What action do you ant them to take?
+- What do they need to understand before they take it?
+
+Strategy First
+- Define success / what does success look like?
+- Identify the Audience / who are we trying to reach
+- Clarify the Conviction Gap / what do they need to know before they take action?
+
+1. What is the one thing you want the visitor to do they they land on the site?
+	- Everything else needs to be built around that one central thing.
+2. Build the structure before the site / map out the structure / sitemap - clear journey.
+
+
+
+
+
 ========================
 
 # Overall Story Flow (PEACE closed)
@@ -64,7 +94,14 @@ We get it. And we built something about it.
 A campaign can make any politician sound good.
 
 
+
+
 ## Answer: Freedom Index = clarity on actual votes
+
+
+<h2 class="fs-2 fw-6 text-center">The Constitution was written to keep the government small and your life big.</h2>
+<p class="text-center">Their votes show whether they still believe that.</p>
+
 
 A voting record shows the pattern.
 The Freedom Index scores every legislator against one standard: the Constitution. Not speeches. Not slogans. Not party labels. Recorded votes.
