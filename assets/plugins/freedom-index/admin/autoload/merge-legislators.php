@@ -69,15 +69,15 @@ fi_log("DUPLICATE CHECK: {$legislator->id} = {$similar_legislator->id}", __FILE_
 add_action('admin_post_fi_merge_legislators', 'fi_admin_post_fi_merge_legislators');
 function fi_admin_post_fi_merge_legislators(){
 	if(!current_user_can(FI_CAP_MANAGE)){
-		wp_die(__('Insufficient permissions.', 'freedom-index'));
+		wp_die(__('Insufficient permissions.', 'freedom-scorecard'));
 	}
 	if (!isset($_GET['from_legislator_id']) || !isset($_GET['to_legislator_id']) || !isset($_GET['_wpnonce'])) {
 		fi_log("MERGE: INVALID REQUEST: from_legislator_id={$_GET['from_legislator_id']} to_legislator_id={$_GET['to_legislator_id']} _wpnonce={$_GET['_wpnonce']}", __FILE__, __LINE__, 'info');
-		wp_die(__('Invalid request.', 'freedom-index'));
+		wp_die(__('Invalid request.', 'freedom-scorecard'));
 	}
 	if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'fi_merge_legislators')) {
 		fi_log("MERGE: INVALID NONCE: from_legislator_id={$_GET['from_legislator_id']} to_legislator_id={$_GET['to_legislator_id']} _wpnonce={$_GET['_wpnonce']}", __FILE__, __LINE__, 'info');
-		wp_die(__('Invalid nonce.', 'freedom-index'));
+		wp_die(__('Invalid nonce.', 'freedom-scorecard'));
 	}
 	$from_id = absint($_GET['from_legislator_id']);
 	$to_id   = absint($_GET['to_legislator_id']);

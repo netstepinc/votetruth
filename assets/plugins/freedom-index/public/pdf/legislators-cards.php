@@ -17,10 +17,10 @@ require_once FI_PUBLIC_DIR . 'pdf/legislator-css.php';
 		<td class="p-0">
 			<div class="fw-bold mb-1" style="font-size:18px;">Do your legislators vote for freedom?</div>
 			<div class="mb-1" style="font-size:11.5px;"><?= $intro_text;?></div>
-			<div class="fw-bold p-0" style="font-size:15px;">Find out at freedomindex.us/<?= strtolower($gov);?></div>
+			<div class="fw-bold p-0" style="font-size:15px;">Find out at votestellthetruth.us/<?= strtolower($gov);?></div>
 		</td>
 		<td class="p-0 text-end" style="width: 80px; padding-left:8px;">
-			<?= fi_qr_code('https://freedomindex.us/' . strtolower($gov) . '/legislators', 72); ?>
+			<?= fi_qr_code('https://votestellthetruth.us/' . strtolower($gov) . '/legislators', 72); ?>
 		</td>
 	</tr>
 </table>

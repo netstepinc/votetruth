@@ -18,63 +18,48 @@ E — End Result
 When voters know the score, politicians start answering for results.
 "Answering for results" echoes the empathy bite ("answers for what they do") creating a closed loop — which is a technique the transcripts don't name explicitly but Miller demonstrates throughout. It's aspirational without being tribal. And "know the score" works on two levels simultaneously.
 
+<h2>Government gets bigger. Your life gets smaller.</h2>
 
-ROUGH DRAFT - NEEDS FORMATTING
-*/
-
-/*
 CTA: CLOSING
 Promises are easy. Votes are proof.
 Find your legislators. Check their record.
 Hold them to the standard they swore to uphold.
 [Find My Legislators]
-*/
-?>
-<div class="container-fluid">
-	<div class="container">
-		<div class="row">
-<div class="col-12 col-md-6">
-	<h2>CTA: CLOSING</h2>
-	<p>Promises are easy. Votes are proof.</p>
-	<p>Find your legislators. Check their record.</p>
-	<p>Hold them to the standard they swore to uphold.</p>
-	<p>[Find My Legislators]</p>
+
+<p class="fs-4 text-center">Promises are easy. <span class="text-nowrap">Votes are proof.</span></p>
+
+<p class="fs-4 text-anchor text-center">Make government smaller.</p>
+<h2 class="fs-3 fw-7 mb-3 text-anchor text-center">Your life gets bigger.</h2>
+
+<p class="fs-6 text-fade fw-5 text-center mb-0">Ignore their slogans. <span class="text-nowrap">See their record.</span></p>
+
+<p class="fs-7 text-center">Hold them accountable <span class="text-nowrap">to the Constitution.</span></p>
+
+<p class="fs-4 text-fade-anchor text-center">Ignore their slogans.</p>
+<p class="fs-4 text-anchor fw-5 text-center">Know the score.</p>
+<p class="fs-4 text-anchor fw-7 text-center mb-0">Hold them accountable.</p>
+<div class="mx-auto col-12 col-md-10 col-lg-8 col-xl-6 text-center py-5">
+<a href="#findmy" class="btn btn-lg btn-primary fs-4 fw-7 bg-anchor w-100">Find My Legislators</a>
 </div>
 
-<h2>OR/alternatively</h2>
-
-		<div class="col-12">
-				<div>The Constitution was designed to keep the government small and your life big.</div>
-				<div>When voters know the score, politicians focus on results instead of rhetoric.</div>
-				<div>Remind them who they work for.</div>
-				<div>Politicians make promises. Their votes tell a different story.</div>
-				<div>It's frustrating to feel like no one in government actually answers for what they do.</div>
-				<div>The Freedom Index scores every legislator on how they actually vote — not what they say.</div>
-				<div>Find your legislators. See the score. Share it.</div>
-				<div>When voters know the score, politicians start answering for results.</div>
-				<div>OR: When voters know the score, politicians focus on results instead of rhetoric.</div>
-				<div>[Find my legislator form]</div>
-
-
-<div class="fi-cost-copy">
-  <p class="fi-eyebrow">Every vote has a price</p>
-  <h2 class="fi-section-h" style="color:var(--blue-dark)">Stop Funding Your Own Loss of Freedom</h2>
-  <p>When legislators vote to spend money they don’t have, it ends up on your household’s tab — while your freedoms shrink.</p>
-  <p><strong>Know their score. Share it. Elect better ones.</strong></p>
-</div>
-			</div>
-		</div>
+<div id="home-answer-score" class="container-fluid p-0">
+	<div class="container py-5">
+		<p class="fs-3 fw-7 text-anchor text-center">Slogans lose power when <span class="text-nowrap">you know the score.</span></p>
 	</div>
 </div>
-
-<h2>NOTES</h2>
-<div class="container-fluid">
+*/
+?>
+<div class="container-fluid py-5 bg-amber-light-2">
 	<div class="container">
 		<div class="row">
 			<div class="col-12">
-				<h2>Government gets bigger. Your life gets smaller.</h2>
-				<h2>Or the inverse we've been working with:</h2>
-				<h2>Keep government small and your life big.</h2>
+				<p class="fs-3 fw-7 text-anchor text-center">Slogans lose power when <span class="text-nowrap">you know the score.</span></p>
+				<!-- <p class="fs-6 text-fade-anchor text-center">Find out if your legislators are working for you.</p> -->
+				<!-- <p class="fs-4 text-anchor fw-5 text-center">See their Freedom score.</p> -->
+				<!-- <p class="fs-4 text-anchor fw-7 text-center mb-0">Hold them accountable.</p> -->
+				<div class="mx-auto col-12 col-md-10 col-lg-8 col-xl-6 text-center py-5">
+					<a href="#findmy" class="btn btn-lg btn-primary fs-4 fw-7 bg-anchor w-100">Find My Legislators</a>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -211,13 +211,13 @@ function fi_legislator_modal(array $args = array()) {
 
 function fi_content_stats(){
 	global $wpdb;
-	//Get total published votes from #_fs_legislators table
+	//Get total published votes from #_fi_legislators table
 	$legislators_tracked = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_LEGISLATORS);
 	$tracked = number_format($legislators_tracked);
-	//Get total publish votes from #_fs_votes table
+	//Get total publish votes from #_fi_votes table
 	$votes_scored = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_VOTES." WHERE status = 'publish'");
 	$scored = number_format($votes_scored);
-	//Get total published rollcalls from #_fs_voterc table
+	//Get total published rollcalls from #_fi_voterc table
 	$rollcalls_counted = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_VOTERC);
 	$counted = number_format($rollcalls_counted);
 	return array(
@@ -225,4 +225,83 @@ function fi_content_stats(){
 		'scored' => $scored,
 		'counted' => $counted
 	);
+}
+
+
+
+/**
+ * Get score CSS class
+ * 
+ * @param float|int $score Score value
+ * @param string $type Type of class: 'text' or 'bg'
+ * @return string CSS class name
+ */
+function fi_score_class($score, string $type = 'text'): string {
+	$score = (float) $score;
+	
+	if ($score >= 90) {
+		return $type === 'bg' ? 'bg-success' : 'text-success';
+	} elseif ($score >= 70) {
+		return $type === 'bg' ? 'bg-info' : 'text-info';
+	} elseif ($score >= 50) {
+		return $type === 'bg' ? 'bg-warning' : 'text-warning';
+	} else {
+		return $type === 'bg' ? 'bg-danger' : 'text-danger';
+	}
+}
+
+/**
+ * Get legislator image HTML
+ * 
+ * @param int|null $image_id Main legislator image ID
+ * @param int|null $session_image_id Session-specific image ID
+ * @param array $args Optional arguments
+ * @return string Image HTML
+ */
+function fi_legislator_image(?int $image_id, ?int $session_image_id = null, array $args = []): string {
+	$defaults = [
+		'size' => [200, 250],
+		'class' => 'img-fluid rounded-circle',
+		'alt' => '',
+		'image_url' => '',
+	];
+	$args = wp_parse_args($args, $defaults);
+
+	//Get width and height from size
+	$width = $args['size'][0];
+	$height = $args['size'][1];
+
+	//Do we have an image URL?
+	if (!empty($args['image_url'])) {
+		return '<img src="' . esc_url($args['image_url']) . '" width="' . esc_attr($width) . '" height="' . esc_attr($height) . '" class="' . esc_attr($args['class']) . '" alt="' . esc_attr($args['alt']) . '">';
+	}
+
+	// Prefer session-specific image if available
+	$use_image_id = $session_image_id ?: $image_id;
+	
+	if (!$use_image_id) {
+		// Return placeholder
+		return '<div class="legislator-placeholder ' . esc_attr($args['class']) . '"><i class="bi bi-person-fill"></i></div>';
+	}
+
+	//Use Custom Better Image Sizes method
+	$image_html = sis_get_attachment_image($use_image_id, $args['size'], false, [
+		'class' => $args['class'],
+		'alt' => $args['alt'],
+	]);
+
+	//If that fails, try regular wp_get_attachment_image
+	if (empty($image_html)) {
+		$image_html = wp_get_attachment_image($use_image_id, $args['size'], false, [
+			'class' => $args['class'],
+			'alt' => $args['alt'],
+		]);
+	}
+
+	//No Image placeholder
+	if (empty($image_html)) {
+		$image_html = '<div class="legislator-placeholder ' . esc_attr($args['class']) . '"><i class="bi bi-person-fill"></i></div>';
+	}
+
+	return $image_html;
 }

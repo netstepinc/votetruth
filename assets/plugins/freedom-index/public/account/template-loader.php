@@ -1,82 +1,62 @@
 <?php
-namespace FI\Public {
+/**
+ * Freedom Index Public Template Loader
+ *
+ * Procedural replacement for former TemplateLoader class.
+ */
 
-	if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH')) {
+	exit;
+}
 
-	/**
-	* Template Loader Class
-	* Handles loading of Freedom Index templates with theme override support
-	*/
-	class TemplateLoader {
-		/**
-		* Get template part (public static method)
-		* 
-		* @param string $template_name Template name (without .php extension)
-		* @param array $args Arguments to pass to template
-		*/
-		public static function get_template_part($template_name, $args = array()) {
-			// Check for theme override first
-			/*SKIP: Theme and template are purpose built to work together.
-			$theme_template = get_template_directory() . "/freedom-index/{$template_name}.php";
-			if (file_exists($theme_template)) {
-				$template_file = $theme_template;
-			} else {
-				// Use plugin template
-				$template_file = FI_PUBLIC_DIR . "templates/{$template_name}.php";
-			}
-			*/
-			$template_file = FI_PUBLIC_DIR . "templates/{$template_name}.php";
-			if (file_exists($template_file)) {
-				// Extract args for template
-				if (!empty($args)) {
-					extract($args);
-				}
-				include $template_file;
-			} else {
-				self::log("Freedom Index template not found: {$template_name}", __FILE__, __LINE__, 'warning');
-			}
+/**
+ * Get template part
+ *
+ * @param string $template_name Template name (without .php extension)
+ * @param array $args Arguments to pass to template
+ * @return void
+ */
+function fi_public_get_template_part(string $template_name, array $args = []): void {
+	$template_file = FI_PUBLIC_DIR . "templates/{$template_name}.php";
+
+	if (file_exists($template_file)) {
+		// Extract args for template
+		if (!empty($args)) {
+			extract($args);
 		}
-		
-		/**
-		* Get template path (private method)
-		* 
-		* @param string $template_name Template name (without .php extension)
-		* @return string|false Template file path or false if not found
-		*/
-		/* SKIP: Theme and template are purpose built to work together.
-		private static function get_template_path($template_name) {
-			// Check for theme override first
-			$theme_template = get_template_directory() . "/freedom-index/{$template_name}.php";
-			
-			if (file_exists($theme_template)) {
-				return $theme_template;
-			}
-			
-			// Use plugin template
-			$template_file = FI_PUBLIC_DIR . "templates/{$template_name}.php";
-			
-			if (file_exists($template_file)) {
-				return $template_file;
-			}
-			
-			return false;
-		}
-		*/
-		
-		/**
-		* Generate reports navigation HTML
-		* Single source of truth for reports nav markup
-		* 
-		* @param array $report_links Array of report link arrays with 'url' and 'title' keys
-		* @return string HTML string for reports navigation, or empty string if no links
-		*/
-		public static function get_reports_nav_html(array $report_links): string {
-			if (empty($report_links)) {
-				return '';
-			}
-			
-			ob_start();
-			?>
+		include $template_file;
+	} else {
+		fi_public_template_log("Freedom Index template not found: {$template_name}", __FILE__, __LINE__, 'warning');
+	}
+}
+
+/**
+ * Template loader logger
+ *
+ * @param string $message Log message
+ * @param string $file File path
+ * @param int $line Line number
+ * @param string $level Log level
+ * @return void
+ */
+function fi_public_template_log(string $message, string $file = '', int $line = 0, string $level = 'debug'): void {
+	// Enable if needed: if (function_exists('fi_log')) { fi_log($message, $file, $line, $level); }
+}
+
+/**
+ * Generate reports navigation HTML
+ * Single source of truth for reports nav markup
+ *
+ * @param array $report_links Array of report link arrays with 'url' and 'title' keys
+ * @return string HTML string for reports navigation, or empty string if no links
+ */
+function fi_public_reports_nav_html(array $report_links): string {
+	if (empty($report_links)) {
+		return '';
+	}
+
+	ob_start();
+	?>
 <div class="row border-bottom border-top mb-3">
 	<div class="col-12 py-1" id="fi-reports-nav">
 		<!-- SM-MD: Mobile/Tablet with toggle menu -->
@@ -97,7 +77,7 @@ namespace FI\Public {
 				</ul>
 			</div>
 		</nav>
-		
+
 		<!-- LG+: Desktop horizontal scroll -->
 		<div class="d-none d-md-block">
 			<div class="d-flex align-items-center">
@@ -111,35 +91,32 @@ namespace FI\Public {
 		</div>
 	</div>
 </div>
-        <?php
-        return ob_get_clean();
-    	}
-
-
-		/**
-		* Wrap fi_log in function so we can log this class only if necessary.
-		*/
-		public static function log(string $message, string $file = '', int $line = 0, string $level = 'debug'): void {
-			//fi_log($message, $file, $line, $level);
-		}
-
-	}
+	<?php
+	return ob_get_clean();
+}
+/**
+ * Get template part (backward compatible wrapper)
+ *
+ * @param string $template_name Template name (without .php extension)
+ * @param array $args Arguments to pass to template
+ * @return void
+ */
+function fi_get_public_template(string $template_name, array $args = []): void {
+    fi_public_get_template_part($template_name, $args);
 }
 
-// Public namespace functions
-namespace {
-    /**
-     * Get template part (wrapper for TemplateLoader)
-     * 
-     * @param string $template_name Template name (without .php extension)
-     * @param array $args Arguments to pass to template
-     */
-    function fi_get_template($template_name, $args = array()) {
-        \FI\Public\TemplateLoader::get_template_part($template_name, $args);
-    }
-    
-    /**
-     * Generate personalize form HTML
+/**
+ * Generate reports navigation HTML (backward compatible wrapper)
+ *
+ * @param array $report_links Array of report link arrays with 'url' and 'title' keys
+ * @return string HTML string
+ */
+function fi_reports_nav_html(array $report_links): string {
+    return fi_public_reports_nav_html($report_links);
+}
+
+/**
+ * Generate personalize form HTML
      * 
      * @param array $args {
      *     @type string $name_value Name field value
@@ -269,19 +246,8 @@ namespace {
         return ob_get_clean();
     }
     
-    /**
-     * Generate reports navigation HTML
-     * Single source of truth for reports nav markup
-     * 
-     * @param array $report_links Array of report link arrays with 'url' and 'title' keys
-     * @return string HTML string for reports navigation, or empty string if no links
-     */
-    function fi_reports_nav_html(array $report_links): string {
-        return \FI\Public\TemplateLoader::get_reports_nav_html($report_links);
-    }
-
 	function fi_legislators_find_mine(array $args = array()) {
-		fi_get_template('partials/legislators-find-mine', $args);
+		fi_get_public_template('partials/legislators-find-mine', $args);
 	}
 
 	/**
@@ -435,6 +401,3 @@ namespace {
 	<?php
 		return ob_get_clean();
 	}
-
-
-}

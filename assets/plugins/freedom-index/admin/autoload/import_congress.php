@@ -123,7 +123,6 @@ function fi_us_simplexml_to_array($xml) {
 	return $arr;
 }
 
-//SELECT l.bioguide_id, ls.legislator_id FROM jbsw_5_fi_legislator_sessions ls LEFT JOIN jbsw_5_fi_legislators l ON ls.legislator_id = l.id WHERE ls.session_id = 14
 function fi_us_get_bioguide_xref($session_id){
 	global $wpdb;
 	$xref = [];

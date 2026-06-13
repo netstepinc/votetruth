@@ -36,7 +36,7 @@ if($gov == 'US'){
 	$gov_text = $gov;
 }
 $scorecard_about = "The {$legBody} Scorecard is a nationwide, nonpartisan educational program of The John Birch Society intended to inform voters about legislators' voting records. It does not promote any candidate or political party. Bills are chosen for their constitutional implications and taxpayer costs.";
-$scorecard_cta = "Find out if your legislators vote for freedom at freedomindex.us.";
+$scorecard_cta = "Find out if your legislators vote for freedom at votestellthetruth.us.";
 $fi_title = $legBody . ' Scorecard';
 $fi_subtitle = $legBody . ' Scorecard based on the Constitution.';
 $report_basedon = 'Based on the the U.S. Constitution';
@@ -248,16 +248,16 @@ foreach($vote_ids as $vid){
 		$has_cost = 1;
 	}
 
-	//260512: FIX: PHP Fatal error: Uncaught TypeError: fi_clean_content(): Argument #1 ($content) must be of type string, null given, called in /home2/jbs/public_html/wp-content/plugins/freedom-index/public/pdf/legislator.php on line 250 and defined in /home2/jbs/public_html/wp-content/plugins/freedom-index/core/formatting.php:24
+	//260512: FIX: PHP Fatal error: Uncaught TypeError: fi_format_clean_content(): Argument #1 ($content) must be of type string, null given, called in /home2/jbs/public_html/wp-content/plugins/freedom-index/public/pdf/legislator.php on line 250 and defined in /home2/jbs/public_html/wp-content/plugins/freedom-index/core/formatting.php:24
 	$description_short = $vm['description_short'] ?? '';
 	$description_medium = $vm['description_medium'] ?? '';
 	$description_long = $vm['description_long'] ?? '';
 
 	$vd = [];
 	$vd['title'] = $v->title;
-	$vd['text_sm'] = !empty($description_short) ? fi_clean_content($description_short, ['exclude' => ['a']]) : '';
-	$vd['text_md'] = !empty($description_medium) ? fi_clean_content($description_medium, ['exclude' => ['a']]) : '';
-	$vd['text_lg'] = !empty($description_long) ? fi_clean_content($description_long, ['exclude' => ['a']]) : '';
+	$vd['text_sm'] = !empty($description_short) ? fi_format_clean_content($description_short, ['exclude' => ['a']]) : '';
+	$vd['text_md'] = !empty($description_medium) ? fi_format_clean_content($description_medium, ['exclude' => ['a']]) : '';
+	$vd['text_lg'] = !empty($description_long) ? fi_format_clean_content($description_long, ['exclude' => ['a']]) : '';
 	$vd['date_formatted'] = date('m/d/Y', strtotime($v->date_voted));
 	$vd['vote_format'] = $vote_format;
 	$vd['bill_number'] = $v->bill_number;
@@ -336,7 +336,7 @@ if(!empty($votes)){
 		$vote_icon = fi_vote_img($match,[24,24]);
 
 		//Remove any links or paragraphs from the text_sm
-		$text_sm = fi_clean_content($v['text_sm'],['exclude' => ['a','p'],'autop' => false]);
+		$text_sm = fi_format_clean_content($v['text_sm'],['exclude' => ['a','p'],'autop' => false]);
 
 		//Start row output
 		$row = '<tr>';
@@ -407,10 +407,10 @@ $qr_codes = [
 	],
 	'tools' => [
 		'title' => 'View the Freedom Toolbox',
-		//'text' => 'Scan to learn more about the Freedom Index, the Constitution, and the principles of liberty.<div class="fw-bold">freedomindex.us/tools</div>',
-		//'text' => 'Scan to learn more about the Freedom Index and its methodology, view and subscribe to legislative alerts, get informed about the U.S. Constitution and America\'s founding principles, and more.<div class="fw-bold">freedomindex.us/tools</div>',
-		'text' => 'Scan to learn more about the Freedom Index, view legislative alerts, and deepen your understanding of the U.S. Constitution and America\'s founding principles. Visit <span class="fw-bold">freedomindex.us/tools</span>',
-		'url' => urlencode('https://freedomindex.us/tools/?utm_source=qr'),
+		//'text' => 'Scan to learn more about the Freedom Index, the Constitution, and the principles of liberty.<div class="fw-bold">votestellthetruth.us/tools</div>',
+		//'text' => 'Scan to learn more about the Freedom Index and its methodology, view and subscribe to legislative alerts, get informed about the U.S. Constitution and America\'s founding principles, and more.<div class="fw-bold">votestellthetruth.us/tools</div>',
+		'text' => 'Scan to learn more about the Freedom Index, view legislative alerts, and deepen your understanding of the U.S. Constitution and America\'s founding principles. Visit <span class="fw-bold">votestellthetruth.us/tools</span>',
+		'url' => urlencode('https://votestellthetruth.us/tools/?utm_source=qr'),
 	],
 
 /*
@@ -432,7 +432,7 @@ $qr_codes = [
 	'methodology' => [
 		'title' => 'How Do We Choose Votes?',
 		'text' => 'What criteria do we use when selecting votes? Why do these votes matter? Learn more about the methodology we use to choose votes that reveal where legislators really stand.',
-		'url' => urlencode('https://freedomindex.us/about/?utm_source=qr&utm_medium=pdf'),
+		'url' => urlencode('https://votestellthetruth.us/about/?utm_source=qr&utm_medium=pdf'),
 	],
 	'constitution' => [
 		'title' => 'The Constitution Is the Solution',

@@ -1,8 +1,4 @@
-<?php
-namespace FI\Core;
-
-if (!defined('ABSPATH')) exit;
-
+<?php if (!defined('ABSPATH')) exit;
 /**
  * Yoast sitemap provider for Freedom Index custom URLs.
  *

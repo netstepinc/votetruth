@@ -75,7 +75,7 @@ function fi_admin_legiscan_redirect_url(array $args, string $hash = ''): string 
  */
 function fi_admin_legiscan_handle_add_vote(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 
 	check_admin_referer('fi_legiscan_add_vote');
@@ -116,7 +116,6 @@ function fi_admin_legiscan_handle_add_vote(): void {
 
 	try {
 		//fi_log('ARGS fi_legiscan_create_vote: '.json_encode($args_new),__FILE__,__LINE__);
-		//ARGS fi_legiscan_create_vote: {"roll_call_id":1502603,"bill":{"bill_id":1907774,"session_id":2173,"url":"https:\/\/legiscan.com\/CO\/bill\/HB1030\/2025","state_link":"https:\/\/leg.colorado.gov\/bills\/hb25-1030","state":"CO","bill_number":"HB1030","bill_type":"B","body":"H","title":"Accessibility Standards in Building Codes","description":"Concerning the requirement that certain building codes have accessibility standards that are at least as stringent as international building codes."},"roll_call":{"roll_call_id":1502603,"bill_id":1907774,"date":"2025-02-28","desc":"House: Senate Amendments Repass","yea":39,"nay":21,"nv":0,"absent":5,"total":65,"passed":1,"chamber":"H","chamber_id":21,"votes":[{"people_id":20024,"vote_id":1,"vote_text":"Yea"},{"people_id":20025,"vote_id":1,"vote_text":"Yea"},{"people_id":20032,"vote_id":4,"vote_text":"Absent"},{"people_id":20127,"vote_id":1,"vote_text":"Yea"},{"people_id":20139,"vote_id":2,"vote_text":"Nay"},{"people_id":20142,"vote_id":1,"vote_text":"Yea"},{"people_id":20143,"vote_id":1,"vote_text":"Yea"},{"people_id":20148,"vote_id":1,"vote_text":"Yea"},{"people_id":20739,"vote_id":1,"vote_text":"Yea"},{"people_id":21549,"vote_id":1,"vote_text":"Yea"},{"people_id":22220,"vote_id":1,"vote_text":"Yea"},{"people_id":22222,"vote_id":2,"vote_text":"Nay"},{"people_id":22226,"vote_id":2,"vote_text":"Nay"},{"people_id":22228,"vote_id":1,"vote_text":"Yea"},{"people_id":22231,"vote_id":1,"vote_text":"Yea"},{"people_id":22233,"vote_id":2,"vote_text":"Nay"},{"people_id":22921,"vote_id":1,"vote_text":"Yea"},{"people_id":23046,"vote_id":1,"vote_text":"Yea"},{"people_id":23948,"vote_id":2,"vote_text":"Nay"},{"people_id":23949,"vote_id":1,"vote_text":"Yea"},{"people_id":23950,"vote_id":2,"vote_text":"Nay"},{"people_id":23952,"vote_id":1,"vote_text":"Yea"},{"people_id":23954,"vote_id":1,"vote_text":"Yea"},{"people_id":23955,"vote_id":1,"vote_text":"Yea"},{"people_id":23956,"vote_id":1,"vote_text":"Yea"},{"people_id":23957,"vote_id":2,"vote_text":"Nay"},{"people_id":23959,"vote_id":1,"vote_text":"Yea"},{"people_id":23960,"vote_id":1,"vote_text":"Yea"},{"people_id":23961,"vote_id":1,"vote_text":"Yea"},{"people_id":23962,"vote_id":2,"vote_text":"Nay"},{"people_id":23963,"vote_id":2,"vote_text":"Nay"},{"people_id":23964,"vote_id":2,"vote_text":"Nay"},{"people_id":23965,"vote_id":2,"vote_text":"Nay"},{"people_id":23967,"vote_id":1,"vote_text":"Yea"},{"people_id":23968,"vote_id":2,"vote_text":"Nay"},{"people_id":23969,"vote_id":1,"vote_text":"Yea"},{"people_id":23996,"vote_id":4,"vote_text":"Absent"},{"people_id":24384,"vote_id":1,"vote_text":"Yea"},{"people_id":24385,"vote_id":1,"vote_text":"Yea"},{"people_id":24616,"vote_id":1,"vote_text":"Yea"},{"people_id":24873,"vote_id":1,"vote_text":"Yea"},{"people_id":24966,"vote_id":1,"vote_text":"Yea"},{"people_id":25044,"vote_id":1,"vote_text":"Yea"},{"people_id":26051,"vote_id":2,"vote_text":"Nay"},{"people_id":26052,"vote_id":2,"vote_text":"Nay"},{"people_id":26053,"vote_id":2,"vote_text":"Nay"},{"people_id":26054,"vote_id":1,"vote_text":"Yea"},{"people_id":26055,"vote_id":4,"vote_text":"Absent"},{"people_id":26056,"vote_id":1,"vote_text":"Yea"},{"people_id":26057,"vote_id":1,"vote_text":"Yea"},{"people_id":26058,"vote_id":1,"vote_text":"Yea"},{"people_id":26059,"vote_id":2,"vote_text":"Nay"},{"people_id":26060,"vote_id":2,"vote_text":"Nay"},{"people_id":26061,"vote_id":2,"vote_text":"Nay"},{"people_id":26062,"vote_id":1,"vote_text":"Yea"},{"people_id":26063,"vote_id":4,"vote_text":"Absent"},{"people_id":26064,"vote_id":2,"vote_text":"Nay"},{"people_id":26065,"vote_id":1,"vote_text":"Yea"},{"people_id":26066,"vote_id":2,"vote_text":"Nay"},{"people_id":26067,"vote_id":1,"vote_text":"Yea"},{"people_id":26068,"vote_id":1,"vote_text":"Yea"},{"people_id":26069,"vote_id":4,"vote_text":"Absent"},{"people_id":26070,"vote_id":2,"vote_text":"Nay"},{"people_id":26071,"vote_id":1,"vote_text":"Yea"},{"people_id":26391,"vote_id":1,"vote_text":"Yea"}],"state_link":"https:\/\/leg.colorado.gov\/content\/hb25-1030vote72bd32"}}
 		$new_vote_id = fi_legiscan_create_vote($args_new);
 	} catch (\Throwable $e) {
 		fi_admin_legiscan_notice_set('error', 'Vote creation halted: ' . esc_html($e->getMessage()));
@@ -143,7 +142,7 @@ add_action('admin_post_fi_legiscan_add_vote', 'fi_admin_legiscan_handle_add_vote
  */
 function fi_admin_legiscan_handle_add_person(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 
 	check_admin_referer('fi_legiscan_add_person');
@@ -195,7 +194,6 @@ function fi_admin_legiscan_handle_add_person(): void {
 		exit;
 	}
 
-	$legiscan = new \FI\Admin\Legiscan();
 	$imported_count = 0;
 	$failed_count = 0;
 	$skipped_count = 0;
@@ -230,9 +228,10 @@ function fi_admin_legiscan_handle_add_person(): void {
 				}
 			}
 
-			$new_legislator_id = $legiscan->create_legislator([
+			$new_legislator_id = fi_legiscan_create_legislator([
 				'person' => $person,
 				'session' => $session_data_for_import,
+				'gov' => $gov,
 			]);
 
 			if ($new_legislator_id) {
@@ -422,7 +421,7 @@ function fi_admin_legiscan_resolve_session_from_fetch(string $fetch, string $gov
  */
 function fi_admin_legiscan_handle_add_person_to_session(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 	check_admin_referer('fi_legiscan_add_person_to_session');
 
@@ -473,7 +472,7 @@ if (!defined('FI_LEGISCAN_BULK_ADD_TO_SESSION_MAX')) {
  */
 function fi_admin_legiscan_handle_bulk_add_person_to_session(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 	check_admin_referer('fi_legiscan_add_person_to_session');
 
@@ -572,7 +571,7 @@ add_action('admin_post_fi_legiscan_bulk_add_person_to_session', 'fi_admin_legisc
  */
 function fi_admin_legiscan_handle_fetch_dataset(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 
 	check_admin_referer('fi_legiscan_fetch_dataset');
@@ -655,7 +654,7 @@ function fi_admin_legiscan_handle_fetch_dataset(): void {
 		// Cache for 7 days when not unpacked; never expire when unpacked.
 		$cache_expires = is_dir($data_dir) ? 0 : 7;
 
-		$response = \FI\Admin\Legiscan::api_request([
+		$response = fi_legiscan_api_request([
 			'op' => 'getDataset',
 			'key' => 'getDataset_' . $dataID,
 			'expires' => $cache_expires,
@@ -720,7 +719,7 @@ function fi_admin_legiscan_handle_fetch_dataset(): void {
 			$zip->close();
 
 			// Rename session directory to standardized format
-			$renamed_extract = \FI\Admin\Legiscan::rename_session_directory($temp_extract, $dataset);
+			$renamed_extract = fi_legiscan_rename_session_directory($temp_extract, $dataset);
 			if (!$renamed_extract) {
 				fi_admin_legiscan_notice_set('error', 'Failed to rename session directory after extraction.');
 				wp_safe_redirect($redirect_url);
@@ -758,13 +757,13 @@ function fi_admin_legiscan_handle_fetch_dataset(): void {
 						// Use rename for atomic move
 						if (!rename($temp_session_path, $perm_session_path)) {
 							// Fallback to recursive copy if rename fails (cross-filesystem)
-							\FI\Admin\Legiscan::recursive_copy($temp_session_path, $perm_session_path);
+							fi_legiscan_recursive_copy($temp_session_path, $perm_session_path);
 						}
 					}
 				}
 
 				// Cleanup temp directory
-				\FI\Admin\Legiscan::cleanup_extract_dir($temp_extract);
+				fi_legiscan_cleanup_extract_dir($temp_extract);
 			}
 
 			if (is_dir($data_dir)) {
@@ -789,7 +788,7 @@ add_action('admin_post_fi_legiscan_fetch_dataset', 'fi_admin_legiscan_handle_fet
  */
 function fi_admin_legiscan_handle_sync_session(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 
 	check_admin_referer('fi_legiscan_sync_session');
@@ -846,17 +845,14 @@ function fi_admin_legiscan_handle_sync_session(): void {
 		exit;
 	}
 
-	// Generate slug from session_title (cleaner, shorter)
-	//SESSIONSLUG: This is admin/import code - OK to keep slug lookup here for import reference, but consider migrating to ID-based lookup if possible
-	$slug = sanitize_title($session_title);
-	$existing_session = fi_session_get_by_slug($slug, $gov);
-	if (!$existing_session) {
-		$existing_session = fi_session_get_by_legiscan_id($legiscan_session_id, $gov);
-	}
+	$existing_session = fi_session_get_by_legiscan_id($legiscan_session_id, $gov);
 
 	if ($existing_session) {
 		// Update existing session meta with dataset info
 		$existing_meta = !empty($existing_session->meta) ? json_decode($existing_session->meta, true) : [];
+		if (!is_array($existing_meta)) {
+			$existing_meta = [];
+		}
 		$existing_meta['legiscan'] = $dataset; // Save entire dataset
 		$existing_meta['name_lg'] = $session_name; // Save verbose legiscan name
 		if ($legiscan_folder !== '') {
@@ -877,18 +873,17 @@ function fi_admin_legiscan_handle_sync_session(): void {
 	$date_start = $year_start ? "{$year_start}-01-01" : null;
 	$date_end = $year_end ? "{$year_end}-12-31" : null;
 
-	// Create new session using session_title as name
+	// Create new session using session_title as name.
 	$new_session_id = fi_session_save([
 		'gov' => (string) $gov,
 		'legiscan_id' => $legiscan_session_id,
-		'slug' => $slug,
-		'name' => $session_title, // Use session_title (cleaner) as name
+		'name' => $session_title,
 		'date_start' => $date_start,
 		'date_end' => $date_end,
 		'meta' => [
-			'legiscan' => $dataset, // Save entire dataset
-			'name_lg' => $session_name, // Save verbose legiscan name
-			'legiscan_folder' => $legiscan_folder, // Cache path
+			'legiscan' => $dataset,
+			'name_lg' => $session_name,
+			'legiscan_folder' => $legiscan_folder,
 		],
 	]);
 
@@ -908,7 +903,7 @@ add_action('admin_post_fi_legiscan_sync_session', 'fi_admin_legiscan_handle_sync
  */
 function fi_admin_legiscan_handle_refresh_data(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-index'));
+		wp_die(esc_html__('Sorry, you are not allowed to do that.', 'freedom-scorecard'));
 	}
 
 	check_admin_referer('fi_legiscan_refresh_data');
@@ -999,7 +994,7 @@ add_action('admin_post_fi_legiscan_refresh_data', 'fi_admin_legiscan_handle_refr
  */
 function fi_admin_migrate_render(): void {
 	require_once __DIR__ . '/../migrate/json-migrate.php';
-	\FI\Admin\MigrateJson\render_page();
+	fi_admin_migrate_json_render_page();
 }
 
 /**
@@ -1023,4 +1018,3 @@ function fi_admin_import_handle_simple_action(): void {
 	include __DIR__ . '/../views/import-action-simple.php';
 	exit;
 }
-

@@ -17,8 +17,8 @@ sis_image_sizes_resizer::delete_all_sis_images() - Delete all image resizer imag
 */
 
 define( 'SIS_BASE', 'sis_image_sizes' );
-define( 'SIS_RESIZER_DIR', WP_CONTENT_DIR.'/resizer' );
-define( 'SIS_RESIZER_URL', WP_CONTENT_URL.'/resizer' );
+define( 'SIS_RESIZER_URL', URL_SAM_RESIZER );
+define( 'SIS_RESIZER_DIR', DIR_SAM_RESIZER );
 
 
 if( ! defined('SIS_ALLOWED_MIME_TYPES') ){
@@ -568,7 +568,7 @@ if( ! class_exists('sis_image_sizes_resizer') ){
                         // Convert file path to URL for attachment_url_to_postid()
                         $upload_url = wp_upload_dir()['baseurl'];
                         //This is a dev site. The attachment URLs are saved with the production url.
-                        $production_url = 'https://jbs.org/assets';
+                        $production_url = WP_CONTENT_URL;
                         $attachment_url = str_replace($main_dir, $production_url, $checkDir . $file);
                         //$attachment_id = attachment_url_to_postid($attachment_url);
                         //Get attachment ID from guid

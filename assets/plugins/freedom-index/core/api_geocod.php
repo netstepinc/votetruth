@@ -1,388 +1,668 @@
 <?php
-namespace FI\Core{
+/**
+ * Freedom Index Geocodio integration.
+ *
+ * Retrieves elected officials from Geocodio, merges them with Freedom Index
+ * legislator records, and updates available legislator metadata.
+ */
 
-	if (!defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
-	/**
-	* Government Constants and Helpers
-	* 
-	* Centralized government management for the Freedom Index system.
-	* All government codes are 2-letter state abbreviations or 'US' for Congress.
-	* https://api.geocod.io/v1.9/geocode?q=75645&fields=cd,stateleg&api_key=73713543404bb2183071611b86a4605a8666a15
-	*/
+/**
+ * Build an address from the submitted legislator search fields.
+ *
+ * Uses the complete address when address, city, and state are supplied.
+ * Otherwise, searches using the ZIP code.
+ *
+ * @return string
+ */
+function fi_geocod_build_submitted_address() {
+	$zip = isset( $_POST['zip'] )
+		? sanitize_text_field( wp_unslash( $_POST['zip'] ) )
+		: '';
 
-	final class Geocod {
+	if ( empty( $zip ) ) {
+		wp_send_json_error(
+			array(
+				'message' => 'ZIP code is required',
+			)
+		);
+	}
 
-		public static function address() {
-			$zip = isset($_POST['zip']) ? sanitize_text_field($_POST['zip']) : '';
-			if (empty($zip)) {
-				wp_send_json_error(array('message' => 'ZIP code is required'));
-			}
-			
-			// Check if full address fields are provided
-			$address = '';
-			if (isset($_POST['address']) && !empty($_POST['address']) && 
-			    isset($_POST['city']) && !empty($_POST['city']) && 
-			    isset($_POST['state']) && !empty($_POST['state'])) {
-				// Full address provided
-				$address = sanitize_text_field($_POST['address']) . ' ' . 
-				           sanitize_text_field($_POST['city']) . ' ' . 
-				           sanitize_text_field($_POST['state']) . ' ' . 
-				           $zip;
-			} else {
-				// ZIP only
-				$address = $zip;
-			}
-			return $address;
-		}
+	$street_address = isset( $_POST['address'] )
+		? sanitize_text_field( wp_unslash( $_POST['address'] ) )
+		: '';
 
-		public static function address_encoded($address) {
-			return urlencode($address);
-		}
+	$city = isset( $_POST['city'] )
+		? sanitize_text_field( wp_unslash( $_POST['city'] ) )
+		: '';
 
-		public static function party_code($party_name) {
-			$party = '';
-			switch($party_name){
-				case 'Democrat':
-					$party = 'D';
-					break;
-				case 'Republican':
-					$party = 'R';
-					break;
-				case 'Libertarian':
-					$party = 'L';
-					break;
-			}
-			return $party;
-		}
+	$state = isset( $_POST['state'] )
+		? sanitize_text_field( wp_unslash( $_POST['state'] ) )
+		: '';
 
+	if (
+		! empty( $street_address ) &&
+		! empty( $city ) &&
+		! empty( $state )
+	) {
+		return trim(
+			$street_address . ' ' .
+			$city . ' ' .
+			$state . ' ' .
+			$zip
+		);
+	}
 
-		public static function geocod_get_officials($address_encoded) {
-			$cacheKey = 'findmy/' . $address_encoded;
-			$officials = fi_cache($cacheKey); //default to 1 day for testing then extend: , '', (30 * 24 * 60 * 60)); //30 days
-			if ($officials) {
-				return $officials;
-			}
-			//API call
-			$geocode_url = 'https://api.geocod.io/v1.9/geocode?q=' . $address_encoded . '&fields=cd,stateleg&api_key=' . API_KEY_GEOCOD;
-			$geocode_response = wp_remote_get($geocode_url);
-			$geocode_data = json_decode(wp_remote_retrieve_body($geocode_response), true);
+	return $zip;
+}
 
-			$senators = [];
-			$representatives = [];
+/**
+ * Convert a political party name to its abbreviated code.
+ *
+ * @param string $party_name Full political party name.
+ *
+ * @return string
+ */
+function fi_geocod_get_party_code( $party_name ) {
+	switch ( $party_name ) {
+		case 'Democrat':
+			return 'D';
 
-			// Check if we have results and fields
-			if (isset($geocode_data['results'][0]['fields'])) {
-				$fields = $geocode_data['results'][0]['fields'];
+		case 'Republican':
+			return 'R';
 
-				// Process congressional legislators (Congressional Districts)
-				if (isset($fields['congressional_districts']) && !empty($fields['congressional_districts'])) {
-					foreach ($fields['congressional_districts'] as $district) {
-						if (isset($district['current_legislators']) && !empty($district['current_legislators'])) {
-							foreach ($district['current_legislators'] as $legislator) {
-								//Zip only may return multiple districts with overlapping senators, so we need to check for duplicates
-								$key = $legislator['type'] . $legislator['bio']['first_name'] . $legislator['bio']['last_name'];
-								$party_name = $legislator['bio']['party'];
-								$party = self::party_code($party_name);
-								$references = isset($legislator['references']) ? $legislator['references'] : null;
-								$photo_url_from_api = isset($legislator['bio']['photo_url']) ? $legislator['bio']['photo_url'] : null;
+		case 'Libertarian':
+			return 'L';
 
-								$official = [
-									'name' => $legislator['bio']['first_name'] . ' ' . $legislator['bio']['last_name'],
-									'party' => $party,
-									'party_name' => $party_name,
-									'chamber' => ucfirst($legislator['type']) . ' - ' . $district['name'],
-									'division' => $district['name'],
-									'contact' => $legislator['contact'],
-									'social' => $legislator['social'],
-									'bio' => $legislator['bio'],
-									'photo_url' => isset($legislator['bio']['photo_url']) ? $legislator['bio']['photo_url'] : null,
-									'birthday' => isset($legislator['bio']['birthday']) ? $legislator['bio']['birthday'] : null,
-									'gender' => isset($legislator['bio']['gender']) ? $legislator['bio']['gender'] : null,
-									'seniority' => isset($legislator['seniority']) ? $legislator['seniority'] : null,
-									'references' => isset($legislator['references']) ? $legislator['references'] : null,
-								];
-								if($legislator['type'] == 'representative') {
-									$representatives[$key] = $official;
-								} else {
-									$senators[$key] = $official;
-								}
-							}
-						}
-					}
-				}
-
-				// Remove duplicate keys from $representatives array
-				$representatives = array_unique($representatives, SORT_REGULAR);
-				$senators = array_unique($senators, SORT_REGULAR);
-
-				// Create unique of congressional and state officials
-				$officials = array_merge($senators, $representatives);
-
-				// Process state legislators
-				if (isset($fields['state_legislative_districts'])) {
-					$state_districts = $fields['state_legislative_districts'];
-
-					// State Senators
-					if (isset($state_districts['senate']) && !empty($state_districts['senate'])) {
-						foreach ($state_districts['senate'] as $district) {
-							if (isset($district['current_legislators']) && !empty($district['current_legislators'])) {
-								foreach ($district['current_legislators'] as $legislator) {
-									$party_name = $legislator['bio']['party'];
-									$party = self::party_code($party_name);
-									$references = isset($legislator['references']) ? $legislator['references'] : null;
-									$photo_url_from_api = isset($legislator['bio']['photo_url']) ? $legislator['bio']['photo_url'] : null;
-
-									$official = [
-										'name' => $legislator['bio']['first_name'] . ' ' . $legislator['bio']['last_name'],
-										'party' => $party,
-										'party_name' => $party_name,
-										'chamber' => 'State Senator - ' . $district['name'],
-										'division' => $district['name'],
-										'contact' => $legislator['contact'],
-										'social' => $legislator['social'],
-										'bio' => $legislator['bio'],
-										'photo_url' => isset($legislator['bio']['photo_url']) ? $legislator['bio']['photo_url'] : null,
-										'birthday' => isset($legislator['bio']['birthday']) ? $legislator['bio']['birthday'] : null,
-										'gender' => isset($legislator['bio']['gender']) ? $legislator['bio']['gender'] : null,
-										'seniority' => isset($legislator['seniority']) ? $legislator['seniority'] : null,
-										'references' => isset($legislator['references']) ? $legislator['references'] : null,
-									];
-									$officials[] = $official;
-								}
-							}
-						}
-					}
-
-					// State House Representatives
-					if (isset($state_districts['house']) && !empty($state_districts['house'])) {
-						foreach ($state_districts['house'] as $district) {
-							if (isset($district['current_legislators']) && !empty($district['current_legislators'])) {
-								foreach ($district['current_legislators'] as $legislator) {
-									$party_name = $legislator['bio']['party'];
-									$party = self::party_code($party_name);
-									$references = isset($legislator['references']) ? $legislator['references'] : null;
-									$photo_url_from_api = isset($legislator['bio']['photo_url']) ? $legislator['bio']['photo_url'] : null;
-									$official = [
-										'name' => $legislator['bio']['first_name'] . ' ' . $legislator['bio']['last_name'],
-										'party' => $party,
-										'party_name' => $party_name,
-										'chamber' => 'State Representative - ' . $district['name'],
-										'division' => $district['name'],
-										'contact' => $legislator['contact'],
-										'social' => $legislator['social'],
-										'bio' => $legislator['bio'],
-										'photo_url' => isset($legislator['bio']['photo_url']) ? $legislator['bio']['photo_url'] : null,
-										'birthday' => isset($legislator['bio']['birthday']) ? $legislator['bio']['birthday'] : null,
-										'gender' => isset($legislator['bio']['gender']) ? $legislator['bio']['gender'] : null,
-										'seniority' => isset($legislator['seniority']) ? $legislator['seniority'] : null,
-										'references' => isset($legislator['references']) ? $legislator['references'] : null,
-									];
-									$officials[] = $official;
-								}
-							}
-						}
-					}
-				}
-			}
-
-			//Merge with Freedom Index legislators
-			$officials = self::merge_legislators_to_officials($officials);
-			fi_cache($cacheKey,$officials);
-			return $officials;
-		}
-
-		//Fetch all Freedom Index legislators and merge with geocod API results
-		public static function merge_legislators_to_officials($officials) {
-			$merged = [];
-			foreach($officials as $official) {
-				//fi_log('MY-fetch: ' . json_encode($official), __FILE__, __LINE__);
-				$legislator = self::get_legislator($official['references']);
-				$official = array_merge($official, $legislator);
-				if(	isset($official['id']) && $official['id'] > 0) {
-					self::legislator_update($official);
-				}
-				$merged[] = $official;
-			}
-			return $merged;
-		}
-
-
-		public static function get_legislator($references) {
-			// Use helper function to get legislator by external ID (no custom queries)
-			$legislator = fi_legislator_get_by_external_id($references ?? []);
-
-			// Flatten the legislator array into a single array of most recent data
-			$legislator_id = $legislator ? ($legislator->id ?? 0) : 0;
-			$legislator_url = '';
-			if ($legislator_id > 0) {
-				// Generate URL using ID if not already set
-				if (isset($legislator->url) && !empty($legislator->url)) {
-					$legislator_url = $legislator->url;
-				} elseif (function_exists('fi_get_legislator_url')) {
-					$legislator_url = fi_get_legislator_url($legislator_id);
-				} else {
-					$legislator_url = home_url('/legislator/' . $legislator_id . '/');
-				}
-				//Are we missing their image still?
-				if($legislator->image_id && $legislator->image_id > 0 && !$legislator->image_url){
-					$image_url = jis_get_attachment_image_src($legislator->image_id, [200,250],true);
-					if($image_url['src'] != ''){
-						$legislator->image_url = $image_url['src'];
-					}
-				}
-
-
-				//Merge geocod fields + add ['legislator'] with our values
-				$legislator_data = array(
-					'name' => $legislator->display_name ?? '',
-					//'party' => $legislator->party ?? '',
-					//'party_name' => $legislator->party_name ?? '',
-					//'chamber' => $legislator->chamber_label ?? '',
-					//'division' => $legislator->district ?? '',
-					'score' => $legislator->freedom_score ?? '',
-					'score_label' => 'Freedom Score',
-					'legislator' => [
-						'id' => $legislator_id,
-						'url' => $legislator_url,
-						'image_id' => $legislator->image_id ?? '',
-						'first_name' => $legislator->first_name ?? '',
-						'last_name' => $legislator->last_name ?? '',
-						'district' => $legislator->district ?? '',
-						'gov' => $legislator->gov ?? '',
-						'state' => $legislator->state ?? '',
-						'state_name' => $legislator->state_name ?? '',
-					],
-				);
-				if($legislator->image_url && $legislator->image_url != '') {
-					$legislator_data['photo_url'] = $legislator->image_url;
-				}
-
-			}else{
-				$legislator_data = [];
-			}
-			//fi_log('MY-legislator: ' . json_encode($legislator_data), __FILE__, __LINE__);
-			return $legislator_data;
-		}
-
-		/* Take this opportunity to update the legislator data
-		*/
-		public static function legislator_update($official) {
-			$legislator_id = $official['id'] ??	0;
-			if($legislator_id > 0) {
-				// Reference fields that go directly on the legislator table (must exist in schema)
-				$direct_fields = [
-					'bioguide_id',
-					'legiscan_id',
-					'govtrack_id',
-					'votesmart_id',
-					'ballotpedia_id',
-					'openstates_id',
-				];
-				$legislatorUpdate = [];
-				foreach ($direct_fields as $field) {
-					if (isset($official['references'][$field]) && $official['references'][$field] !== '') {
-						$legislatorUpdate[$field] = $official['references'][$field];
-					}
-				}
-
-				// Meta fields for the legislator meta column (will be merged, not replaced)
-				$meta_fields = [
-					//'chamber',
-					//'division',
-					'contact' => [
-						'url',
-						'address',
-						'phone',
-						'contact_form',
-					],
-					'social' => [
-						'rss_url',
-						'twitter',
-						'facebook',
-						'youtube',
-						'youtube_id',
-					],
-					'bio' => [
-						'birthday',
-						'gender',
-						'party',
-						'photo_url',
-						'photo_attribution',
-					],
-					//'photo_url',
-					'birthday',
-					'gender',
-					'seniority',
-					'references' => [
-						'openstates_id' => 'openstates_id',
-						'wikipedia_id' => 'wikipedia_id',
-						'thomas_id' => 'thomas_id',
-						'opensecrets_id' => 'opensecrets_id',
-						'lis_id' => 'lis_id',
-						'washington_post_id' => 'washington_post_id',
-					],
-				];
-						
-				$meta_data = [];
-				// Consume $meta_fields and flatten their values into $meta_data if they exist and have a value
-				foreach ($meta_fields as $key => $field) {
-					if (is_array($field)) {
-						// This is a group; check the subfields in $official[$key] (or $official['references'] for group keys that are 'references')
-						$section = ($key === 'references') ? ($official['references'] ?? []) : ($official[$key] ?? []);
-						foreach ($field as $subkey => $subfield) {
-							// If associative, $subkey is the name, else $subfield is the field name
-							$target = is_int($subkey) ? $subfield : $subkey;
-							if (isset($section[$target]) && $section[$target] !== '') {
-								$meta_data[$target] = $section[$target];
-							}
-						}
-					} else {
-						// Flat field, just check $official[$field]
-						if (isset($official[$field]) && $official[$field] !== '') {
-							$meta_data[$field] = $official[$field];
-						}
-					}
-				}
-				$legislatorUpdate['meta'] = array_merge($legislatorUpdate['meta'] ?? [], $meta_data);
-				
-				// Update direct fields if any
-				if (!empty($legislatorUpdate)) {
-					fi_legislator_update($legislator_id, $legislatorUpdate);
-				}				
-			}
-		}
+		default:
+			return '';
 	}
 }
 
-namespace{
-	function fi_geocod_get_officials() {
-		$address = \FI\Core\Geocod::address();
-		$address_encoded = \FI\Core\Geocod::address_encoded($address);
-		$officials = \FI\Core\Geocod::geocod_get_officials($address_encoded);
-		//fi_log('fi_geocod_get_officials: ' . $address_encoded . '|'. count($officials) . ' found', __FILE__, __LINE__);
-		$data = [
-			'address' => $address,
-			'officials' => $officials,
-		];
-		if(get_current_user_id() == 1 && isset($_GET['TEST']) && $_GET['TEST'] == 'geocod'){
-			echo '<textarea style="width: 100%; height: 400px;">';print_r($data);echo '</textarea>';exit;
-		}
-		return $data;
+/**
+ * Normalize a Geocodio legislator record into the format used by the site.
+ *
+ * @param array  $legislator Geocodio legislator data.
+ * @param string $chamber    Chamber label.
+ * @param string $division   Congressional or legislative district.
+ *
+ * @return array
+ */
+function fi_geocod_build_official_record( $legislator, $chamber, $division ) {
+	$bio = isset( $legislator['bio'] ) && is_array( $legislator['bio'] )
+		? $legislator['bio']
+		: array();
+
+	$party_name = isset( $bio['party'] )
+		? $bio['party']
+		: '';
+
+	return array(
+		'name'       => trim(
+			( $bio['first_name'] ?? '' ) . ' ' .
+			( $bio['last_name'] ?? '' )
+		),
+		'party'      => fi_geocod_get_party_code( $party_name ),
+		'party_name' => $party_name,
+		'chamber'    => $chamber,
+		'division'   => $division,
+		'contact'    => isset( $legislator['contact'] ) && is_array( $legislator['contact'] )
+			? $legislator['contact']
+			: array(),
+		'social'     => isset( $legislator['social'] ) && is_array( $legislator['social'] )
+			? $legislator['social']
+			: array(),
+		'bio'        => $bio,
+		'photo_url'  => $bio['photo_url'] ?? null,
+		'birthday'   => $bio['birthday'] ?? null,
+		'gender'     => $bio['gender'] ?? null,
+		'seniority'  => $legislator['seniority'] ?? null,
+		'references' => isset( $legislator['references'] ) && is_array( $legislator['references'] )
+			? $legislator['references']
+			: array(),
+	);
+}
+
+/**
+ * Retrieve elected officials from the Geocodio API.
+ *
+ * Results are cached using the encoded address.
+ *
+ * @param string $address_encoded URL-encoded address.
+ *
+ * @return array
+ */
+function fi_geocod_fetch_officials( $address_encoded ) {
+	if ( empty( $address_encoded ) ) {
+		return array();
 	}
 
-	function fi_geocod_get_officials_for_user_dashboard(string $address) {
-		$address_encoded = urlencode($address);
+	$cache_key = 'findmy/' . $address_encoded;
+	$officials = fi_cache( $cache_key );
 
-		if($address_encoded){
-			$officials = \FI\Core\Geocod::geocod_get_officials($address_encoded);
-			//fi_log('fi_geocod for dashboard: ' . $address_encoded . '|'. count($officials) . ' found', __FILE__, __LINE__);
-			$data = [
-				'address' => $address,
-				'officials' => $officials,
-			];
-			return $data;
+	if ( false !== $officials && null !== $officials ) {
+		return is_array( $officials )
+			? $officials
+			: array();
+	}
+
+	if ( ! defined( 'API_KEY_GEOCOD' ) || empty( API_KEY_GEOCOD ) ) {
+		fi_log(
+			'GEOCOD: API_KEY_GEOCOD is not defined.',
+			__FILE__,
+			__LINE__
+		);
+
+		return array();
+	}
+
+	$geocode_url = add_query_arg(
+		array(
+			'q'       => $address_encoded,
+			'fields'  => 'cd,stateleg',
+			'api_key' => API_KEY_GEOCOD,
+		),
+		'https://api.geocod.io/v1.9/geocode'
+	);
+
+	$geocode_response = wp_remote_get(
+		$geocode_url,
+		array(
+			'timeout' => 20,
+		)
+	);
+
+	if ( is_wp_error( $geocode_response ) ) {
+		fi_log(
+			'GEOCOD API ERROR: ' . $geocode_response->get_error_message(),
+			__FILE__,
+			__LINE__
+		);
+
+		return array();
+	}
+
+	$response_code = wp_remote_retrieve_response_code( $geocode_response );
+
+	if ( 200 !== $response_code ) {
+		fi_log(
+			'GEOCOD API HTTP ERROR: ' . $response_code,
+			__FILE__,
+			__LINE__
+		);
+
+		return array();
+	}
+
+	$geocode_data = json_decode(
+		wp_remote_retrieve_body( $geocode_response ),
+		true
+	);
+
+	if ( ! is_array( $geocode_data ) ) {
+		fi_log(
+			'GEOCOD API ERROR: Invalid JSON response.',
+			__FILE__,
+			__LINE__
+		);
+
+		return array();
+	}
+
+	$fields = $geocode_data['results'][0]['fields'] ?? array();
+
+	if ( ! is_array( $fields ) || empty( $fields ) ) {
+		fi_cache( $cache_key, array() );
+
+		return array();
+	}
+
+	$officials       = array();
+	$senators       = array();
+	$representatives = array();
+
+	/*
+	 * Process congressional legislators.
+	 *
+	 * ZIP-only searches may return overlapping congressional districts, so
+	 * legislators are keyed by type and name to prevent duplicate senators.
+	 */
+	$congressional_districts = $fields['congressional_districts'] ?? array();
+
+	if ( is_array( $congressional_districts ) ) {
+		foreach ( $congressional_districts as $district ) {
+			if ( ! is_array( $district ) ) {
+				continue;
+			}
+
+			$current_legislators = $district['current_legislators'] ?? array();
+
+			if ( ! is_array( $current_legislators ) || empty( $current_legislators ) ) {
+				continue;
+			}
+
+			$district_name = isset( $district['name'] )
+				? $district['name']
+				: '';
+
+			foreach ( $current_legislators as $legislator ) {
+				if ( ! is_array( $legislator ) ) {
+					continue;
+				}
+
+				$bio = isset( $legislator['bio'] ) && is_array( $legislator['bio'] )
+					? $legislator['bio']
+					: array();
+
+				$legislator_type = isset( $legislator['type'] )
+					? $legislator['type']
+					: '';
+
+				$key = sanitize_key(
+					$legislator_type . '-' .
+					( $bio['first_name'] ?? '' ) . '-' .
+					( $bio['last_name'] ?? '' )
+				);
+
+				$official = fi_geocod_build_official_record(
+					$legislator,
+					ucfirst( $legislator_type ) . ' - ' . $district_name,
+					$district_name
+				);
+
+				if ( 'representative' === $legislator_type ) {
+					$representatives[ $key ] = $official;
+				} else {
+					$senators[ $key ] = $official;
+				}
+			}
 		}
 	}
 
+	$officials = array_merge(
+		array_values( $senators ),
+		array_values( $representatives )
+	);
+
+	/*
+	 * Process state legislative districts.
+	 */
+	$state_districts = $fields['state_legislative_districts'] ?? array();
+
+	if ( is_array( $state_districts ) ) {
+		/*
+		 * State senators.
+		 */
+		$state_senate_districts = $state_districts['senate'] ?? array();
+
+		if ( is_array( $state_senate_districts ) ) {
+			foreach ( $state_senate_districts as $district ) {
+				if ( ! is_array( $district ) ) {
+					continue;
+				}
+
+				$current_legislators = $district['current_legislators'] ?? array();
+
+				if ( ! is_array( $current_legislators ) || empty( $current_legislators ) ) {
+					continue;
+				}
+
+				$district_name = isset( $district['name'] )
+					? $district['name']
+					: '';
+
+				foreach ( $current_legislators as $legislator ) {
+					if ( ! is_array( $legislator ) ) {
+						continue;
+					}
+
+					$officials[] = fi_geocod_build_official_record(
+						$legislator,
+						'State Senator - ' . $district_name,
+						$district_name
+					);
+				}
+			}
+		}
+
+		/*
+		 * State representatives.
+		 */
+		$state_house_districts = $state_districts['house'] ?? array();
+
+		if ( is_array( $state_house_districts ) ) {
+			foreach ( $state_house_districts as $district ) {
+				if ( ! is_array( $district ) ) {
+					continue;
+				}
+
+				$current_legislators = $district['current_legislators'] ?? array();
+
+				if ( ! is_array( $current_legislators ) || empty( $current_legislators ) ) {
+					continue;
+				}
+
+				$district_name = isset( $district['name'] )
+					? $district['name']
+					: '';
+
+				foreach ( $current_legislators as $legislator ) {
+					if ( ! is_array( $legislator ) ) {
+						continue;
+					}
+
+					$officials[] = fi_geocod_build_official_record(
+						$legislator,
+						'State Representative - ' . $district_name,
+						$district_name
+					);
+				}
+			}
+		}
+	}
+
+	$officials = fi_geocod_merge_legislators_to_officials( $officials );
+
+	fi_cache( $cache_key, $officials );
+
+	return $officials;
+}
+
+/**
+ * Merge Freedom Index legislator data into Geocodio official records.
+ *
+ * @param array $officials Geocodio official records.
+ *
+ * @return array
+ */
+function fi_geocod_merge_legislators_to_officials( $officials ) {
+	if ( ! is_array( $officials ) ) {
+		return array();
+	}
+
+	$merged = array();
+
+	foreach ( $officials as $official ) {
+		if ( ! is_array( $official ) ) {
+			continue;
+		}
+
+		$references = isset( $official['references'] ) && is_array( $official['references'] )
+			? $official['references']
+			: array();
+
+		$legislator_data = fi_geocod_get_legislator_data( $references );
+		$official        = array_merge( $official, $legislator_data );
+
+		$legislator_id = isset( $official['legislator']['id'] )
+			? absint( $official['legislator']['id'] )
+			: 0;
+
+		if ( $legislator_id > 0 ) {
+			fi_geocod_update_legislator( $official );
+		}
+
+		$merged[] = $official;
+	}
+
+	return $merged;
+}
+
+/**
+ * Find a Freedom Index legislator using external IDs.
+ *
+ * @param array $references Geocodio external legislator IDs.
+ *
+ * @return array
+ */
+function fi_geocod_get_legislator_data( $references ) {
+	if ( ! is_array( $references ) ) {
+		$references = array();
+	}
+
+	$legislator = fi_legislator_get_by_external_id( $references );
+
+	if ( ! $legislator || ! is_object( $legislator ) ) {
+		return array();
+	}
+
+	$legislator_id = isset( $legislator->id ) ? absint( $legislator->id ) : 0;
+
+	if ( $legislator_id < 1 ) {
+		return array();
+	}
+
+	/*
+	 * Generate the legislator URL.
+	 */
+	$legislator_url = home_url('/legislator/' . $legislator_id . '/');
+	/*
+	if ( ! empty( $legislator->url ) ) {
+		$legislator_url = $legislator->url;
+	} elseif ( function_exists( 'fi_get_legislator_url' ) ) {
+		$legislator_url = fi_get_legislator_url( $legislator_id );
+	} else {
+		$legislator_url = home_url(
+			'/legislator/' . $legislator_id . '/'
+		);
+	}*/
+
+	$image_id  = isset( $legislator->image_id ) ? absint( $legislator->image_id ): 0;
+	$image_url = isset( $legislator->image_url ) ? $legislator->image_url : '';
+	/*
+	 * Recover the image URL from the attachment when the stored URL is absent.
+	 */
+	if ($image_id > 0 && empty( $image_url ) ) {
+		$image_data = sis_get_attachment_image_src(
+			$image_id,
+			array( 200, 250 ),
+			true
+		);
+
+		if ( is_array( $image_data ) && ! empty( $image_data['src'] ) ) {
+			$image_url             = $image_data['src'];
+			$legislator->image_url = $image_url;
+		}
+	}
+
+	$legislator_data = array(
+		'name'        => $legislator->display_name ?? '',
+		'score'       => $legislator->freedom_score ?? '',
+		'score_label' => 'Freedom Score',
+		'legislator'  => array(
+			'id'         => $legislator_id,
+			'url'        => $legislator_url,
+			'image_id'   => $image_id,
+			'first_name' => $legislator->first_name ?? '',
+			'last_name'  => $legislator->last_name ?? '',
+			'district'   => $legislator->district ?? '',
+			'gov'        => $legislator->gov ?? '',
+			'state'      => $legislator->state ?? '',
+			'state_name' => $legislator->state_name ?? '',
+		),
+	);
+
+	if ( ! empty( $image_url ) ) {
+		$legislator_data['photo_url'] = $image_url;
+	}
+
+	return $legislator_data;
+}
+
+/**
+ * Update a Freedom Index legislator using current Geocodio data.
+ *
+ * @param array $official Merged Geocodio and Freedom Index official record.
+ *
+ * @return void
+ */
+function fi_geocod_update_legislator( $official ) {
+	if ( ! is_array( $official ) ) {
+		return;
+	}
+
+	$legislator_id = isset( $official['legislator']['id'] ) ? absint( $official['legislator']['id'] ) : 0;
+
+	if ( $legislator_id < 1 ) {
+		return;
+	}
+
+	$references = isset( $official['references'] ) && is_array( $official['references'] ) ? $official['references'] : array();
+
+	/*
+	 * Reference fields stored directly on the legislator table.
+	 */
+	$direct_fields = array(
+		'bioguide_id',
+		'legiscan_id',
+		'govtrack_id',
+		'votesmart_id',
+		'ballotpedia_id',
+		'openstates_id',
+	);
+
+	$legislator_update = array();
+
+	foreach ( $direct_fields as $field ) {
+		if (
+			isset( $references[ $field ] ) &&
+			'' !== $references[ $field ]
+		) {
+			$legislator_update[ $field ] = $references[ $field ];
+		}
+	}
+
+	/*
+	 * Geocodio fields stored in the legislator meta column.
+	 */
+	$meta_fields = array(
+		'contact'    => array(
+			'url',
+			'address',
+			'phone',
+			'contact_form',
+		),
+		'social'     => array(
+			'rss_url',
+			'twitter',
+			'facebook',
+			'youtube',
+			'youtube_id',
+		),
+		'bio'        => array(
+			'birthday',
+			'gender',
+			'party',
+			'photo_url',
+			'photo_attribution',
+		),
+		'birthday',
+		'gender',
+		'seniority',
+		'references' => array(
+			'openstates_id',
+			'wikipedia_id',
+			'thomas_id',
+			'opensecrets_id',
+			'lis_id',
+			'washington_post_id',
+		),
+	);
+
+	$meta_data = array();
+
+	foreach ( $meta_fields as $section_name => $fields ) {
+		if ( is_array( $fields ) ) {
+			$section = 'references' === $section_name
+				? $references
+				: (
+					isset( $official[ $section_name ] ) &&
+					is_array( $official[ $section_name ] )
+						? $official[ $section_name ]
+						: array()
+				);
+
+			foreach ( $fields as $field ) {
+				if (
+					isset( $section[ $field ] ) &&
+					'' !== $section[ $field ]
+				) {
+					$meta_data[ $field ] = $section[ $field ];
+				}
+			}
+
+			continue;
+		}
+
+		$field = $fields;
+
+		if (
+			isset( $official[ $field ] ) &&
+			'' !== $official[ $field ]
+		) {
+			$meta_data[ $field ] = $official[ $field ];
+		}
+	}
+
+	if ( ! empty( $meta_data ) ) {
+		$legislator_update['meta'] = $meta_data;
+	}
+
+	if ( ! empty( $legislator_update ) ) {
+		fi_legislator_update(
+			$legislator_id,
+			$legislator_update
+		);
+	}
+}
+
+/**
+ * Retrieve officials using the submitted public search fields.
+ *
+ * This is the primary public entry point for the legislator search.
+ *
+ * @return array
+ */
+function fi_geocod_get_officials() {
+	$address         = fi_geocod_build_submitted_address();
+	$address_encoded = rawurlencode( $address );
+	$officials       = fi_geocod_fetch_officials( $address_encoded );
+
+	$data = array(
+		'address'   => $address,
+		'officials' => $officials,
+	);
+	fi_log(json_encode($data),__FILE__,__LINE__);
+	return $data;
+}
+
+/**
+ * Retrieve officials for a user's saved dashboard address.
+ *
+ * This is the primary public entry point for dashboard address lookups.
+ *
+ * @param string $address Complete user address.
+ *
+ * @return array
+ */
+function fi_geocod_get_officials_for_user_dashboard( string $address ) {
+	$address = trim( $address );
+
+	if ( empty( $address ) ) {
+		return array(
+			'address'   => '',
+			'officials' => array(),
+		);
+	}
+
+	$address_encoded = rawurlencode( $address );
+	$officials       = fi_geocod_fetch_officials( $address_encoded );
+
+	return array(
+		'address'   => $address,
+		'officials' => $officials,
+	);
 }

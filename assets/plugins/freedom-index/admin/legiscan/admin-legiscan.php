@@ -44,7 +44,7 @@ $compiler_auth_key = md5(strtotime(date('Y-m-d') . ' 00:00:01'));
 // Variables are set in render_legiscan_import() function scope
 // $gov, $governments, $datasets, $existing_sessions are available
 $scope = fi_scope_get_current();
-$gov = strtoupper(sanitize_text_field($_REQUEST['gov'] ?? $scope['gov'] ?? 'US'));
+$gov = strtoupper((string) ($scope['gov'] ?? 'US'));
 $governments = fi_govs();
 
 // Ensure gov directory exists in cache (for checking unpacked datasets)
@@ -57,7 +57,7 @@ if (!is_dir($govdir)) {
 // to avoid "headers already sent" issues in wp-admin. This view is read-only UI.
 
 // Initialize legiscan instance early (needed for vote import and dataset loading)
-$legiscan = new \FI\Admin\Legiscan();
+$legiscan = fi_legiscan_create_legislator();
 
 // Get dataset list early (needed for vote/person import and display)
 $legiscan_state = ($gov === 'US') ? 'US' : $gov;

@@ -1,277 +1,241 @@
 <?php
+/**
+ * Freedom Index FluentCRM Integration Helpers
+ *
+ * Straight function version of the former FICore\Fluent class file.
+ *
+ * Centralizes FluentCRM references and provides safe helper functions for
+ * subscribers, tags, and WordPress user integrations.
+ */
 
-namespace FI\Core {
+if (!defined('ABSPATH')) exit;
 
-	if (!defined('ABSPATH')) exit;
+/**
+ * Check if FluentCRM model classes are available.
+ *
+ * Important: FluentCRM classes must be checked with class_exists(), not function_exists().
+ *
+ * @return bool True if the required FluentCRM classes are available.
+ */
+function fi_fluent_is_active(): bool {
+	return class_exists('\FluentCrm\App\Models\Subscriber')
+		&& class_exists('\FluentCrm\App\Models\Tag');
+}
 
-	/**
-	* FluentCRM Integration Helper Class
-	* 
-	* Consolidates all FluentCRM references and provides helper functions
-	* for managing tags, subscribers, and push notifications.
-	* 
-	* @author Sam Mittelstaedt <smittelstaedt@jbs.org>
-	*/
-	final class Fluent {
-		
-		/**
-		* Check if FluentCRM is active
-		*/
-		public static function is_active(): bool {
-			return function_exists('FluentCrm\App\Models\Subscriber');
-		}
-		
-		/**
-		* Get subscriber by email
-		* 
-		* @param string $email Subscriber email
-		* @return \FluentCrm\App\Models\Subscriber|null
-		*/
-		public static function get_subscriber(string $email) {
-			if (!self::is_active()) {
-				return null;
-			}
-			
-			try {
-				return \FluentCrm\App\Models\Subscriber::where('email', $email)->first();
-			} catch (\Exception $e) {
-				fi_log('[FluentCRM] Error getting subscriber: ' . $e->getMessage(), __FILE__, __LINE__, 'error');
-				return null;
-			}
-		}
-		
-		/**
-		* Get subscriber by WordPress user ID
-		* 
-		* @param int $user_id WordPress user ID
-		* @return \FluentCrm\App\Models\Subscriber|null
-		*/
-		public static function get_subscriber_by_user_id(int $user_id) {
-			$user = get_userdata($user_id);
-			if (!$user || empty($user->user_email)) {
-				return null;
-			}
-			
-			return self::get_subscriber($user->user_email);
-		}
-		
-		/**
-		* Add tag to subscriber
-		* 
-		* @param string $email Subscriber email
-		* @param string|array $tags Tag slug(s) to add
-		* @return bool Success
-		*/
-		public static function add_tag(string $email, $tags): bool {
-			$subscriber = self::get_subscriber($email);
-			if (!$subscriber) {
-				return false;
-			}
-			
-			$tags = is_array($tags) ? $tags : [$tags];
-			$tags = array_filter(array_map('sanitize_text_field', $tags));
-			
-			if (empty($tags)) {
-				return false;
-			}
-			
-			try {
-				$subscriber->attachTags($tags);
-				return true;
-			} catch (\Exception $e) {
-				fi_log('[FluentCRM] Error adding tag: ' . $e->getMessage(), __FILE__, __LINE__, 'error');
-				return false;
-			}
-		}
-		
-		/**
-		* Remove tag from subscriber
-		* 
-		* @param string $email Subscriber email
-		* @param string|array $tags Tag slug(s) to remove
-		* @return bool Success
-		*/
-		public static function remove_tag(string $email, $tags): bool {
-			$subscriber = self::get_subscriber($email);
-			if (!$subscriber) {
-				return false;
-			}
-			
-			$tags = is_array($tags) ? $tags : [$tags];
-			$tags = array_filter(array_map('sanitize_text_field', $tags));
-			
-			if (empty($tags)) {
-				return false;
-			}
-			
-			try {
-				$subscriber->detachTags($tags);
-				return true;
-			} catch (\Exception $e) {
-				fi_log('[FluentCRM] Error removing tag: ' . $e->getMessage(), __FILE__, __LINE__, 'error');
-				return false;
-			}
-		}
-		
-		/**
-		* Check if subscriber has tag
-		* 
-		* @param string $email Subscriber email
-		* @param string $tag Tag slug
-		* @return bool
-		*/
-		public static function has_tag(string $email, string $tag): bool {
-			$subscriber = self::get_subscriber($email);
-			if (!$subscriber) {
-				return false;
-			}
-			
-			try {
-				return $subscriber->hasTag($tag);
-			} catch (\Exception $e) {
-				return false;
-			}
-		}
-		
-		/**
-		* Get tag count
-		* 
-		* @param string $tag_slug Tag slug
-		* @return int Count of subscribers with this tag
-		*/
-		public static function get_tag_count(string $tag_slug): int {
-			if (!self::is_active()) {
-				return 0;
-			}
-			
-			try {
-				$tag = \FluentCrm\App\Models\Tag::where('slug', $tag_slug)->first();
-				return $tag && isset($tag->subscribers_count) ? (int) $tag->subscribers_count : 0;
-			} catch (\Exception $e) {
-				return 0;
-			}
-		}
-		
-		/**
-		* Add tag to WordPress user by email
-		* 
-		* @param int $user_id WordPress user ID
-		* @param string|array $tags Tag slug(s) to add
-		* @return bool Success
-		*/
-		public static function add_tag_to_user(int $user_id, $tags): bool {
-			$user = get_userdata($user_id);
-			if (!$user || empty($user->user_email)) {
-				return false;
-			}
-			
-			return self::add_tag($user->user_email, $tags);
-		}
-		
-		/**
-		* Remove tag from WordPress user by email
-		* 
-		* @param int $user_id WordPress user ID
-		* @param string|array $tags Tag slug(s) to remove
-		* @return bool Success
-		*/
-		public static function remove_tag_from_user(int $user_id, $tags): bool {
-			$user = get_userdata($user_id);
-			if (!$user || empty($user->user_email)) {
-				return false;
-			}
-			
-			return self::remove_tag($user->user_email, $tags);
-		}
-		
-		/**
-		* Check if WordPress user has tag
-		* 
-		* @param int $user_id WordPress user ID
-		* @param string $tag Tag slug
-		* @return bool
-		*/
-		public static function user_has_tag(int $user_id, string $tag): bool {
-			$user = get_userdata($user_id);
-			if (!$user || empty($user->user_email)) {
-				return false;
-			}
-			
-			return self::has_tag($user->user_email, $tag);
-		}
+/**
+ * Log FluentCRM integration errors.
+ *
+ * @param string $message Error message.
+ * @param string $file File path.
+ * @param int $line Line number.
+ * @return void
+ */
+function fi_fluent_log_error(string $message, string $file = '', int $line = 0): void {
+	if (function_exists('fi_log')) {
+		fi_log('[FluentCRM] ' . $message, $file, $line, 'error');
 	}
 }
 
-// Global namespace functions
-namespace {
-	
-	/**
-	 * Check if FluentCRM is active
-	 */
-	function fi_fluent_is_active(): bool {
-		return \FI\Core\Fluent::is_active();
+/**
+ * Normalize tag input into a clean array.
+ *
+ * @param string|array $tags Tag slug(s).
+ * @return array Sanitized tag slugs.
+ */
+function fi_fluent_normalize_tags($tags): array {
+	$tags = is_array($tags) ? $tags : [$tags];
+
+	return array_values(array_filter(array_map(static function($tag) {
+		return sanitize_text_field((string) $tag);
+	}, $tags)));
+}
+
+/**
+ * Get a WordPress user's email address.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return string User email or empty string.
+ */
+function fi_fluent_get_user_email(int $user_id): string {
+	$user = get_userdata($user_id);
+
+	return ($user && !empty($user->user_email)) ? (string) $user->user_email : '';
+}
+
+/**
+ * Get FluentCRM subscriber by email.
+ *
+ * @param string $email Subscriber email.
+ * @return mixed FluentCRM Subscriber model or null.
+ */
+function fi_fluent_get_subscriber(string $email) {
+	if (!fi_fluent_is_active()) {
+		return null;
 	}
-	
-	/**
-	 * Get FluentCRM subscriber by email
-	 */
-	function fi_fluent_get_subscriber(string $email) {
-		return \FI\Core\Fluent::get_subscriber($email);
+
+	$email = sanitize_email($email);
+	if ($email === '') {
+		return null;
 	}
-	
-	/**
-	 * Get FluentCRM subscriber by WordPress user ID
-	 */
-	function fi_fluent_get_subscriber_by_user_id(int $user_id) {
-		return \FI\Core\Fluent::get_subscriber_by_user_id($user_id);
+
+	try {
+		return \FluentCrm\App\Models\Subscriber::where('email', $email)->first();
+	} catch (\Throwable $e) {
+		fi_fluent_log_error('Error getting subscriber: ' . $e->getMessage(), __FILE__, __LINE__);
+		return null;
 	}
-	
-	/**
-	 * Add FluentCRM tag to subscriber
-	 */
-	function fi_fluent_add_tag(string $email, $tags): bool {
-		return \FI\Core\Fluent::add_tag($email, $tags);
+}
+
+/**
+ * Get FluentCRM subscriber by WordPress user ID.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return mixed FluentCRM Subscriber model or null.
+ */
+function fi_fluent_get_subscriber_by_user_id(int $user_id) {
+	$email = fi_fluent_get_user_email($user_id);
+
+	return $email !== '' ? fi_fluent_get_subscriber($email) : null;
+}
+
+/**
+ * Add FluentCRM tag(s) to subscriber.
+ *
+ * @param string $email Subscriber email.
+ * @param string|array $tags Tag slug(s) to add.
+ * @return bool Success.
+ */
+function fi_fluent_add_tag(string $email, $tags): bool {
+	$subscriber = fi_fluent_get_subscriber($email);
+	if (!$subscriber) {
+		return false;
 	}
-	
-	/**
-	 * Remove FluentCRM tag from subscriber
-	 */
-	function fi_fluent_remove_tag(string $email, $tags): bool {
-		return \FI\Core\Fluent::remove_tag($email, $tags);
+
+	$tags = fi_fluent_normalize_tags($tags);
+	if (empty($tags)) {
+		return false;
 	}
-	
-	/**
-	 * Check if subscriber has FluentCRM tag
-	 */
-	function fi_fluent_has_tag(string $email, string $tag): bool {
-		return \FI\Core\Fluent::has_tag($email, $tag);
+
+	try {
+		$subscriber->attachTags($tags);
+		return true;
+	} catch (\Throwable $e) {
+		fi_fluent_log_error('Error adding tag: ' . $e->getMessage(), __FILE__, __LINE__);
+		return false;
 	}
-	
-	/**
-	 * Get FluentCRM tag count
-	 */
-	function fi_fluent_get_tag_count(string $tag_slug): int {
-		return \FI\Core\Fluent::get_tag_count($tag_slug);
+}
+
+/**
+ * Remove FluentCRM tag(s) from subscriber.
+ *
+ * @param string $email Subscriber email.
+ * @param string|array $tags Tag slug(s) to remove.
+ * @return bool Success.
+ */
+function fi_fluent_remove_tag(string $email, $tags): bool {
+	$subscriber = fi_fluent_get_subscriber($email);
+	if (!$subscriber) {
+		return false;
 	}
-	
-	/**
-	 * Add FluentCRM tag to WordPress user
-	 */
-	function fi_fluent_add_tag_to_user(int $user_id, $tags): bool {
-		return \FI\Core\Fluent::add_tag_to_user($user_id, $tags);
+
+	$tags = fi_fluent_normalize_tags($tags);
+	if (empty($tags)) {
+		return false;
 	}
-	
-	/**
-	 * Remove FluentCRM tag from WordPress user
-	 */
-	function fi_fluent_remove_tag_from_user(int $user_id, $tags): bool {
-		return \FI\Core\Fluent::remove_tag_from_user($user_id, $tags);
+
+	try {
+		$subscriber->detachTags($tags);
+		return true;
+	} catch (\Throwable $e) {
+		fi_fluent_log_error('Error removing tag: ' . $e->getMessage(), __FILE__, __LINE__);
+		return false;
 	}
-	
-	/**
-	 * Check if WordPress user has FluentCRM tag
-	 */
-	function fi_fluent_user_has_tag(int $user_id, string $tag): bool {
-		return \FI\Core\Fluent::user_has_tag($user_id, $tag);
+}
+
+/**
+ * Check if subscriber has FluentCRM tag.
+ *
+ * @param string $email Subscriber email.
+ * @param string $tag Tag slug.
+ * @return bool
+ */
+function fi_fluent_has_tag(string $email, string $tag): bool {
+	$subscriber = fi_fluent_get_subscriber($email);
+	if (!$subscriber) {
+		return false;
 	}
+
+	$tag = sanitize_text_field($tag);
+	if ($tag === '') {
+		return false;
+	}
+
+	try {
+		return (bool) $subscriber->hasTag($tag);
+	} catch (\Throwable $e) {
+		return false;
+	}
+}
+
+/**
+ * Get FluentCRM tag subscriber count.
+ *
+ * @param string $tag_slug Tag slug.
+ * @return int Count of subscribers with this tag.
+ */
+function fi_fluent_get_tag_count(string $tag_slug): int {
+	if (!fi_fluent_is_active()) {
+		return 0;
+	}
+
+	$tag_slug = sanitize_text_field($tag_slug);
+	if ($tag_slug === '') {
+		return 0;
+	}
+
+	try {
+		$tag = \FluentCrm\App\Models\Tag::where('slug', $tag_slug)->first();
+		return $tag && isset($tag->subscribers_count) ? (int) $tag->subscribers_count : 0;
+	} catch (\Throwable $e) {
+		return 0;
+	}
+}
+
+/**
+ * Add FluentCRM tag(s) to WordPress user.
+ *
+ * @param int $user_id WordPress user ID.
+ * @param string|array $tags Tag slug(s) to add.
+ * @return bool Success.
+ */
+function fi_fluent_add_tag_to_user(int $user_id, $tags): bool {
+	$email = fi_fluent_get_user_email($user_id);
+
+	return $email !== '' ? fi_fluent_add_tag($email, $tags) : false;
+}
+
+/**
+ * Remove FluentCRM tag(s) from WordPress user.
+ *
+ * @param int $user_id WordPress user ID.
+ * @param string|array $tags Tag slug(s) to remove.
+ * @return bool Success.
+ */
+function fi_fluent_remove_tag_from_user(int $user_id, $tags): bool {
+	$email = fi_fluent_get_user_email($user_id);
+
+	return $email !== '' ? fi_fluent_remove_tag($email, $tags) : false;
+}
+
+/**
+ * Check if WordPress user has FluentCRM tag.
+ *
+ * @param int $user_id WordPress user ID.
+ * @param string $tag Tag slug.
+ * @return bool
+ */
+function fi_fluent_user_has_tag(int $user_id, string $tag): bool {
+	$email = fi_fluent_get_user_email($user_id);
+
+	return $email !== '' ? fi_fluent_has_tag($email, $tag) : false;
 }

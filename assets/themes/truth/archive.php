@@ -21,7 +21,7 @@ else :
 	get_template_part( 'loop-templates/content', 'none' );
 endif;
 ?>
-<?php scorecard_pagination(); ?>
+<?php vttt_pagination(); ?>
 <div class="gap-2"></div>
 <?php 
 get_template_part('global-templates/page','bottom');

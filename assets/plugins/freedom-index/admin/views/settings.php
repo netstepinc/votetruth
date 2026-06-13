@@ -1,7 +1,8 @@
 <?php if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 
-$gov = strtoupper($_GET['gov'] ?? 'US');
+$scope = function_exists('fi_scope_get_current') ? fi_scope_get_current() : ['gov' => 'US'];
+$gov = strtoupper((string) ($scope['gov'] ?? 'US'));
 $tab = $_GET['tab'] ?? 'images';
 // Redirect logging tab to images (logging tab is disabled)
 if ($tab === 'logging') {
@@ -220,18 +221,6 @@ fi_scope_render_selector();
 <div class="wrap">
 	<div class="d-flex justify-content-between align-items-center mb-4">
 		<h1 class="mb-0">Settings</h1>
-		<form method="get" class="d-inline-flex align-items-center gap-2">
-			<input type="hidden" name="page" value="fi-settings">
-			<input type="hidden" name="tab" value="<?php echo esc_attr($tab); ?>">
-			<label class="mb-0 fw-semibold">Government:</label>
-			<select name="gov" id="fi-gov-select" class="form-select form-select-sm" style="min-width: 200px;" onchange="this.form.submit()">
-				<?php foreach ($governments as $gov_code => $gov_name): ?>
-					<option value="<?php echo esc_attr($gov_code); ?>" <?php selected($gov, $gov_code); ?>>
-						<?php echo esc_html($gov_name); ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
-		</form>
 	</div>
 
 	<ul class="nav nav-tabs mb-4" role="tablist">

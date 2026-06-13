@@ -483,7 +483,7 @@ function fi_user_profile_update(int $user_id, array $data) {
  * @param int $user_id User ID
  * @return array Array of preferences
  */
-function fi_user_prefs_get(int $user_id): array {
+function fi_user_prefi_get(int $user_id): array {
 	if (empty($user_id)) {
 		return [];
 	}
@@ -509,7 +509,7 @@ function fi_user_pref_get(int $user_id, string $key, $default = null) {
 		return $default;
 	}
 	
-	$prefs = fi_user_prefs_get($user_id);
+	$prefs = fi_user_prefi_get($user_id);
 	
 	return $prefs[$key] ?? $default;
 }
@@ -521,7 +521,7 @@ function fi_user_pref_get(int $user_id, string $key, $default = null) {
  * @param array $prefs Array of preferences
  * @return bool True on success, false on failure
  */
-function fi_user_prefs_save(int $user_id, array $prefs): bool {
+function fi_user_prefi_save(int $user_id, array $prefs): bool {
 	if (empty($user_id) || !is_array($prefs)) {
 		return false;
 	}
@@ -544,10 +544,10 @@ function fi_user_pref_save(int $user_id, string $key, $value): bool {
 		return false;
 	}
 	
-	$prefs = fi_user_prefs_get($user_id);
+	$prefs = fi_user_prefi_get($user_id);
 	$prefs[$key] = $value;
 	
-	return fi_user_prefs_save($user_id, $prefs);
+	return fi_user_prefi_save($user_id, $prefs);
 }
 
 /**

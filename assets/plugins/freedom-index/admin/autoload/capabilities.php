@@ -6,11 +6,6 @@
  * Goal: allow FI staff to manage FI without being full WP administrators.
  */
 function fi_admin_caps_bootstrap(): void {
-	// Admin UI is only loaded on blog 5 for this plugin.
-	if (get_current_blog_id() !== 5) {
-		return;
-	}
-
 	// Ensure the capability exists for Administrators (site owners).
 	$admin_role = get_role('administrator');
 	if ($admin_role && defined('FI_CAP_MANAGE')) {
@@ -34,4 +29,3 @@ function fi_admin_caps_bootstrap(): void {
 	}
 }
 add_action('init', 'fi_admin_caps_bootstrap');
-

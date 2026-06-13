@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) exit;
 * If more complexity arises later (more error cases, retries, advanced batching, etc.), we can expand this to a class.
 
 * Reproduce the WP-based queries with very specific and lean requests.
-* EXAMPLE: https://freedomindex.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislator&id=1414
+* EXAMPLE: https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislator&id=1414
 */
 
 function fi_api_request(array $args): array {

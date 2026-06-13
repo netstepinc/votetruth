@@ -209,7 +209,7 @@ function fi_admin_votes_handle_save(array $scope): void {
 		$tag_ids = array_filter($tag_ids);
 		fi_vote_tags_set_tags($saved_id, $tag_ids);
 
-		$redirect = fi_admin_edit_vote_url($saved_id, ['updated' => 1]);
+		$redirect = fi_admin_edit_vote_url($saved_id, ['updated' => 1, '_fi_ts' => time()]);
 		if (!$redirect || empty($redirect)) {
 			//fi_log('Vote save: Redirect URL is empty or invalid. saved_id=' . $saved_id, __FILE__, __LINE__);
 			add_settings_error('fi_votes', 'save_error', 'Vote saved but redirect URL could not be generated.', 'error');

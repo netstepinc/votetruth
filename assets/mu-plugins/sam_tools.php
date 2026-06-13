@@ -21,6 +21,10 @@ define('DIR_SAM_SRC',		WPMU_PLUGIN_DIR . '/sam/src/');
 define('DIR_SAM_CACHE', 	WPMU_PLUGIN_DIR . '/sam/cache/');
 
 define('DIR_SAM_LOG', 		WPMU_PLUGIN_DIR . '/sam/__L0g/');
+
+define('URL_SAM_RESIZER', 	WPMU_PLUGIN_URL . '/sam/resizer/');
+define('DIR_SAM_RESIZER', 	WPMU_PLUGIN_DIR . '/sam/resizer/');
+
 define('LOG_E','errors');
 define('LOG_SAM_DETAIL',1); //enable/disable detailed logging for products and other functions typically used for debugging
 

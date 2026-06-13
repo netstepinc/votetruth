@@ -6,7 +6,7 @@
  */
 function fi_admin_cache_tools_handle_clear(): void {
 	if ( ! current_user_can( FI_CAP_MANAGE ) ) {
-		wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'freedom-index' ) );
+		wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'freedom-scorecard' ) );
 	}
 
 	check_admin_referer( 'fi_cache_clear' );
@@ -47,7 +47,7 @@ add_action('admin_bar_menu', function ($wp_admin_bar) {
 	$wp_admin_bar->add_node([
 		'id' => 'fi-clear-cache',
 		'parent' => 'root-default',
-		'title' => __('Clear FI Cache', 'freedom-index'),
+		'title' => __('Clear FI Cache', 'freedom-scorecard'),
 		'meta'  => [
 			'title' => 'Clear the public query cache',
 			'class' => 'bg-danger me-2 fw-bold',
@@ -61,10 +61,10 @@ add_action('admin_bar_menu', function ($wp_admin_bar) {
  */
 function fi_admin_post_clear_disk_cache(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		wp_die(__('Insufficient permissions.', 'freedom-index'));
+		wp_die(__('Insufficient permissions.', 'freedom-scorecard'));
 	}
 	if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'fi_clear_disk_cache')) {
-		wp_die(__('Invalid nonce.', 'freedom-index'));
+		wp_die(__('Invalid nonce.', 'freedom-scorecard'));
 	}
 	$result = fi_clear_disk_cache();
 	$redirect = wp_get_referer() ?: admin_url();

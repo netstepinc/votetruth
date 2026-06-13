@@ -191,13 +191,13 @@ $header_args = [
 	'filter_enabled' => false,
 ];
 
-fi_get_template('partials/template-header', $header_args);
+fi_get_public_template('partials/template-header', $header_args);
 ?>
 <div class="row">
 	<div class="col-12">
 		<div class="card shadow mb-4">
 			<div class="card-body">
-<?php if($format == 'freedomindex'){ fi_get_template('partials/report-tna-promo'); }?>
+<?php if($format == 'freedomindex'){ fi_get_public_template('partials/report-tna-promo'); }?>
 
 <!--
 				<p>The <?= $report_format_text;?> is a nationwide educational program of The <a href="https://jbs.org" target="_blank">John Birch Society</a> based on the U.S. Constitution.</p>
@@ -382,7 +382,7 @@ fi_get_template('partials/template-header', $header_args);
 <?php
 				// Build config for vote-card
 				/*
-				fi_get_template('partials/vote-card', [
+				fi_get_public_template('partials/vote-card', [
 					'id' => $vote->id,
 					'title' => $title,
 					'text' => $description_long, //$description_short,
@@ -435,7 +435,7 @@ fi_get_template('partials/template-header', $header_args);
 					<a class="btn btn-sm btn-outline-primary col-6 col-md-4 col-lg-3 col-xl-2 mx-auto fw-bold" href="<?php echo esc_url($other_url); ?>"><i class="<?php echo esc_attr($other_icon); ?> me-2"></i>Change to <?php echo esc_html($other_label); ?> View</a>
 				</div>
 				<?php
-				fi_get_template('partials/report-legislators-filter', [
+				fi_get_public_template('partials/report-legislators-filter', [
 					'session_id' => $report->session_id,
 					'chamber' => $chamber,
 					'gov' => $gov,
@@ -451,7 +451,7 @@ fi_get_template('partials/template-header', $header_args);
 
 				echo '<div id="fi-report-legislators-results">';
 				if ($view === 'table') {
-					fi_get_template('partials/report-legislators-table', [
+					fi_get_public_template('partials/report-legislators-table', [
 						'legislator_data' => $leg_data['legislator_data'],
 						'votes' => $votes,
 						'gov' => $gov,
@@ -459,7 +459,7 @@ fi_get_template('partials/template-header', $header_args);
 						'vote_start' => $vote_start,
 					]);
 				} else {
-					fi_get_template('partials/report-legislators-grid', [
+					fi_get_public_template('partials/report-legislators-grid', [
 						'legislator_data' => $leg_data['legislator_data'],
 						'gov' => $gov,
 						'vote_start' => $vote_start,
@@ -469,12 +469,12 @@ fi_get_template('partials/template-header', $header_args);
 			}
 		endif; 
 
-		fi_get_template('partials/report-footer', [
+		fi_get_public_template('partials/report-footer', [
 			'format' => $format
 		]);
 		?>
 	</div>
 </div>
 <?php
-fi_get_template('partials/template-footer');
+fi_get_public_template('partials/template-footer');
 get_footer();

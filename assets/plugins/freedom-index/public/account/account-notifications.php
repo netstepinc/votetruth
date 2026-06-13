@@ -7,7 +7,7 @@ if (!is_user_logged_in()) {
 }
 ?>
 <div class="row">
-	<?php fi_get_template('partials/account-nav', ['current_page' => 'notifications']); ?>
+	<?php fi_get_public_template('partials/account-nav', ['current_page' => 'notifications']); ?>
 	<div class="col-12 col-md-9">
 
 		<div class="row g-3">
@@ -45,18 +45,18 @@ if (!is_user_logged_in()) {
 								echo '<div class="list-group-item p-0 border-bottom border-primary"><span class="text-primary fs-5">' . $state_name . ' Alerts</span></div>';
 								$state_slug = str_replace(' ', '-', strtolower(FI_GOVERNMENTS[$gov]));
 								$rss_url = 'https://jbs.org/alerts/' .$state_slug . '/feed/';
-								fi_get_template('partials/gov-alerts-feed', ['url' => $rss_url]);
+								fi_get_public_template('partials/gov-alerts-feed', ['url' => $rss_url]);
 							}
 						}	
 
 						//All States
 						$rss_url = 'https://jbs.org/alerts/state/feed/';
-						fi_get_template('partials/gov-alerts-feed', ['url' => $rss_url]);
+						fi_get_public_template('partials/gov-alerts-feed', ['url' => $rss_url]);
 
 						//Congressional Alerts
 						echo '<div class="list-group-item p-0 border-bottom border-primary"><span class="text-primary fs-5">Congressional Alerts</span></div>';
 						$rss_url = 'https://jbs.org/alerts/federal/feed/';
-						fi_get_template('partials/gov-alerts-feed', ['url' => $rss_url]);
+						fi_get_public_template('partials/gov-alerts-feed', ['url' => $rss_url]);
 
 						fi_scrollbar_css();
 						?>

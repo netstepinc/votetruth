@@ -3,7 +3,7 @@
 
 /* All-Purpose API Fetch Function
 */
-function fi_api_fetch($url): array {
+function fi_http_fetch_json($url): array {
 	$res = wp_remote_get($url, [
 		'timeout' => 10,
 		'redirection' => 0,

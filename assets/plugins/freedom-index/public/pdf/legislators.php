@@ -61,7 +61,7 @@ $pdf_file_path = FI_DIR_PDF.$pdf_filename.'.pdf';
 define('PDF_PAGE_TITLE', $gov_name.' '.$chamber_plural.' - '.$session_name);
 define('PDF_KEYWORDS', 'Legislators, ' . $gov_name . ', ' . $session_name . ', ' . $filter_description . 'Scorecard, Vote Record, Freedom Index, The John Birch Society, The New American');
 
-//Example: https://freedomindex.us/us/legislators/state/ak/session/14/chamber/S/party/R/pdf/cards
+//Example: https://votestellthetruth.us/us/legislators/state/ak/session/14/chamber/S/party/R/pdf/cards
 //Get the server URL and remove "pdf/*"
 $server_url = $_SERVER['SERVER_NAME'];
 $canonical_url = preg_replace('#/pdf/.*$#', '', $server_url);

@@ -57,7 +57,7 @@ $header_args = [
 	'filter_enabled' => false,
 ];
 
-fi_get_template('partials/template-header', $header_args);
+fi_get_public_template('partials/template-header', $header_args);
 ?>
 <div class="row g-4">
 	<?php if (empty($reports)): ?>
@@ -144,6 +144,6 @@ if (!empty($pdf_url)) {
 	<?php endif; ?>
 </div>
 <?php
-fi_get_template('partials/template-footer');
+fi_get_public_template('partials/template-footer');
 get_footer();
 ?>

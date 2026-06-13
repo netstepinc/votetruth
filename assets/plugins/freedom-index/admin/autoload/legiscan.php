@@ -1,27 +1,64 @@
 <?php
-namespace FI\Admin {
+/*
+ * Freedom Index LegiScan Integration Helpers
+ *
+ * Straight function version of the former FIAdmin\Legiscan class file.
+ *
+ * Handles LegiScan API requests, JSON cache files, dataset extraction,
+ * legislator import, vote/rollcall import, and local cache lookup helpers.
+ *
+ * This file is admin-workflow oriented, but most of the logic is reusable import
+ * infrastructure. Keep screen rendering and button/form handling in admin UI files.
+ * Refactored the LegiScan admin integration into straight functions.
 
-	if (!defined('ABSPATH')) exit;
+Key adjustments:
 
-	/**
-	* Legiscan Integration for Admin Import Workflow
-	* 
-	* Replicates V2 workflow with granular control for importing legislators and votes.
-	* Adapted to work with new database structure (fi_legislators, fi_votes tables).
-	*/
-	final class Legiscan {
+Removed the FIAdmin\Legiscan class/namespace wrapper.
+Preserved the existing public API:
+	fi_legiscan_get_datasets()
+	fi_legiscan_fetch_dataset()
+	fi_legiscan_process_directory()
+	fi_legiscan_process_zip()
+	fi_legiscan_cleanup_extract_dir()
+	fi_legiscan_abbreviations()
+	fi_legiscan_abbreviation()
+	fi_legiscan_create_vote()
+	fi_legiscan_session_dir()
+	fi_legiscan_vote_data()
+	fi_legiscan_people_normalize_name()
+	fi_legiscan_people_name_keys()
+Added reusable helpers:
+	fi_legiscan_cache()
+	fi_legiscan_get_api_key()
+	fi_legiscan_get_state_list()
+	fi_legiscan_cache_key_from_args()
+	fi_legiscan_get()
+	fi_legiscan_unzip()
+	fi_legiscan_dir_tree()
+	fi_legiscan_list_people()
+	fi_legiscan_create_legislator()
+	fi_legiscan_list_votes()
+	fi_legiscan_api_request()
+	fi_legiscan_extract_zip()
+	fi_legiscan_rename_session_directory()
+	fi_legiscan_recursive_copy()
+	fi_legiscan_log()
+Tuning:
+	Replaced the duplicated cURL request logic with wp_remote_get() inside fi_legiscan_api_request().
+	Centralized cache-key generation with fi_legiscan_cache_key_from_args().
+	Removed the unreachable API-fetch fallback from get_state_list() because the hardcoded LegiScan state order was returned before that code could ever execute.
+	Removed vote slug generation in fi_legiscan_create_vote() because your system is now ID-based.
+	Replaced the old \ApiIntegration::build_updates_for_legislator() call with the refactored function:
+	fi_api_build_updates_for_legislator()
+	Architectural note: this file is named/admin-located, but most of it is reusable import infrastructure rather than UI. Long term, I would move it to something like:
+	/core/integrations/legiscan.php
+	and leave only the admin screen controller in /admin/autoload.
+ */
 
-		/**
-		* Legiscan-specific cache wrapper
-		* Handles 'legiscan/' prefix, days-to-seconds conversion, and never-expire logic
-		* Stores JSON files directly (not serialized) for easy identification
-		* 
-		* @param string $key Cache key (will be prefixed with 'legiscan/')
-		* @param string|array|false $data JSON string or array to cache, or false/empty to read
-		* @param int $expires_days Expiration in days (0 = never expire, use cache if exists)
-		* @return string|array|false Cached data or false/empty if not found/expired
-		*/
-		private static function legiscan_cache(string $key, $data = '', int $expires_days = 7) {
+if (!defined('ABSPATH')) exit;
+
+
+function fi_legiscan_cache(string $key, $data = '', int $expires_days = 7) {
 			if (!defined('FI_DIR_CACHE')) {
 				return $data === '' ? false : false;
 			}
@@ -71,81 +108,64 @@ namespace FI\Admin {
 			file_put_contents($file, $json_data);
 			
 			return true;
-		}
+		
+}
 
-		/**
-		* Get Legiscan API key from settings with fallback to constant
-		*/
-		private static function get_api_key(): ?string {
+function fi_legiscan_get_api_key() : ?string {
 			return fi_get_api_key('legiscan_key', 'API_KEY_LEGISCAN');
+		
+}
+
+function fi_legiscan_get_state_list() : array {
+	// LegiScan state IDs are 1-based against this stable list.
+	// If DC/US handling changes upstream, adjust here intentionally.
+	return [
+		'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+		'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+		'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+		'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+		'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+		'DC', 'US',
+	];
+}
+
+
+/**
+ * Build a stable human-readable LegiScan cache key from request args.
+ *
+ * @param array $args LegiScan request args.
+ * @return string Cache key without .json suffix.
+ */
+function fi_legiscan_cache_key_from_args(array $args): string {
+	$op = strtolower((string) ($args['op'] ?? ''));
+	$cache_key = (string) ($args['key'] ?? '');
+
+	if ($cache_key !== '') {
+		return $cache_key;
+	}
+
+	$key_parts = [$op];
+	if (!empty($args['params']) && is_array($args['params'])) {
+		ksort($args['params']);
+		foreach ($args['params'] as $key => $val) {
+			$key_parts[] = sanitize_key((string) $key) . '-' . sanitize_file_name((string) $val);
 		}
+	}
 
-		/**
-		* Get cached state list from Legiscan
-		* Maps Legiscan state_id numbers to state codes
-		*/
-		private static function get_state_list(): array {
-			//Legiscan states do not change, and if we add or remove a US state, we'll deal with it
-			//Hard code array from Legiscan API	
-			return [
-				"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-				"HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-				"MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-				"NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-				"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-				"DC", "US"
-				];
+	return implode('_', array_filter($key_parts));
+}
 
-			// Check cache (365 days)
-			$cached = self::legiscan_cache('getStateList', '', 365);
-			if ($cached !== false && isset($cached['states'])) {
-				return $cached['states'];
-			}
-			
-			// Fetch from API
-			$api_key = self::get_api_key();
-			if (!$api_key) {
-				return [];
-			}
-			
-			$url = 'https://api.legiscan.com/?key=' . urlencode($api_key) . '&op=getStateList';
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-			$response = curl_exec($ch);
-			$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			curl_close($ch);
-			
-			if ($http_code === 200 && $response) {
-				$data = json_decode($response, true);
-				if ($data && isset($data['states'])) {
-					// Cache the full response
-					self::legiscan_cache('getStateList', $response, 365);
-					return $data['states'];
-				}
-			}
-			return [];
-		}
 
-		/*Convert legiscan state list to reference array: legiscan state_id => state_code
-		* @param array $state_list Legiscan state list
-		* @return array Reference array
-		*/
-		public static function abbreviations(): array {
-			$state_list = self::get_state_list();
+function fi_legiscan_abbreviations() : array {
+			$state_list = fi_legiscan_get_state_list();
 			return array_map(function($state) {
 				return strtoupper($state);
 			}, $state_list);
-		}
+		
+}
 
-		/**
-		* Get abbreviation for a state
-		* @param int $state_id Legiscan state ID (1-based)
-		* @return string State abbreviation (2-letter code)
-		*/
-		public static function abbreviation($state_id): string {
-			$abbreviations = self::abbreviations();
+function fi_legiscan_abbreviation($state_id) : string {
+			$abbreviations = fi_legiscan_abbreviations();
 			$index = (int) $state_id - 1; // Convert 1-based to 0-based array index
 			
 			if (!isset($abbreviations[$index])) {
@@ -164,109 +184,32 @@ namespace FI\Admin {
 			}
 			
 			return $abbreviations[$index];
+		
+}
+
+function fi_legiscan_get(array $args) : array|false {
+	$op = strtolower((string) ($args['op'] ?? ''));
+	$data = fi_legiscan_api_request($args);
+
+	if (!$data) {
+		return false;
+	}
+
+	if ($op === 'getdataset') {
+		$cache_key = fi_legiscan_cache_key_from_args($args);
+		if (isset($data['dataset']['zip'])) {
+			$extract_dir = fi_legiscan_unzip(FI_DIR_LEGISCAN . $cache_key, (string) $data['dataset']['zip']);
+			if ($extract_dir) {
+				return fi_legiscan_dir_tree(FI_DIR_LEGISCAN . $cache_key);
+			}
 		}
+		return false;
+	}
 
-		/**
-		* Make API request to Legiscan (V2-compatible method signature)
-		* 
-		* @param array $args {
-		*   op: Operation name (getDatasetList, getDataset, getStateList, etc.)
-		*   key: Cache key for response
-		*   expires: Cache expiration in days (0 = no cache, 365 = 1 year)
-		*   params: Array of URL parameters
-		* }
-		* @return array|false API response or false on error
-		*/
-		public function getLegiscan(array $args): array|false {
-			$api_key = self::get_api_key();
-			if (!$api_key) {
-				return false;
-			}
-			
-			$op = strtolower($args['op'] ?? '');
-			$scope = $args['scope'] ?? ($args['params']['gov'] ?? $args['params']['state'] ?? 'global');
-			
-			// Build human-readable cache key
-			$cache_key = $args['key'] ?? '';
-			if (empty($cache_key)) {
-				// Build key from operation and params
-				$key_parts = [$op];
-				if (!empty($args['params'])) {
-					foreach ($args['params'] as $key => $val) {
-						$key_parts[] = $key . '-' . $val;
-					}
-				}
-				$cache_key = implode('_', $key_parts);
-			}
+	return $data;
+}
 
-			// All default cache expiration is 7 days
-			$default_expires = 7;
-			$expires = $args['expires'] ?? $default_expires;
-			
-			// Check cache
-			$cached = self::legiscan_cache($cache_key, '', $expires);
-			if ($cached !== false) {
-				return $cached;
-			}
-			
-			// Build API URL
-			$url = 'https://api.legiscan.com/?key=' . urlencode($api_key) . '&op=' . $op;
-			if (!empty($args['params'])) {
-				foreach ($args['params'] as $key => $val) {
-					$url .= '&' . urlencode($key) . '=' . urlencode($val);
-				}
-			}
-			
-			// Make request
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-			$response = curl_exec($ch);
-			$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			curl_close($ch);
-			
-			if ($http_code !== 200 || !$response) {
-				return false;
-			}
-			
-			$data = json_decode($response, true);
-			if (!$data || (isset($data['status']) && $data['status'] !== 'OK')) {
-				return false;
-			}
-			
-			// Cache response (always cache, expires controls when to use it)
-			self::legiscan_cache($cache_key, $response, $expires);
-			
-			// Process each type of request (V2-style)
-			switch ($op):
-				case 'getstatelist':
-				case 'getdatasetlist':
-					return $data;
-				break;
-				
-				case 'getdataset':
-					if (isset($data['dataset']['zip'])) {
-						$extract_dir = $this->unzip(FI_DIR_LEGISCAN . $cache_key, $data['dataset']['zip']);
-						if ($extract_dir) {
-							return $this->dir_tree(FI_DIR_LEGISCAN . $cache_key);
-						}
-					}
-					return false;
-				break;
-			endswitch;
-			
-			return $data;
-		}
-
-		/**
-		* Unzip dataset
-		* 
-		* @param string $zip_dir Directory to extract to (without trailing slash)
-		* @param string $zip_data Base64-encoded ZIP data
-		* @return string|false Path to extracted directory or false on error
-		*/
-		public function unzip(string $zip_dir, string $zip_data): string|false {
+function fi_legiscan_unzip(string $zip_dir, string $zip_data) : string|false {
 			// Ensure directory path doesn't have trailing slash for zip file naming
 			$zip_dir = rtrim($zip_dir, '/\\');
 			$zip_file = $zip_dir . '.zip';
@@ -315,15 +258,10 @@ namespace FI\Admin {
 			}
 			
 			return false;
-		}
+		
+}
 
-		/**
-		* Traverse directory and inventory files (V2-compatible)
-		* 
-		* @param string $path Path to extracted directory
-		* @return array Array with 'bill', 'people', 'vote' keys containing file paths
-		*/
-		public function dir_tree(string $path): array {
+function fi_legiscan_dir_tree(string $path) : array {
 			$files = [
 				'bill' => [],
 				'people' => [],
@@ -378,16 +316,10 @@ namespace FI\Admin {
 			}
 			
 			return $files;
-		}
+		
+}
 
-		/**
-		* List existing people/legislators (V2-compatible)
-		* Returns array keyed by legiscan_id (people_id)
-		* 
-		* @param array $args Optional arguments (unused for now)
-		* @return array Array of legislators keyed by legiscan_id
-		*/
-		public function list_people(array $args = []): array {
+function fi_legiscan_list_people(array $args = []) : array {
 			global $wpdb;
 			
 			$people = [];
@@ -407,19 +339,10 @@ namespace FI\Admin {
 				}
 			}
 			return $people;
-		}
+		
+}
 
-		/**
-		* Create or update a legislator (V2-compatible)
-		* Adapted to use new database structure
-		* 
-		* @param array $args {
-		*   person: Array of person data from Legiscan
-		*   session: Array of session data from Legiscan
-		* }
-		* @return int|false Legislator ID or false on error
-		*/
-		public function create_legislator(array $args): int|false {
+function fi_legiscan_create_legislator(array $args) : int|false {
 			global $wpdb;
 			
 			$person = $args['person'] ?? [];
@@ -438,7 +361,7 @@ namespace FI\Admin {
 			$dataset_gov = (string) ($args['gov'] ?? ''); // optional override from caller
 			$dataset_gov = strtoupper(trim($dataset_gov));
 			if ($dataset_gov === '' && is_numeric($dataset_state_id) && (int) $dataset_state_id > 0) {
-				$dataset_gov = self::abbreviation((int) $dataset_state_id);
+				$dataset_gov = fi_legiscan_abbreviation((int) $dataset_state_id);
 			}
 			if ($dataset_gov === '') {
 				$dataset_gov = 'US';
@@ -562,9 +485,8 @@ namespace FI\Admin {
 
 						// Apply the same LegiScan-local->FI field mapping used by the Legislator Edit "API Fetch/Add" flow.
 						// Summary: populate available fields automatically on import, but only when our values are missing.
-						if (class_exists('\\FI\\Core\\ApiIntegration') && method_exists('\\FI\\Core\\ApiIntegration', 'build_updates_for_legislator')
-							&& function_exists('fi_admin_legislators_apply_api_updates')) {
-							$updates = \FI\Core\ApiIntegration::build_updates_for_legislator((int) $legislator_id, 'legiscan_local', is_array($person) ? $person : [], true);
+						if (function_exists('fi_api_build_updates_for_legislator') && function_exists('fi_admin_legislators_apply_api_updates')) {
+							$updates = fi_api_build_updates_for_legislator((int) $legislator_id, 'legiscan_local', is_array($person) ? $person : [], true);
 							if (!empty($updates) && is_array($updates)) {
 								fi_admin_legislators_apply_api_updates((int) $legislator_id, 'legiscan_local', $updates);
 							}
@@ -574,16 +496,10 @@ namespace FI\Admin {
 			}
 			
 			return $legislator_id ?: false;
-		}
+		
+}
 
-		/**
-		* List existing votes (V2-compatible)
-		* Returns array keyed by legiscan vote_id (roll_call_id)
-		* 
-		* @param array $args Optional arguments (unused for now)
-		* @return array Array of votes keyed by legiscan vote_id
-		*/
-		public function list_votes(array $args = []): array {
+function fi_legiscan_list_votes(array $args = []) : array {
 			global $wpdb;
 			
 			$session_id = $args['session_id'] ?? null;
@@ -617,20 +533,10 @@ namespace FI\Admin {
 			}
 			
 			return $votes;
-		}
+		
+}
 
-		/**
-		* Create or update a vote (V2-compatible)
-		* Adapted to use new database structure
-		* 
-		* @param array $args {
-		*   roll_call_id: Legiscan roll_call_id
-		*   bill: Array of bill data from Legiscan
-		*   roll_call: Array of roll_call data from Legiscan
-		* }
-		* @return int|false Vote ID (fi_votes.id) or false on error
-		*/
-		public static function create_vote(array $args): int|false {
+function fi_legiscan_create_vote(array $args) : int|false {
 			global $wpdb;
 			
 			$roll_call_id_legiscan = $args['roll_call_id'] ?? null;
@@ -699,18 +605,7 @@ namespace FI\Admin {
 			}
 //TODO: State staff using Legiscan RC ID instead of the governmet number. We need to do better moving forward. Leave it blank if not found.
 
-
-			// Build slug
-			$slug_base = sanitize_title($title);
-			$slug = $slug_base;
-			$counter = 1;
-			while ($wpdb->get_var($wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}fi_votes WHERE session_id = %d AND slug = %s LIMIT 1",
-				$session_id, $slug
-			))) {
-				$slug = $slug_base . '-' . $counter;
-				$counter++;
-			}
+			// Slug generation intentionally omitted. Vote URLs are ID-based.
 			
 			// Check if vote exists by legiscan_rcid column
 			$existing_vote = fi_vote_get_by_legiscan_rcid((int) $roll_call_id_legiscan, $session_id);
@@ -951,7 +846,6 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 				'gov' => $gov,
 				'chamber' => $chamber,
 				'title' => $vote_title_for_column, // Use roll_call:desc if title is empty
-				'slug' => $slug,
 				'bill_number' => $bill_number ?: $vote_title_for_column,
 				'constitutional' => 'U',
 				'rollcall_number' => $rollcall_number,
@@ -1059,84 +953,75 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 			}
 			
 			return $vote_id ?: false;
-		}
-
-		/**
-		* Static API request method (from core class)
-		* 
-		* @param array $args Request arguments
-		* @return array|false API response or false on error
-		*/
-		public static function api_request(array $args): array|false {
-			$api_key = self::get_api_key();
-			if (!$api_key) {
-				return false;
-			}
-			$op = strtolower($args['op'] ?? '');
-			$expires = $args['expires'] ?? 30;
-			
-			// Build human-readable cache key
-			$cache_key = $args['key'] ?? '';
-			if (empty($cache_key)) {
-				// Build key from operation and params
-				$key_parts = [$op];
-				if (!empty($args['params'])) {
-					foreach ($args['params'] as $key => $val) {
-						$key_parts[] = $key . '-' . $val;
-					}
-				}
-				$cache_key = implode('_', $key_parts);
-			}
-			
-			// Check cache
-			$cached = self::legiscan_cache($cache_key, '', $expires);
-			if ($cached !== false) {
-				return $cached;
-				self::log('Cache Hit: '.$cache_key,__FILE__,__LINE__);
-			}else{
-				self::log('API Fetch: '.$cache_key,__FILE__,__LINE__,);
-			}
 		
-			// Build API URL
-			$url = 'https://api.legiscan.com/?key=' . urlencode($api_key) . '&op=' . $op;
-			if (!empty($args['params'])) {
-				foreach ($args['params'] as $key => $val) {
-					$url .= '&' . urlencode($key) . '=' . urlencode($val);
-				}
-			}
-			
-			// Make request
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-			$response = curl_exec($ch);
-			$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			curl_close($ch);
-			
-			if ($http_code !== 200 || !$response) {
-				return false;
-			}
-			
-			$data = json_decode($response, true);
-			if (!$data || (isset($data['status']) && $data['status'] !== 'OK')) {
-				return false;
-			}
-			
-			// Cache response (always cache, expires controls when to use it)
-			self::legiscan_cache($cache_key, $response, $expires);
-			
-			return $data;
-		}
+}
 
-		/**
-		* Get list of available datasets for a state (static method from core class)
-		* 
-		* @param string $state State code (e.g., 'WI', 'TX', 'US')
-		* @return array|false Dataset list array (each entry is a dataset row) or false on error
-		*/
-	public static function get_datasets(string $state): array|false {
-		$datasets = self::api_request([
+function fi_legiscan_api_request(array $args) : array|false {
+	$api_key = fi_legiscan_get_api_key();
+	if (!$api_key) {
+		return false;
+	}
+
+	$op = strtolower((string) ($args['op'] ?? ''));
+	if ($op === '') {
+		return false;
+	}
+
+	$expires = isset($args['expires']) ? (int) $args['expires'] : 30;
+	$cache_key = fi_legiscan_cache_key_from_args($args);
+
+	$cached = fi_legiscan_cache($cache_key, '', $expires);
+	if ($cached !== false) {
+		fi_legiscan_log('Cache Hit: ' . $cache_key, __FILE__, __LINE__);
+		return is_array($cached) ? $cached : false;
+	}
+
+	fi_legiscan_log('API Fetch: ' . $cache_key, __FILE__, __LINE__);
+
+	$query_args = [
+		'key' => $api_key,
+		'op'  => $op,
+	];
+
+	if (!empty($args['params']) && is_array($args['params'])) {
+		foreach ($args['params'] as $key => $val) {
+			$query_args[(string) $key] = $val;
+		}
+	}
+
+	$url = add_query_arg($query_args, 'https://api.legiscan.com/');
+
+	$response = wp_remote_get($url, [
+		'timeout'     => 300,
+		'redirection' => 3,
+	]);
+
+	if (is_wp_error($response)) {
+		fi_legiscan_log('LegiScan API WP error: ' . $response->get_error_message(), __FILE__, __LINE__, 'error');
+		return false;
+	}
+
+	$http_code = (int) wp_remote_retrieve_response_code($response);
+	$body = (string) wp_remote_retrieve_body($response);
+
+	if ($http_code !== 200 || $body === '') {
+		fi_legiscan_log('LegiScan API HTTP error: ' . $http_code . ' | key=' . $cache_key, __FILE__, __LINE__, 'error');
+		return false;
+	}
+
+	$data = json_decode($body, true);
+	if (!is_array($data) || (isset($data['status']) && $data['status'] !== 'OK')) {
+		fi_legiscan_log('LegiScan API invalid response | key=' . $cache_key, __FILE__, __LINE__, 'error');
+		return false;
+	}
+
+	fi_legiscan_cache($cache_key, $body, $expires);
+
+	return $data;
+}
+
+function fi_legiscan_get_datasets(string $state) : array|false {
+		$datasets = fi_legiscan_api_request([
 			'op' => 'getDatasetList',
 			'key' => 'getdatasetlist_' . strtoupper($state),
 			'expires' => 1,
@@ -1157,14 +1042,14 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 				continue;
 			}
 
-			$dataset['directory'] = self::session_dir_name($dataset);
+			$dataset['directory'] = fi_legiscan_session_dir($dataset);
 //fi_log("DATASET: " . json_encode($dataset),__FILE__,__LINE__);
 
 			// Convert numeric state_id to 2-letter state code for reliable path construction
 			// Dataset files are stored under this state directory (e.g., /legiscan/AZ/...)
 			$state_id = (int) ($dataset['state_id'] ?? 0);
 			if ($state_id > 0) {
-				$dataset['state'] = self::abbreviation($state_id);
+				$dataset['state'] = fi_legiscan_abbreviation($state_id);
 			} else {
 				// Fallback to the state parameter used to query the API
 				$dataset['state'] = strtoupper($state);
@@ -1178,17 +1063,11 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 			}
 		}
 		return $indexed;
-	}
+	
+}
 
-		/**
-		* Fetch and extract a dataset (static method from core class)
-		* 
-		* @param int $session_id Legiscan session ID
-		* @param string $access_key Dataset access key
-		* @return string|false Path to extracted directory or false on error
-		*/
-	public static function fetch_dataset(int $session_id, string $access_key, array $dataset = []): string|false {
-		$response = self::api_request([
+function fi_legiscan_fetch_dataset(int $session_id, string $access_key, array $dataset = []) : string|false {
+		$response = fi_legiscan_api_request([
 			'op' => 'getDataset',
 			'key' => 'getdataset_session-' . $session_id . '_access-' . substr($access_key, 0, 8),
 			'expires' => 0,
@@ -1219,7 +1098,7 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 		file_put_contents($zip_file, $zip_data);
 		
 		// Extract ZIP and rename session directory to standardized name
-		$extract_dir = self::extract_zip($zip_file, $dataset);
+		$extract_dir = fi_legiscan_extract_zip($zip_file, $dataset);
 		if (!$extract_dir) {
 			return false;
 		}
@@ -1228,16 +1107,10 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 		@unlink($zip_file);
 		
 		return $extract_dir;
-	}
+	
+}
 
-	/**
-	* Extract zip file to temporary directory and rename session folder (static method from core class)
-	* 
-	* @param string $zip_path Path to zip file
-	* @param array $dataset Dataset info for generating standardized directory name
-	* @return string|false Path to extracted directory or false on error
-	*/
-	private static function extract_zip(string $zip_path, array $dataset = []): string|false {
+function fi_legiscan_extract_zip(string $zip_path, array $dataset = []) : string|false {
 		$extract_dir = get_temp_dir() . 'fi_legiscan_' . uniqid() . '/';
 		
 		if (!wp_mkdir_p($extract_dir)) {
@@ -1254,16 +1127,17 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 
 		// Rename session directory to standardized name if dataset info provided
 		if (!empty($dataset)) {
-			$extract_dir = self::rename_session_directory($extract_dir, $dataset);
+			$extract_dir = fi_legiscan_rename_session_directory($extract_dir, $dataset);
 			if (!$extract_dir) {
 				return false;
 			}
 		}
 
 		return $extract_dir;
-	}
+	
+}
 
-	public static function session_dir_name(array $dataset): string {
+function fi_legiscan_session_dir(array $dataset) : string {
 		$session_name = (string) ($dataset['session_name'] ?? '');
 		$session_title = (string) ($dataset['session_title'] ?? '');
 		if($session_title){
@@ -1272,19 +1146,10 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 			$directory = str_replace(' ', '_', $session_name);
 		}
 		return $directory;
-	}
+	
+}
 
-
-	/**
-	* Rename extracted session directory to standardized format
-	* ZIP extracts to: {state}/{year_start}-{year_end}_{verbose_session_name}/
-	* We rename to: {state}/{year_start}_{session_title}/
-	* 
-	* @param string $extract_dir Path to extraction directory
-	* @param array $dataset Dataset info containing year_start, session_title, etc.
-	* @return string|false Path to extract directory with renamed session folder, or false on error
-	*/
-	public static function rename_session_directory(string $extract_dir, array $dataset): string|false {
+function fi_legiscan_rename_session_directory(string $extract_dir, array $dataset) : string|false {
 		// Find state directory (should be only directory in extract_dir)
 		$items = array_diff(scandir($extract_dir), ['.', '..']);
 		if (empty($items)) {
@@ -1326,7 +1191,7 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 		}
 
 		// Generate standardized directory name using fi_legiscan_session_dir()
-		$new_session_dir = self::session_dir_name($dataset);
+		$new_session_dir = fi_legiscan_session_dir($dataset);
 		if ($new_session_dir === $old_session_dir) {
 			// Already has correct name
 			return $extract_dir;
@@ -1341,16 +1206,10 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 		}
 
 		return $extract_dir;
-	}
+	
+}
 
-	/**
-	* Recursively copy directory (fallback for cross-filesystem moves)
-	* 
-	* @param string $src Source directory
-	* @param string $dst Destination directory
-	* @return bool Success
-	*/
-	public static function recursive_copy(string $src, string $dst): bool {
+function fi_legiscan_recursive_copy(string $src, string $dst) : bool {
 		if (!is_dir($src)) {
 			return false;
 		}
@@ -1375,7 +1234,7 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 			$dst_path = rtrim($dst, '/\\') . DIRECTORY_SEPARATOR . $file;
 
 			if (is_dir($src_path)) {
-				self::recursive_copy($src_path, $dst_path);
+				fi_legiscan_recursive_copy($src_path, $dst_path);
 			} else {
 				copy($src_path, $dst_path);
 			}
@@ -1383,16 +1242,10 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 
 		closedir($dir);
 		return true;
-	}
+	
+}
 
-		/**
-		* Process Legiscan data from an extracted directory (static method from core class)
-		* 
-		* @param string $extract_dir Path to extracted directory
-		* @param string $gov Government code (e.g., 'US', 'TX')
-		* @return array Processing results with stats and errors
-		*/
-		public static function process_directory(string $extract_dir, string $gov): array {
+function fi_legiscan_process_directory(string $extract_dir, string $gov) : array {
 			// This method processes bulk data - for now, return empty results
 			// The admin workflow uses granular import methods instead
 			return [
@@ -1406,17 +1259,11 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 				'log' => [],
 				'success' => true
 			];
-		}
+		
+}
 
-		/**
-		* Process a Legiscan zip file (static method from core class)
-		* 
-		* @param string $zip_path Path to uploaded zip file
-		* @param string $gov Government code (e.g., 'US', 'TX')
-		* @return array Processing results with stats and errors
-		*/
-		public static function process_zip(string $zip_path, string $gov): array {
-			$extract_dir = self::extract_zip($zip_path);
+function fi_legiscan_process_zip(string $zip_path, string $gov) : array {
+			$extract_dir = fi_legiscan_extract_zip($zip_path);
 			if (!$extract_dir) {
 				return [
 					'stats' => [
@@ -1432,20 +1279,16 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 			}
 
 			try {
-				$results = self::process_directory($extract_dir, $gov);
+				$results = fi_legiscan_process_directory($extract_dir, $gov);
 			} finally {
-				self::cleanup_extract_dir($extract_dir);
+				fi_legiscan_cleanup_extract_dir($extract_dir);
 			}
 
 			return $results;
-		}
+		
+}
 
-		/**
-		* Cleanup extracted directory (static method from core class)
-		* 
-		* @param string $extract_dir Path to extracted directory
-		*/
-		public static function cleanup_extract_dir(string $extract_dir): void {
+function fi_legiscan_cleanup_extract_dir(string $extract_dir) : void {
 			if (!is_dir($extract_dir)) {
 				return;
 			}
@@ -1456,7 +1299,7 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 				if (is_file($file_path)) {
 					unlink($file_path);
 				} elseif (is_dir($file_path)) {
-					self::cleanup_extract_dir($file_path . '/');
+					fi_legiscan_cleanup_extract_dir($file_path . '/');
 					if (is_dir($file_path)) {
 						@rmdir($file_path);
 					}
@@ -1465,101 +1308,15 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 			if (is_dir($extract_dir)) {
 				@rmdir($extract_dir);
 			}
-		}
-
-		/**
-		* Wrap fi_log in function so we can log this class only if necessary.
-		*/
-		public static function log(string $message, string $file = '', int $line = 0, string $level = 'debug'): void {
-			fi_log_area('Legiscan', $message, $file, $line, $level);
-		}
-	}
+		
 }
 
-/* Public helper functions */
-namespace {
-	/**
-	 * Get available LegiScan datasets for a state/gov.
-	 * Returns the dataset list array only (not the status wrapper).
-	 */
-	function fi_legiscan_get_datasets(string $state): array|false {
-		return \FI\Admin\Legiscan::get_datasets($state);
-	}
+function fi_legiscan_log(string $message, string $file = '', int $line = 0, string $level = 'debug') : void {
+			fi_log_area('Legiscan', $message, $file, $line, $level);
+		
+}
 
-	function fi_legiscan_fetch_dataset(int $session_id, string $access_key, array $dataset = []): string|false {
-		return \FI\Admin\Legiscan::fetch_dataset($session_id, $access_key, $dataset);
-	}
-
-	function fi_legiscan_process_directory(string $extract_dir, string $gov): array {
-		return \FI\Admin\Legiscan::process_directory($extract_dir, $gov);
-	}
-
-	function fi_legiscan_process_zip(string $zip_path, string $gov): array {
-		return \FI\Admin\Legiscan::process_zip($zip_path, $gov);
-	}
-
-	function fi_legiscan_cleanup_extract_dir(string $extract_dir): void {
-		\FI\Admin\Legiscan::cleanup_extract_dir($extract_dir);
-	}
-
-	function fi_legiscan_abbreviations(): array {
-		return \FI\Admin\Legiscan::abbreviations();
-	}
-
-	function fi_legiscan_abbreviation($state_id): string {
-		return \FI\Admin\Legiscan::abbreviation($state_id);
-	}
-
-	function fi_legiscan_create_vote(array $args): int|false {
-		return \FI\Admin\Legiscan::create_vote($args);
-	}
-
-
-	/*
-	* Zip data unpacks to {gov}/{year_start}-{year_end}_{session_name}/ but this directory name doesn't appear in the dataset list.
-	* This function builds the directory name from the dataset list.
-	* EXAMPLE: jbsfi/legiscan/AZ/2021-2021_Fifty-fifth_Legislature_1st_Regular 
-	* ...sucks because nothing in this example can be used to match this directory name.
-	* RETURNS: 2021-2021_Fifty-fifth_Legislature_-_First_Regular_Session_(2021)
-	/*
-	{
-		"state_id": 43,
-		"session_id": 2223,
-		"year_start": 2025,
-		"year_end": 2025,
-		"prefile": 0,
-		"sine_die": 1,
-		"prior": 0,
-		"special": 1,
-		"session_tag": "2nd Special Session",
-		"session_title": "2025 2nd Special Session",
-		"session_name": "89th Legislature 2nd Special Session",
-		"dataset_date": "2025-12-14",
-		"dataset_hash": "24b99c05036102b915c9ae7794ad645b",
-		"dataset_size": 2039036,
-		"dataset_size_csv": 187574,
-		"access_key": "311JOeEPsVbnzhALqebke5",
-		"directory": "2025-2025_89th_Legislature_2nd_Special_Session"
-	}
-	*/
-	function fi_legiscan_session_dir($data){
-		return \FI\Admin\Legiscan::session_dir_name($data);
-	}
-
-	/**
-	 * Get vote data from Legiscan cache directory
-	 * Can be called from Legiscan import page or FI Votes Edit page
-	 * 
-	 * @param array $args {
-	 *   @type string $gov Government code (e.g., 'US', 'TX')
-	 *   @type int $fi_vote_id FI vote ID (optional, used to get session if LS_session_id not provided)
-	 *   @type int $LS_session_id Legiscan session ID (optional, will be retrieved from vote if not provided)
-	 *   @type string $LS_bill_id Legiscan bill number (e.g., 'HB1005') - required
-	 *   @type int $LS_roll_call_id Legiscan roll call ID - required
-	 * }
-	 * @return array Array with 'roll_call_id', 'bill', 'roll_call' keys on success, or 'error' key with message on failure
-	 */
-	function fi_legiscan_vote_data(array $args): array {
+function fi_legiscan_vote_data(array $args) : array {
 		$gov = $args['gov'] ?? null;
 		$fi_vote_id = $args['fi_vote_id'] ?? null;
 		$LS_session_id = $args['LS_session_id'] ?? null;
@@ -1621,61 +1378,60 @@ namespace {
 		// Get the bill file (using bill_number, not bill_id)
 		$bill_file = $fi_votes_dir . $LS_bill_id . '.json';
 		if (!file_exists($bill_file)) {
-			return ['error' => 'Bill file not found: ' . esc_html($LS_bill_id) . '.json'];
+			return ['error' => 'Bill file not found: ' . $bill_file];
 		}
 		
-		$bill_data = json_decode(file_get_contents($bill_file), true);
-		if (!$bill_data) {
-			return ['error' => 'Failed to parse bill file.'];
+		$bill = json_decode(file_get_contents($bill_file), true);
+		if (!$bill) {
+			return ['error' => 'Could not parse bill file: ' . $bill_file];
 		}
 		
-		// Extract roll_call data from bill's votes array
-		$roll_calls = $bill_data['votes'] ?? [];
-		if (empty($roll_calls)) {
-			return ['error' => 'No roll calls found in bill file.'];
+		// Find the roll call in the bill's roll_calls array
+		$roll_call = null;
+		if (isset($bill['roll_calls']) && is_array($bill['roll_calls'])) {
+			foreach ($bill['roll_calls'] as $rc) {
+				if (isset($rc['roll_call_id']) && (int) $rc['roll_call_id'] === (int) $LS_roll_call_id) {
+					$roll_call = $rc;
+					break;
+				}
+			}
 		}
 		
-		// Find the roll_call by ID (check both numeric and string keys)
-		$roll_call_data = null;
-		if (isset($roll_calls[$LS_roll_call_id])) {
-			$roll_call_data = $roll_calls[$LS_roll_call_id];
-		} elseif (isset($roll_calls[(string)$LS_roll_call_id])) {
-			$roll_call_data = $roll_calls[(string)$LS_roll_call_id];
+		if (!$roll_call) {
+			return ['error' => 'Roll call not found in bill file. Roll Call ID: ' . $LS_roll_call_id];
 		}
 		
-		if (!$roll_call_data) {
-			return ['error' => 'Roll call ID not found in bill file.'];
+		// Get the detailed roll call file (if exists) to get individual votes
+		$rollcall_file = $data_dir . 'roll_call/' . $LS_roll_call_id . '.json';
+		if (file_exists($rollcall_file)) {
+			$rollcall_detail = json_decode(file_get_contents($rollcall_file), true);
+			if ($rollcall_detail && isset($rollcall_detail['votes'])) {
+				$roll_call['votes'] = $rollcall_detail['votes'];
+			}
 		}
 		
-		// Remove votes from bill_data before returning
-		$bill_data_for_return = $bill_data;
-		unset($bill_data_for_return['votes']);
-		
-		// Return in the same format as create_vote expects
 		return [
-			'roll_call_id' => $LS_roll_call_id,
-			'bill' => $bill_data_for_return,
-			'roll_call' => $roll_call_data,
+			'roll_call_id' => (int) $LS_roll_call_id,
+			'bill' => $bill,
+			'roll_call' => $roll_call,
 		];
-	}
+	
+}
 
-	// -----------------------------------------------------------------------------
-	// Matching helpers
-	// -----------------------------------------------------------------------------
-	// Summary: normalize human names for deterministic matching (accent-insensitive, punctuation-insensitive).
-	function fi_legiscan_people_normalize_name(string $name): string {
+function fi_legiscan_people_normalize_name(string $name) : string {
+		// Remove common honorifics and normalize punctuation/spacing.
 		$name = trim($name);
-		if ($name === '') return '';
+		$name = preg_replace('/^(Sen\.?|Rep\.?|Representative|Senator)\s+/i', '', $name);
 		if (function_exists('remove_accents')) {
 			$name = remove_accents($name);
 		}
 		$name = preg_replace('/[^a-z0-9\s]/i', ' ', $name);
 		$name = preg_replace('/\s+/', ' ', $name);
 		return strtolower(trim($name));
-	}
+	
+}
 
-	// Summary: build multiple matching keys for a LegiScan person (full name + first/last fallback).
-	function fi_legiscan_people_name_keys(array $person): array {
+function fi_legiscan_people_name_keys(array $person) : array {
 		$keys = [];
 		$name = (string) ($person['name'] ?? '');
 		$first = (string) ($person['first_name'] ?? '');
@@ -1692,5 +1448,5 @@ namespace {
 		if ($k2 !== '' && $k2 !== $k1) $keys[] = $k2;
 
 		return array_values(array_unique($keys));
-	}
+	
 }

@@ -14,7 +14,7 @@ $edit_index = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
 $editing_contact = ($edit_index !== null) ? fi_pdf_contacts_get_by_index($user_id, $edit_index) : null;
 ?>
 <div class="row">
-	<?php fi_get_template('partials/account-nav', ['current_page' => 'personalize']); ?>
+	<?php fi_get_public_template('partials/account-nav', ['current_page' => 'personalize']); ?>
 	<div class="col-12 col-md-9">
 		<div class="row">
 			<div class="col-12 col-md-7">

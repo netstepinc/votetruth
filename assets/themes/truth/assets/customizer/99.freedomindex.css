@@ -1,4 +1,4 @@
-#home-hero {
+#findmy {
   /* Constitution document feel: deep navy with very subtle warm texture */
   background:
     linear-gradient(160deg,
@@ -18,7 +18,7 @@
   position: relative;
 }
 
-#home-hero h1 {
+#findmy h1 {
   font-size: clamp(64px, 8vw, 84px);
   font-weight: 800;
   color: #fff;
@@ -31,6 +31,7 @@
 
 
 .bg-anchor {background-color: var(--bs-bluedk) !important;}
+.bg-warm {background-color: var(--bs-warm) !important;}
 .bg-amber{background-color: var(--bs-orange) !important;}
 .bg-amber-light{background-color: rgba(var(--bs-yellow-rgb), 1) !important;}
 .bg-amber-light-1{background-color: rgba(var(--bs-yellow-rgb), 0.1) !important;}
@@ -48,6 +49,7 @@
 .text-amber-light{color: var(--bs-yellow) !important;}
 .text-warm-5{color: rgba(var(--bs-warm-rgb), 0.5) !important;}
 
+.text-fade-anchor{color: rgba(var(--bs-bluedk-rgb),0.9) !important;}
 .text-fade-amber{color: rgba(var(--bs-orange-rgb),0.9) !important;}
 .text-fade{color: rgba(255,255,255,0.8) !important;}
 
@@ -80,4 +82,23 @@
 }
 .search-box{
     background-color: var(--bs-warm);
+}
+
+
+/*home*/
+.fi-grade-pill {
+	border-radius: 0.5rem;
+	display: flex; align-items: center; justify-content: center;
+	font-weight: 800;
+	flex-shrink: 0; color: #fff;
+}
+.fi-scale-range {
+	font-size: 0.9125rem; font-weight: 600;
+	color: var(--bs-gray-800); min-width: 60px;
+}
+.fi-scale-desc {
+	font-size: 0.9125rem; color: var(--bs-gray-600); flex: 1;
+}
+#home-score-scale{
+	max-width:340px;
 }

@@ -1,33 +1,47 @@
 <?php
-namespace FI\Admin;
+/**
+ * Freedom Index Plugin Installer
+ *
+ * Handles plugin activation tasks.
+ */
 
-use wpdb;
+if (!defined('ABSPATH')) {
+	exit;
+}
 
-final class Installer {
-    private string $option_key = 'fi_admin_db_version';
+/**
+ * Run plugin activation.
+ *
+ * Notes:
+ * - Fresh installs create schema immediately.
+ * - Existing installs avoid heavy dbDelta/ALTER work during activation.
+ * - Schema upgrades should be run manually or through gated FI admin tooling.
+ *
+ * @return void
+ */
+function fi_plugin_activate(): void {
+	global $wpdb;
 
-    public function activate(): void {
-        global $wpdb;
-        $current = get_option($this->option_key, '');
-        $target  = FI_VERSION;
+	$option_key = 'fi_admin_db_version';
+	$target     = defined('FI_VERSION') ? FI_VERSION : '0';
 
-        // Fast activation mode:
-        // - On existing installs with large FI tables, dbDelta/ALTER operations can exceed proxy timeouts (e.g., Cloudflare 120s).
-        // - Schema upgrade can be run later (manually / via admin_init on FI pages if enabled).
-        // - On fresh installs (tables missing), we still create schema immediately.
-        $table = $wpdb->prefix . 'fi_legislators';
-        $exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
-        if (!$exists) {
-            fi_schema_ensure();
-            update_option('fi_schema_version', $target, false);
-        } else {
-            // Mark schema as "current" to avoid automatic schema runs during activation.
-            // If an upgrade is needed, staff can explicitly run it from FI admin tools.
-            update_option('fi_schema_version', $target, false);
-            set_transient('fi_schema_deferred_notice', 1, DAY_IN_SECONDS);
-        }
+	$table  = $wpdb->prefix . 'fi_legislators';
+	$exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 
-        // Persist version
-        update_option($this->option_key, $target, true);
-    }
+	if (!$exists) {
+		if (function_exists('fi_schema_ensure')) {
+			fi_schema_ensure();
+			update_option('fi_schema_version', $target, false);
+		}
+	} else {
+		/*
+		 * Existing installs may have large FI tables.
+		 * Do not run schema upgrades during activation because dbDelta/ALTER
+		 * can exceed proxy/server timeouts.
+		 */
+		update_option('fi_schema_version', $target, false);
+		set_transient('fi_schema_deferred_notice', 1, DAY_IN_SECONDS);
+	}
+
+	update_option($option_key, $target, true);
 }

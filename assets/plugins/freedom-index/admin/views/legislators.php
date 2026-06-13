@@ -247,7 +247,7 @@ else:
 				<label for="fi-filter-state" class="form-label">State</label>
 				<select id="fi-filter-state" class="form-select" name="state">
 					<option value="">All States</option>
-					<?php foreach (\FI\Core\Governments::get_state_options() as $abbr => $name): ?>
+					<?php foreach (fi_state_options() as $abbr => $name): ?>
 						<option value="<?php echo esc_attr($abbr); ?>" <?php selected($filters['state'], $abbr); ?>>
 							<?php echo esc_html($abbr); ?> &mdash; <?php echo esc_html($name); ?>
 						</option>

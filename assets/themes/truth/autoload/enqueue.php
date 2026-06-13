@@ -1,6 +1,6 @@
 <?php if(!defined('ABSPATH')){exit;}
 
-function scorecard_enqueue_assets() {
+function vttt_enqueue_assets() {
 	wp_enqueue_script( 'jquery' );
 
 	wp_enqueue_style( 'fa', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css', [], '6.7.2' );
@@ -11,8 +11,13 @@ function scorecard_enqueue_assets() {
 		wp_enqueue_script('qr-code-styling', 'https://cdn.jsdelivr.net/npm/qr-code-styling/lib/qr-code-styling.min.js', array(), null, true);
 	}
 
-	wp_enqueue_script('gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js', [], null, true);
-	wp_enqueue_script('gsap-scrolltrigger', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js', ['gsap'], null, true);
-	wp_enqueue_script('gsap-init', STYLE_JS . 'gsap-animations.js', ['gsap'], '1.0.0', true);
+	if ( is_front_page() || is_page() || is_singular('post') ) {
+		wp_enqueue_script('gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js', [], null, true);
+		wp_enqueue_script('gsap-scrolltrigger', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js', ['gsap'], null, true);
+		wp_enqueue_script('gsap-init', STYLE_JS . 'gsap-animations.js', ['gsap', 'gsap-scrolltrigger'], '1.0.0', true);
+	}
+
+	wp_enqueue_script('jsvectormap', STYLE_JS . 'jsvectormap.min.js', [], null, true);
+	wp_enqueue_script('jsvectormap-us-en', STYLE_JS . 'jsvectormap-us-en.js', ['jsvectormap'], null, true);
 }
-add_action( 'wp_enqueue_scripts', 'scorecard_enqueue_assets' );
+add_action( 'wp_enqueue_scripts', 'vttt_enqueue_assets' );

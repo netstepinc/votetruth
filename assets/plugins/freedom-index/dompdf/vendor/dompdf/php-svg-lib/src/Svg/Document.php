@@ -30,7 +30,7 @@ use Svg\Tag\UseTag;
 class Document extends AbstractTag
 {
     protected $filename;
-    protected $_defs_depth = 0;
+    protected $_defi_depth = 0;
     public $inDefs = false;
 
     protected $x;
@@ -87,9 +87,9 @@ class Document extends AbstractTag
      * @return int
      */
     public function enterDefs () {
-        $this->_defs_depth++;
+        $this->_defi_depth++;
         $this->inDefs = true;
-        return $this->_defs_depth;
+        return $this->_defi_depth;
     }
 
     /**
@@ -98,12 +98,12 @@ class Document extends AbstractTag
      * @return int
      */
     public function exitDefs () {
-        $this->_defs_depth--;
-        if ($this->_defs_depth < 0) {
-            $this->_defs_depth = 0;
+        $this->_defi_depth--;
+        if ($this->_defi_depth < 0) {
+            $this->_defi_depth = 0;
         }
-        $this->inDefs = ($this->_defs_depth > 0 ? true : false);
-        return $this->_defs_depth;
+        $this->inDefs = ($this->_defi_depth > 0 ? true : false);
+        return $this->_defi_depth;
     }
 
     /**
@@ -242,7 +242,7 @@ class Document extends AbstractTag
 
     public function render(SurfaceInterface $surface)
     {
-        $this->_defs_depth = 0;
+        $this->_defi_depth = 0;
         $this->inDefs = false;
         $this->surface = $surface;
 

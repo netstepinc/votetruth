@@ -67,7 +67,7 @@ function fi_admin_helpers_sanitize_field_value(string $type, string $value): str
 		'email'    => sanitize_email($value),
 		'url'      => esc_url_raw($value),
 		'textarea' => sanitize_textarea_field($value),
-		'wysiwyg', 'editor' => \FI\Core\Votes::normalize_meta_description_string($value),
+		'wysiwyg', 'editor' => fi_vote_normalize_meta_description_string($value),
 		default    => sanitize_text_field($value),
 	};
 }

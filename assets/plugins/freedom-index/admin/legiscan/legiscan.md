@@ -34,12 +34,12 @@
 
 ## SQL ADJUSTMENTS
 
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '77' WHERE `jbsw_5_fi_sessions`.`id` = 6;
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '84' WHERE `jbsw_5_fi_sessions`.`id` = 7;
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '1026' WHERE `jbsw_5_fi_sessions`.`id` = 8;
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '1156' WHERE `jbsw_5_fi_sessions`.`id` = 9;
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '1435' WHERE `jbsw_5_fi_sessions`.`id` = 10;
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '1658' WHERE `jbsw_5_fi_sessions`.`id` = 11; 
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '1823' WHERE `jbsw_5_fi_sessions`.`id` = 12; 
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '2041' WHERE `jbsw_5_fi_sessions`.`id` = 13;
-UPDATE `jbsw_5_fi_sessions` SET `legiscan_id` = '2199' WHERE `jbsw_5_fi_sessions`.`id` = 14;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '77' WHERE `jbsfi_sessions`.`id` = 6;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '84' WHERE `jbsfi_sessions`.`id` = 7;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '1026' WHERE `jbsfi_sessions`.`id` = 8;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '1156' WHERE `jbsfi_sessions`.`id` = 9;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '1435' WHERE `jbsfi_sessions`.`id` = 10;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '1658' WHERE `jbsfi_sessions`.`id` = 11; 
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '1823' WHERE `jbsfi_sessions`.`id` = 12; 
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '2041' WHERE `jbsfi_sessions`.`id` = 13;
+UPDATE `jbsfi_sessions` SET `legiscan_id` = '2199' WHERE `jbsfi_sessions`.`id` = 14;

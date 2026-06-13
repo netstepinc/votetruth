@@ -20,7 +20,7 @@ if (!is_admin() && is_user_logged_in()) {
 						echo '<p class="mb-4"><a href="/account/">My Account</a>.</p>';
 						echo '<p class="mb-4"><a href="' . wp_logout_url() . '">Log Out</a></p>';
 					} else {
-						echo do_shortcode('[jbsn_login_form]');
+						echo do_shortcode('[sam_login_form]');
 					}
 					?>
 				</div>
@@ -29,7 +29,7 @@ if (!is_admin() && is_user_logged_in()) {
 			<div class="card border-primary rounded-4 shadow mb-4">
 				<div class="card-header h3">Password Reset</div>
 				<div class="card-body">
-					<?php echo do_shortcode('[jbsn_lost_password_form]'); ?>
+					<?php echo do_shortcode('[sam_lost_password_form]'); ?>
 					<p class="text-center text-danger mt-2 mb-0"><small>Please <b>check your SPAM folder</b> if you do not receive the email after 5 minutes.</small></p>
 				</div>
 			</div>
@@ -52,7 +52,7 @@ if (!is_admin() && is_user_logged_in()) {
 			<div class="card rounded-4 shadow mb-4">
 				<div class="card-header h3">Create Your Free Account</div>
 				<div class="card-body">
-					<?php echo do_shortcode('[jbsn_registration_form]'); ?>
+					<?php echo do_shortcode('[sam_registration_form]'); ?>
 				</div>
 			</div>
 		</div>

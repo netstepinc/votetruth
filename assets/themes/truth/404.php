@@ -69,6 +69,8 @@ if($fi_redirect):
 	// STEP 1: Check for exact match in legacy redirects table (FAST - cached from previous matches)
 	// This is the caching mechanism - successful pattern matches are saved here so future requests can skip expensive pattern matching and go straight to database
 	$redirect = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}fi_legacy_redirects WHERE legacy_path = %s AND status = 301 LIMIT 1",$legacy_path));
+
+/*DISABLE*/$redirect = null;
 	if ($redirect) {
 		$id = $redirect->id;
 		$redirect_to = $redirect->target_slug;
@@ -328,12 +330,14 @@ if($fi_redirect):
 		}
 	}
 
-	fi_log('404: '.$legacy_path.' TO '.$redirect_to);
+//DISABLE	fi_log('404: '.$legacy_path.' TO '.$redirect_to);
 
+/* DISABLE
 	if($redirect_to) {
 		wp_redirect($redirect_to);
 		exit();
 	}
+*/
 endif;
 
 

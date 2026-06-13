@@ -21,7 +21,7 @@ function fi_prepare_richedit_save($raw): string|array {
 /**
 * Clean vote description text
 */
-function fi_clean_content(string $content,$args = []): string {
+function fi_format_clean_content(string $content,$args = []): string {
 	$allowed_html = array(
 		'p'          => array('class' => true, 'id' => true), // No attributes allowed (removes style, class, etc.)
 		'br'         => array(),

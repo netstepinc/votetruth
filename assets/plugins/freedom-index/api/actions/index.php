@@ -1,1 +1,0 @@
-It does not take a majority to prevail... but rather an irate, tireless minority, keen on setting brush fires of freedom in the minds of men.

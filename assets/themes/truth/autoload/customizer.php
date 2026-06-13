@@ -4,12 +4,12 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} // Exit if accessed directly.
  * by Sam Mittelstaedt 
 *****/
 
-function scorecard_customizer_styles() {
+function vttt_customizer_styles() {
     //do_action( 'customizer_library_styles' );
     //$css = Customizer_Library_Styles()->build();
 	ob_start();
 	?>
-<style id="scorecard-css">
+<style id="vttt-css">
 <?php //echo $css;C52029?>
 :root {
 	--bs-font-headings:"Barlow","Roboto Condensed", "Roboto", Helvetica, Arial, sans-serif; /* headings & hero */
@@ -102,8 +102,8 @@ function scorecard_customizer_styles() {
 }
 <?php
 //Load Customizer Styles
-if(function_exists('scorecard_load_css')){
-	scorecard_load_css(STYLE_DIR.'/assets/customizer/');
+if(function_exists('vttt_load_css')){
+	vttt_load_css(STYLE_DIR.'/assets/customizer/');
 }else{
 	echo "\n/*Customizer Loading Failed*/\n";
 }
@@ -133,13 +133,13 @@ if(function_exists('scorecard_load_css')){
 </style>
 <?php
 	$css = ob_get_clean();
-	$css = scorecard_css_inline_minify($css);
+	$css = vttt_css_inline_minify($css);
     echo "\n".$css."\n";
 }
-add_action( 'wp_head', 'scorecard_customizer_styles', 11 );
+add_action( 'wp_head', 'vttt_customizer_styles', 11 );
 
 
-function scorecard_load_css($cssdir){
+function vttt_load_css($cssdir){
     if(is_dir($cssdir)){
         $files = glob($cssdir.'*.css');
 		$upload_dir = wp_upload_dir()['baseurl'];
@@ -156,7 +156,7 @@ function scorecard_load_css($cssdir){
     }
 }
 
-function scorecard_css_inline_minify($css){
+function vttt_css_inline_minify($css){
 	$css = preg_replace('/\s+/', ' ', $css); // Convert multiple whitespace to single space
 	$css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css); // Remove comments
 	$css = str_replace(array("\r\n", "\r", "\n", "\t", '  ', '    ', '    '), '', $css); // Remove tabs/newlines

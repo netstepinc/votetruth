@@ -155,7 +155,7 @@ $header_args = [
 	],
 ];
 
-fi_get_template('partials/template-header', $header_args);
+fi_get_public_template('partials/template-header', $header_args);
 
 /*
 if(get_current_user_id() == 1){
@@ -201,7 +201,7 @@ if(get_current_user_id() == 1){
 				'footer_class_col' => 'col-4 text-center',
 			];
 			
-			fi_get_template('partials/vote-card', $vote_data);
+			fi_get_public_template('partials/vote-card', $vote_data);
 			?>
 
 			<!-- Vote Tags -->
@@ -313,5 +313,5 @@ if(get_current_user_id() == 1){
 	</div>
 </div>
 <?php 
-fi_get_template('partials/template-footer');
+fi_get_public_template('partials/template-footer');
 get_footer();

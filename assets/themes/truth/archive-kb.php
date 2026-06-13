@@ -97,7 +97,7 @@ else :
 	echo '</div></div>';
 endif;
 ?>
-<?php scorecard_pagination(); ?>
+<?php vttt_pagination(); ?>
 	</div>
 </div>
 <?php 

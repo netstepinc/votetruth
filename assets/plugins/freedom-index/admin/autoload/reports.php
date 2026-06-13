@@ -100,6 +100,7 @@ array(19) { ["fi_report_nonce"]=> string(10) "ab52a57a15" ["_wp_http_referer"]=>
 		'action'    => 'edit',
 		'report_id' => (int) $saved_id,
 		'updated'   => '1',
+		'_fi_ts'    => time(),
 	]);
 
 	wp_safe_redirect($redirect_url);

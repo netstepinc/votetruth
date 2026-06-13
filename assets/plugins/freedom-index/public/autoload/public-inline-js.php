@@ -14,86 +14,12 @@ function fi_public_inline_js() {
 	ob_start();
 	?>
 <script>
-(function($){'use strict';window.FI={ajaxurl:'<?= $ajax_url ?>',nonce:'<?= $nonce ?>',isLoggedIn:<?= $is_logged ?>,currentGov:'',currentSession:'',currentUserId:<?= $user_id ?>};$(document).ready(function(){FI.init();setTimeout(function(){FI.initFrontPageSearch();},0);});FI.init=function(){FI.initFilters();
+(function($){'use strict';window.FI={ajaxurl:'<?= $ajax_url ?>',nonce:'<?= $nonce ?>',isLoggedIn:<?= $is_logged ?>,currentGov:'',currentSession:'',currentUserId:<?= $user_id ?>,homeUrl:'<?= esc_js( home_url( '/' ) ) ?>',themeUrl:'<?= esc_js( get_template_directory_uri() ) ?>'};$(document).ready(function(){FI.init();setTimeout(function(){FI.initFrontPageSearch();},0);});FI.init=function(){
         FI.initSearch();
         FI.initLists();
         FI.initUserPrefs();
         FI.initAnimations();
         FI.initMobileNavPrompt();
-    };
-
-    // Filter System
-    FI.initFilters = function() {
-        const $filterForm = $('#fi-filter-form');
-        if (!$filterForm.length) return;
-
-        $filterForm.on('change', 'select, input', function() {
-            FI.submitFilters();
-        });
-
-        let searchTimeout;
-        $filterForm.on('input', 'input[name="search"]', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
-                FI.submitFilters();
-            }, 300);
-        });
-
-        $(document).on('click', '#fi-clear-filters', function() {
-            $filterForm[0].reset();
-            FI.submitFilters();
-        });
-    };
-
-    FI.submitFilters = function() {
-        const $form = $('#fi-filter-form');
-        const $results = $('#fi-results');
-        const $loading = $('#fi-loading');
-
-        $results.addClass('fi-loading');
-        $loading.show();
-
-        const formData = $form.serialize();
-
-        $.ajax({
-            url: FI.ajaxurl,
-            type: 'POST',
-            data: formData + '&action=fi_legislator_filter&nonce=' + FI.nonce,
-            success: function(response) {
-                if (response.success) {
-                    if (typeof gsap !== 'undefined') {
-                        gsap.to('#fi-results', {
-                            opacity: 0,
-                            duration: 0.2,
-                            onComplete: function() {
-                                $('#fi-results').html(response.data.html);
-                                if (response.data.url) {
-                                    history.pushState({}, '', response.data.url);
-                                }
-                                $('#fi-results-count').text(response.data.count);
-                                gsap.fromTo('#fi-results',
-                                    { opacity: 0, y: 20 },
-                                    { opacity: 1, y: 0, duration: 0.3 }
-                                );
-                            }
-                        });
-                    } else {
-                        $('#fi-results').html(response.data.html);
-                        if (response.data.url) {
-                            history.pushState({}, '', response.data.url);
-                        }
-                        $('#fi-results-count').text(response.data.count);
-                    }
-                }
-            },
-            error: function() {
-                $('#fi-results').html('<div class="alert alert-danger">Error loading results. Please try again.</div>');
-            },
-            complete: function() {
-                $results.removeClass('fi-loading');
-                $loading.hide();
-            }
-        });
     };
 
     // Search System
@@ -141,53 +67,36 @@ function fi_public_inline_js() {
     };
 
     // -------------------------------------------------------------------------
-    // Front Page Search: header legislator search + Find My Representatives
+    // Legislator search + Find My Representatives
     // -------------------------------------------------------------------------
     FI.initFrontPageSearch = function() {
-        var $results = $('#legislator-search-results');
         var $hero = $('#hero-search-section');
-        var hasResultsContainer = $results.length > 0;
         var lastResultsSource = null;
         var homeUrl = (typeof window.location !== 'undefined') ? (window.location.origin + '/') : '/';
-        function setResults(html, source) {
-            if (hasResultsContainer && $results.length) { $results.html(html); }
-            lastResultsSource = source;
-            if ($hero.length) { if (html && $.trim(html) !== '') { $hero.addClass('d-none'); } else { $hero.removeClass('d-none'); } }
-        }
         function clearResultsAndShowHero() {
-            if (hasResultsContainer && $results.length) { $results.empty(); }
             lastResultsSource = null;
             if ($hero.length) { $hero.removeClass('d-none'); }
         }
-        function hideHero() { if ($hero.length) { $hero.addClass('d-none'); } }
         var $headerForm = $('#header-legislator-search-form'), $headerInput = $('#header-legislator-search-input'), $headerClear = $('#header-search-clear-btn'), $headerSuggestions = $('#header-search-suggestions');
         var $mobileForm = $('#mobile-legislator-search-form'), $mobileInput = $('#mobile-legislator-search-input'), $mobileClear = $('#mobile-search-clear-btn'), $mobileSuggestions = $('#mobile-search-suggestions');
-        var $homeForm = $('#home-legislator-search-form'), $homeInput = $('#home-legislator-search-input'), $homeClear = $('#home-search-clear-btn'), $homeSuggestions = $('#home-search-suggestions');
-        // Fallback for legacy home search copied from mobile markup (scoped to #homeSearch to avoid duplicates).
-        if (!$homeForm.length) {
-            var $homeScope = $('#homeSearch');
-            if ($homeScope.length) {
-                $homeForm = $homeScope.find('#mobile-legislator-search-form');
-                $homeInput = $homeScope.find('#mobile-legislator-search-input');
-                $homeClear = $homeScope.find('#mobile-search-clear-btn');
-                $homeSuggestions = $homeScope.find('#mobile-search-suggestions');
-            }
-        }
-        // Use text type on home input to prevent native search "clear" icon.
-        if ($homeInput.length && $homeInput.attr('type') === 'search') { $homeInput.attr('type', 'text'); }
         function toggleClearBtn($input, $btn) { if (!$input.length || !$btn.length) return; $btn.toggleClass('d-none', !$.trim($input.val())); }
         function clearHeaderSearch($input, $clearBtn, $suggestions) {
             if (!$input.length) return;
             $input.val(''); toggleClearBtn($input, $clearBtn); if ($suggestions.length) $suggestions.addClass('d-none');
-            if (!hasResultsContainer || !$results.length) { window.location = homeUrl; $input.focus(); return; }
-            $results.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-            fetch(FI.ajaxurl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'fi_legislator_search', nonce: FI.nonce, clear: '1' }) })
-            .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
-            .then(function(data) {
-                if (data.success) { setResults(data.data.html, null); if (window.history && window.history.pushState) { var url = new URL(window.location); url.searchParams.delete('fi_search'); window.history.pushState({}, '', url); } }
-                else { if ($results.length) $results.html('<div class="alert alert-danger">' + (data.data && data.data.message ? data.data.message : 'An error occurred.') + '</div>'); }
-            })
-            .catch(function(err) { if ($results.length) $results.html('<div class="alert alert-danger">An error occurred. Please try again.</div>'); console.error('Clear search error:', err); });
+
+            // If bottom sheet is open, close it
+            if (typeof fiHideBottomSheet === 'function') {
+                fiHideBottomSheet();
+            }
+
+            // Clean up URL search param
+            var hasSearchParam = window.location.search.includes('fi_search=');
+            if (hasSearchParam) {
+                var url = new URL(window.location);
+                url.searchParams.delete('fi_search');
+                window.history.pushState({}, '', url);
+            }
+
             $input.focus();
         }
         function initHeaderSearchForm($form, $input, $suggestions, $clearBtn) {
@@ -199,7 +108,7 @@ function fi_public_inline_js() {
                 var term = $.trim($input.val());
                 toggleClearBtn($input, $clearBtn);
                 clearTimeout(autocompleteTimeout);
-                if (term.length < 3) { if ($suggestions.length) $suggestions.addClass('d-none'); if (hasResultsContainer && $results.length && $results.children().length === 0 && $hero.length) $hero.removeClass('d-none'); return; }
+                if (term.length < 3) { if ($suggestions.length) $suggestions.addClass('d-none'); return; }
                 autocompleteTimeout = setTimeout(function() {
                     fetch(FI.ajaxurl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'fi_search_autocomplete', nonce: FI.nonce, term: term, limit: 10 }) })
                     .then(function(r) { return r.json(); })
@@ -222,62 +131,73 @@ function fi_public_inline_js() {
                 if (term.length < 3) { e.preventDefault(); return; }
                 e.preventDefault(); e.stopPropagation();
                 if ($suggestions.length) $suggestions.addClass('d-none');
-                if (!hasResultsContainer || !$results.length) { window.location = homeUrl + '?fi_search=' + encodeURIComponent(term); return; }
-                $results.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-                fetch(FI.ajaxurl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'fi_legislator_search', nonce: FI.nonce, search: term }) })
-                .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
-                .then(function(data) {
-                    if (data.success) { setResults(data.data.html, 'header'); attachClearSearchHandlers(); }
-                    else { $results.html('<div class="alert alert-danger">' + (data.data && data.data.message ? data.data.message : 'An error occurred.') + '</div>'); hideHero(); }
-                })
-                .catch(function(err) { $results.html('<div class="alert alert-danger">An error occurred. Please try again.</div>'); hideHero(); console.error('Search error:', err); });
+
+                // Use bottom sheet for results
+                if (typeof fiLoadSearchResults === 'function') {
+                    fiLoadSearchResults(term, '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+                    fetch(FI.ajaxurl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'fi_unified_search', nonce: FI.nonce, query: term }) })
+                    .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+                    .then(function(data) {
+                        if (data.success && data.data.html) {
+                            fiLoadSearchResults(term, data.data.html);
+                        } else {
+                            fiLoadSearchResults(term, '<div class="alert alert-warning">' + (data.data && data.data.message ? data.data.message : 'No results found.') + '</div>');
+                        }
+                    })
+                    .catch(function(err) {
+                        fiLoadSearchResults(term, '<div class="alert alert-danger">Search failed. Please try again.</div>');
+                        console.error('Search error:', err);
+                    });
+                } else {
+                    // Fallback to page redirect if bottom sheet not available
+                    window.location = homeUrl + '?fi_search=' + encodeURIComponent(term);
+                }
             });
             $input.on('keydown', function(e) { if (e.key === 'Escape' && $suggestions.length) $suggestions.addClass('d-none'); });
         }
         function attachClearSearchHandlers() {
             $(document).off('click.fiFrontPageSearch', '.clear-search-link').on('click.fiFrontPageSearch', '.clear-search-link', function(e) {
                 e.preventDefault();
-                $headerInput.val(''); $mobileInput.val(''); $homeInput.val('');
-                toggleClearBtn($headerInput, $headerClear); toggleClearBtn($mobileInput, $mobileClear); toggleClearBtn($homeInput, $homeClear);
+                $headerInput.val(''); $mobileInput.val('');
+                toggleClearBtn($headerInput, $headerClear); toggleClearBtn($mobileInput, $mobileClear);
                 clearResultsAndShowHero();
-                $headerSuggestions.addClass('d-none'); $mobileSuggestions.addClass('d-none'); $homeSuggestions.addClass('d-none');
+                $headerSuggestions.addClass('d-none'); $mobileSuggestions.addClass('d-none');
                 // Focus the first available search input after clearing.
-                var $focusTarget = $headerInput.length ? $headerInput : ($mobileInput.length ? $mobileInput : $homeInput);
+                var $focusTarget = $headerInput.length ? $headerInput : $mobileInput;
                 if ($focusTarget.length) $focusTarget.focus();
             });
         }
         if ($headerForm.length && $headerInput.length) initHeaderSearchForm($headerForm, $headerInput, $headerSuggestions, $headerClear);
         if ($mobileForm.length && $mobileInput.length) initHeaderSearchForm($mobileForm, $mobileInput, $mobileSuggestions, $mobileClear);
-        if ($homeForm.length && $homeInput.length) initHeaderSearchForm($homeForm, $homeInput, $homeSuggestions, $homeClear);
-        // When mobile header search opens, hide home search to avoid duplicates.
-        (function() {
-            var $mobileCollapse = $('#mobileSearch');
-            var $homeSearch = $('#homeSearch');
-            if (!$mobileCollapse.length || !$homeSearch.length) return;
-            $mobileCollapse.on('show.bs.collapse', function() { $homeSearch.addClass('d-none'); });
-            $mobileCollapse.on('hidden.bs.collapse', function() { $homeSearch.removeClass('d-none'); });
-        })();
         $(document).on('click', function(e) {
             if ($headerForm.length && !$headerForm.has(e.target).length && $headerSuggestions.length) $headerSuggestions.addClass('d-none');
             if ($mobileForm.length && !$mobileForm.has(e.target).length && $mobileSuggestions.length) $mobileSuggestions.addClass('d-none');
-            if ($homeForm.length && !$homeForm.has(e.target).length && $homeSuggestions.length) $homeSuggestions.addClass('d-none');
         });
+        // Auto-search from URL param
         (function() {
-            if (!hasResultsContainer || !$results.length) return;
             var params = new URLSearchParams(window.location.search), searchParam = params.get('fi_search');
             if (!searchParam || $.trim(searchParam).length < 3) return;
+            // Skip if no bottom sheet function available
+            if (typeof fiLoadSearchResults !== 'function') return;
             var decoded = decodeURIComponent(searchParam.replace(/\+/g, ' '));
-            $headerInput.val(decoded); $mobileInput.val(decoded); $homeInput.val(decoded);
-            toggleClearBtn($headerInput, $headerClear); toggleClearBtn($mobileInput, $mobileClear); toggleClearBtn($homeInput, $homeClear);
-            $results.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            $headerInput.val(decoded); $mobileInput.val(decoded);
+            toggleClearBtn($headerInput, $headerClear); toggleClearBtn($mobileInput, $mobileClear);
+
             setTimeout(function() {
-                fetch(FI.ajaxurl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'fi_legislator_search', nonce: FI.nonce, search: decoded }) })
+                fiLoadSearchResults(decoded, '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+                fetch(FI.ajaxurl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'fi_unified_search', nonce: FI.nonce, query: decoded }) })
                 .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
                 .then(function(data) {
-                    if (data.success) { setResults(data.data.html, 'header'); attachClearSearchHandlers(); }
-                    else { $results.html('<div class="alert alert-danger">' + (data.data && data.data.message ? data.data.message : 'An error occurred.') + '</div>'); hideHero(); }
+                    if (data.success && data.data.html) {
+                        fiLoadSearchResults(decoded, data.data.html);
+                    } else {
+                        fiLoadSearchResults(decoded, '<div class="alert alert-warning">' + (data.data && data.data.message ? data.data.message : 'No results found.') + '</div>');
+                    }
                 })
-                .catch(function(err) { $results.html('<div class="alert alert-danger">An error occurred. Please try again.</div>'); console.error('Search error:', err); });
+                .catch(function(err) {
+                    fiLoadSearchResults(decoded, '<div class="alert alert-danger">Search failed. Please try again.</div>');
+                    console.error('Search error:', err);
+                });
             }, 300);
         })();
         var $findForm = $('#find-representatives-form'), $findSubmit = $('#find-officials-btn'), $clearLink = $('#clear-form-link'), $clearLinkMobile = $('#clear-form-link-mobile'), $clearLinkHome = $('#clear-form-link-home');
@@ -301,26 +221,40 @@ function fi_public_inline_js() {
             window.scrollTo({ top: 0, behavior: 'smooth' }); $('#zip').focus();
         }
         $clearLink.on('click', handleFindReset); $clearLinkMobile.on('click', handleFindReset);
+        // Find Representatives form - uses bottom sheet only
         $findForm.on('submit', function(e) {
             e.preventDefault(); e.stopPropagation();
             var zip = $.trim($('#zip').val());
             if (!validateZip(zip)) { showZipError(true); $('#zip').focus(); return; }
             showZipError(false);
-            if (!hasResultsContainer || !$results.length) { window.location = homeUrl + '?zip=' + encodeURIComponent(zip); return; }
+
+            if (typeof fiLoadSearchResults !== 'function') {
+                window.location = homeUrl + '?zip=' + encodeURIComponent(zip);
+                return;
+            }
+
             var originalText = $findSubmit.text();
             $findSubmit.prop('disabled', true).text('Searching...');
-            $results.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-            var formData = new FormData($findForm[0]); formData.append('action', 'fi_find_representatives');
+
+            fiLoadSearchResults('Find My Representatives', '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+            var formData = new FormData($findForm[0]);
+            formData.append('action', 'fi_find_representatives');
+
             fetch(FI.ajaxurl, { method: 'POST', body: formData })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 $findSubmit.prop('disabled', false).text(originalText);
-                if (data.success) { setResults(data.data.html, 'find-representatives'); $results[0].scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-                else { $results.html('<div class="alert alert-danger">' + (data.data && data.data.message ? data.data.message : 'An error occurred.') + '</div>'); hideHero(); }
+                if (data.success && data.data.html) {
+                    fiLoadSearchResults('Find My Representatives', data.data.html);
+                } else {
+                    fiLoadSearchResults('Find My Representatives', '<div class="alert alert-danger">' + (data.data && data.data.message ? data.data.message : 'An error occurred.') + '</div>');
+                }
             })
             .catch(function(err) {
                 $findSubmit.prop('disabled', false).text(originalText);
-                $results.html('<div class="alert alert-danger">An error occurred. Please try again.</div>'); hideHero(); console.error('Error:', err);
+                fiLoadSearchResults('Find My Representatives', '<div class="alert alert-danger">An error occurred. Please try again.</div>');
+                console.error('Error:', err);
             });
         });
         /*if ($findForm.data('auto-submit')) setTimeout(function() { $findSubmit.trigger('click'); }, 300);*/
@@ -371,16 +305,12 @@ function fi_public_inline_js() {
 
     FI.initAnimations = function() {
         if (typeof gsap === 'undefined') return;
-        gsap.fromTo('.fi-legislator-card', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 });
-        $('.fi-score-badge').each(function() { var $t = $(this), sc = parseInt($t.text()); gsap.fromTo($t, { textContent: 0 }, { textContent: sc, duration: 1.5, ease: 'power2.out', snap: { textContent: 1 } }); });
-        $('.fi-legislator-card').hover(function() { gsap.to(this, { scale: 1.02, duration: 0.2 }); }, function() { gsap.to(this, { scale: 1, duration: 0.2 }); });
-    };
-
-    FI.generatePDF = function(type, id) {
-        $.ajax({ url: FI.ajaxurl, type: 'POST', data: { action: 'fi_generate_pdf', nonce: FI.nonce, type: type, id: id }, success: function(r) { if (r.success) window.open(r.data.pdf_url, '_blank'); else alert('Error generating PDF'); } });
-    };
-    FI.generateCustomPDF = function(id) {
-        $.ajax({ url: FI.ajaxurl, type: 'POST', data: $('#fi-customize-form').serialize() + '&action=fi_generate_pdf&nonce=' + FI.nonce + '&type=legislator&id=' + id, success: function(r) { if (r.success) { $('#fi-customize-modal').modal('hide'); window.open(r.data.pdf_url, '_blank'); } else alert('Error generating PDF'); } });
+        if ($('.fi-legislator-card').length === 0 && $('.fi-score-badge').length === 0) return;
+        if ($('.fi-legislator-card').length) {
+            gsap.fromTo('.fi-legislator-card', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 });
+            $('.fi-legislator-card').hover(function() { gsap.to(this, { scale: 1.02, duration: 0.2 }); }, function() { gsap.to(this, { scale: 1, duration: 0.2 }); });
+        }
+        $('.fi-score-badge').each(function() { var $t = $(this), sc = parseInt($t.text()); if (!isNaN(sc)) { gsap.fromTo($t, { textContent: 0 }, { textContent: sc, duration: 1.5, ease: 'power2.out', snap: { textContent: 1 } }); } });
     };
 
     FI.copyListURL = function() {

@@ -6,12 +6,12 @@
  * Usage: 
  *   GET with params: ?auth_key=...&gov=...&session=...
  * 
- * TEST: https://freedomindex.us/wp-content/jbsfi/legiscan/compiler.php?auth_key=aba1fcf8e23f67cd261842c7a8f30012&gov=US&session=2025-2026_119th_Congress
+ * TEST: https://votestellthetruth.us/wp-content/jbsfi/legiscan/compiler.php?auth_key=aba1fcf8e23f67cd261842c7a8f30012&gov=US&session=2025-2026_119th_Congress
  */
 
 // Referrer check (set to false to disable for direct testing)
 define('CHECK_REFERRER', false);
-define('FI_DOMAIN','freedomindex.us');
+define('FI_DOMAIN',home_url());
 
 $compiler_auth_key = md5(strtotime(date('Y-m-d') . ' 00:00:01'));
 
@@ -69,7 +69,7 @@ if (CHECK_REFERRER) {
 	if (strpos($referrer, FI_DOMAIN) === false) {
 		echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Access Denied</title></head><body>";
 		echo "<h1>Access Denied</h1>";
-		echo "<meta http-equiv='refresh' content='3;url=https://" . FI_DOMAIN . "'>";
+		echo "<meta http-equiv='refresh' content='3;url=" . FI_DOMAIN . "'>";
 		echo "</body></html>";
 		exit;
 	}
@@ -207,7 +207,7 @@ foreach ($bill_file_list as $item) {
 			activeRequests++;
 			markFileStatus(index, 'processing', 'Processing');
 			
-			const url = 'https://<?php echo FI_DOMAIN; ?>/wp-content/jbsfi/legiscan/extractor.php?key=' + 
+			const url = '<?php echo FI_DOMAIN; ?>/wp-content/jbsfi/legiscan/extractor.php?key=' + 
 				encodeURIComponent(authKey) + 
 				'&gov=' + encodeURIComponent(gov) + 
 				'&session=' + encodeURIComponent(session) + 
@@ -268,7 +268,7 @@ foreach ($bill_file_list as $item) {
 			if (activeRequests === 0 && currentIndex >= billCount) {
 				document.getElementById('final-status').style.display = 'block';
 				// Signal compilation complete by creating __compiled file
-				fetch('https://<?php echo FI_DOMAIN; ?>/wp-content/jbsfi/legiscan/compiler.php?auth_key=' + 
+				fetch('<?php echo FI_DOMAIN; ?>/wp-content/jbsfi/legiscan/compiler.php?auth_key=' + 
 					encodeURIComponent(authKey) + 
 					'&gov=' + encodeURIComponent(gov) + 
 					'&session=' + encodeURIComponent(session) + 

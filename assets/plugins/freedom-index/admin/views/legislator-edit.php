@@ -2,8 +2,7 @@
 
 $is_edit       = ($action === 'edit');
 $legislator_id = $is_edit ? absint($_GET['legislator_id'] ?? 0) : 0;
-//Current Gov
-$gov = strtoupper(sanitize_text_field($_REQUEST['gov'] ?? $scope['gov'] ?? 'US'));
+$gov = strtoupper((string) ($scope['gov'] ?? 'US'));
 
 $return_url = '';
 $return_url_raw = $_REQUEST['return_url'] ?? '';

@@ -28,7 +28,7 @@ $user_id = get_current_user_id();
 $user_lists = fi_lists_get_by_user($user_id);
 ?>
 <div class="row">
-	<?php fi_get_template('partials/account-nav', ['current_page' => 'lists']); ?>
+	<?php fi_get_public_template('partials/account-nav', ['current_page' => 'lists']); ?>
 	<div class="col-12 col-md-9">
 		<div class="row g-3">
 			<div class="col-12 col-md-6 col-lg-4">

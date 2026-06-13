@@ -298,10 +298,11 @@ function fi_admin_actions_handle_recalculate_scores(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
 		return;
 	}
-	$gov = $_GET['gov'] ?? '';
+	$scope = function_exists('fi_scope_get_current') ? fi_scope_get_current() : [];
+	$gov = strtoupper((string) ($scope['gov'] ?? ''));
 	$session_id = absint($_GET['session_id'] ?? 0);
 	$calculated = fi_score_calculate_all($gov ?: null, $session_id ?: null);
 	add_settings_error('fi_scoring', 'scores_calculated', "Calculated {$calculated} scores.", 'updated');
-	wp_redirect(remove_query_arg(['action', 'gov', 'session_id']));
+	wp_redirect(add_query_arg('_fi_ts', time(), remove_query_arg(['action', 'gov', 'session_id', '_fi_ts'])));
 	exit;
 }

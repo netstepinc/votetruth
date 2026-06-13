@@ -68,24 +68,22 @@ $actions[] = [
 */
 ?>
 
-<section class="container-fluid bg-dark text-light">
+<section class="container-fluid bg-primary text-light py-5">
 	<div class="container">
-		<p class="fi-eyebrow">Go further</p>
-		<h2 class="fi-section-h">More ways to hold them accountable</h2>
 		<div class="row">
-			<div class="col-12 col-md-4">
-				<?php foreach ($actions as $action): ?>
-				<div class="card">
+			<?php foreach ($actions as $action): ?>
+			<div class="col-12 col-md-4 py-3">
+				<div class="card bg-primary border-white h-100">
 					<div class="card-body">
-						<div class="card-title"><?php echo $action['title']; ?></div>
-						<p class="card-text"><?php echo $action['desc']; ?></p>
+						<div class="card-title text-white fw-bold fs-7"><?php echo $action['title']; ?></div>
+						<p class="card-text text-white"><?php echo $action['desc']; ?></p>
 					</div>
-					<div class="card-footer">
-						<a href="<?php echo $action['link']; ?>" class="btn btn-primary"><?php echo $action['button_text']; ?> →</a>
+					<div class="card-footer p-0">
+						<a href="<?php echo $action['link']; ?>" class="btn btn-primary rounded-0 rounded-bottom w-100"><?php echo $action['button_text']; ?> →</a>
 					</div>
 				</div>
-				<?php endforeach; ?>
-			</div>
+            </div>
+			<?php endforeach; ?>
 		</div>
 	</div>
 </section>

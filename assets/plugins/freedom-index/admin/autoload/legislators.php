@@ -104,6 +104,7 @@ function fi_admin_legislators_handle_save(array $scope): void {
 	// Build redirect URL using helper function
 	$redirect = fi_admin_edit_legislator_url($saved_id, [
 		'updated' => 1,
+		'_fi_ts' => time(),
 		'return_url' => $return_url,
 	]);
 	
@@ -530,7 +531,7 @@ function fi_admin_legislators_apply_api_updates(int $legislator_id, string $sour
 				$attachment_title = trim($gov_label . ' ' . $display . ' ' . (string) $legislator_id . ' s' . (string) $session_id);
 				$attachment_slug = (string) $legislator_id . '-s' . (string) $session_id . '-' . (string) $target_basename;
 
-				$img = \FI\Core\media_sideload_image_from_url($url, $target_basename, [
+				$img = fi_media_sideload_image_from_url($url, $target_basename, [
 					// Summary: never include "Legiscan" in attachment-facing fields; title/slug should help staff search.
 					'desc' => '',
 					'post_title' => $attachment_title,

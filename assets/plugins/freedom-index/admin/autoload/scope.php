@@ -1,463 +1,556 @@
 <?php
-namespace FI\Admin {
+/*
+ * Freedom Index Admin Sticky Scope System
+ *
+ * Straight function version of the former FIAdmin\Scope class file.
+ *
+ * Summary:
+ * - Stores the current admin government scope per user in usermeta: fi_admin_scope.
+ * - Stores recent governments per user in usermeta: fi_admin_scope_recent.
+ * - Handles scope selector rendering and scope switching via admin-post.
+ * Refactored the admin sticky scope system into straight functions.
+Key adjustments:
+	Removed the FIAdmin\Scope class/namespace wrapper.
+Preserved existing global helper names:
+	fi_scope_render_selector()
+	fi_scope_get_current()
+	fi_scope_set_current()
+	fi_scope_get_session()
+	fi_scope_reset()
+	fi_scope_content_check()
+Added procedural helpers:
+	fi_scope_cache()
+	fi_scope_normalize_gov()
+	fi_scope_get_default()
+	fi_scope_get_available_governments()
+	fi_scope_is_valid_gov()
+	fi_scope_set_recent_govs()
+	fi_scope_get_recent_govs()
+	fi_scope_get_gov_display_name()
+	fi_scope_display_recent_govs()
+	fi_scope_get_gov()
+	fi_scope_get_session_id()
+	fi_scope_handle_form_submission()
+	fi_scope_apply_filter()
+	fi_scope_is_valid_scope()
+	fi_scope_get_current_admin_url_clean()
+	fi_scope_get_switch_url()
+	fi_scope_handle_switch_action()
+	fi_scope_get_redirect_url()
+	fi_scope_send_admin_no_cache_headers()
+Tuning:
+	Replaced the hardcoded state display array with fi_gov_name() / fi_govs() when available, with fallback to the hardcoded government list only if needed.
+	Kept US display label as Congress.
+Removed the unused session-scope behavior by making:
+	fi_scope_get_session_id()
+	fi_scope_get_session()
+	return null. The stored scope is now clearly government-only.
+Sanitized and validated government codes consistently.
+	Fixed recent-gov handling so selecting an already-recent gov moves it to the front instead of returning early.
+	Kept PRG redirect behavior.
+	Kept no-cache headers for fi-* admin screens.
+Added compatibility aliases:
+	fi_scope_get_available_govs()
+	fi_scope_get_display_name()
+ */
 
-	if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH')) exit;
 
-	/**
-	 * Sticky Scope System for Freedom Index Admin
-	 *
-	 * Summary:
-	 * - Persistent scope is stored per-user in usermeta (fi_admin_scope).
-	 * - URL arg gov=XX is treated as a one-time setter for deep links and is then stripped via redirect,
-	 *   so it won't keep overriding subsequent user changes.
-	 */
-	final class Scope {
+/**
+ * Get request-level current scope cache.
+ *
+ * @param array|null $scope Scope to set.
+ * @param bool $set Whether to set cache.
+ * @return array|null
+ */
+function fi_scope_cache(?array $scope = null, bool $set = false): ?array {
+	static $current_scope = null;
 
-		private static $current_scope = null;
-
-		/**
-		 * Get current admin scope
-		 */
-		public static function get_current(): array {
-			if (self::$current_scope === null) {
-				// URL-based gov takes priority — each gov has a unique URL for bfcache safety.
-				if (isset($_GET['gov'])) {
-					$g = strtoupper(sanitize_text_field((string) $_GET['gov']));
-					if (in_array($g, self::get_available_governments(), true)) {
-						self::$current_scope = ['gov' => $g];
-						return self::$current_scope;
-					}
-				}
-
-				$user_id = get_current_user_id();
-				$scope = get_user_meta($user_id, 'fi_admin_scope', true);
-
-				if (!$scope || !is_array($scope)) {
-					$scope = self::get_default_scope();
-				}
-
-				// Migrate legacy saved scope (gov+session_id) to gov-only scope.
-				if (isset($scope['session_id'])) {
-					unset($scope['session_id']);
-					self::set_current($scope);
-				}
-
-				self::$current_scope = $scope;
-			}
-
-			return self::$current_scope;
-		}
-
-		/**
-		 * Set current admin scope
-		 */
-		public static function set_current(array $scope): bool {
-			$user_id = get_current_user_id();
-			$result = update_user_meta($user_id, 'fi_admin_scope', $scope);
-			self::set_recent_govs($scope['gov'],$user_id);
-			if ($result) {
-				self::$current_scope = $scope;
-			}
-
-			return (bool) $result;
-		}
-
-		/**
-		 * Add a government code to a user's list of recently accessed governments (max 5).
-		 *
-		 * @param string $gov
-		 * @param int $user_id
-		 */
-		public static function set_recent_govs(string $gov, int $user_id): void {
-			$recent_govs = get_user_meta($user_id, 'fi_admin_scope_recent', true);
-			if (!is_array($recent_govs)) {
-				$recent_govs = [];
-			}
-			//Skip if in array
-			if (in_array($gov, $recent_govs)) {
-				return;
-			}
-			// Remove if exists
-			$recent_govs = array_values(array_diff($recent_govs, [$gov]));
-			array_unshift($recent_govs, $gov);
-			$recent_govs = array_slice($recent_govs, 0, 10);
-			//Once we have the final array, sort it by the gov (abbreviation alphabetically)
-			//usort($recent_govs, function($a, $b) {
-			//	return strcmp($a, $b);
-			//});
-			update_user_meta($user_id, 'fi_admin_scope_recent', $recent_govs);
-		}
-
-		/**
-		 * Get the recent governments for the current user (returns array)
-		 *
-		 * @return array
-		 */
-		public static function get_recent_govs(): array {
-			$user_id = get_current_user_id();
-			$recent_govs = get_user_meta($user_id, 'fi_admin_scope_recent', true);
-			if (!is_array($recent_govs)) {
-				return [];
-			}
-			return $recent_govs;
-		}
-
-		/**
-		 * Display recent govs as a Bootstrap inline button group.
-		 *
-		 * @return string
-		 */
-		public static function display_recent_govs(): string {
-			$recent_govs = self::get_recent_govs();
-
-			if (empty($recent_govs)) {
-				return '';
-			}
-
-			// Build a clean action URL (remove gov + scope flags).
-			$action_url = self::get_current_admin_url_clean(['gov', 'scope_updated', 'scope_set']);
-
-			$html = '<ul class="list-inline mb-0">';
-			foreach ($recent_govs as $gov) {
-				$html .= '<li class="list-inline-item mb-0"><a href="' . esc_url($action_url . '&gov=' . urlencode($gov)) . '" class="btn btn-sm p-1 btn-warning text-black fw-bold px-3 fs-7">' . esc_html($gov) . '</a></li>';
-			}
-			$html .= '</ul>';
-			return $html;
-		}
-
-		/**
-		 * Get default scope (US)
-		 */
-		public static function get_default_scope(): array {
-			return [
-				'gov' => 'US',
-			];
-		}
-
-		/**
-		 * Get current government
-		 */
-		public static function get_gov(): string {
-			$scope = self::get_current();
-			return $scope['gov'] ?? 'US';
-		}
-
-		/**
-		 * Get current session ID (legacy placeholder)
-		 */
-		public static function get_session_id(): ?int {
-			$scope = self::get_current();
-			return $scope['session_id'] ?? null;
-		}
-
-		/**
-		 * Get current session object
-		 */
-		public static function get_session(): ?object {
-			$session_id = self::get_session_id();
-			if (!$session_id) return null;
-
-			global $wpdb;
-			return $wpdb->get_row($wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}fi_sessions WHERE id = %d",
-				$session_id
-			));
-		}
-
-		/**
-		 * Render scope selector HTML
-		 *
-		 * IMPORTANT:
-		 * - Force the form action to a "clean" URL with no gov=XX so posting never re-inherits the deep-link arg.
-		 */
-		public static function render_selector(?array $sessions = null): void {
-			$current_scope = self::get_current();
-			$governments   = self::get_available_governments();
-
-			// Build a clean action URL (remove gov + scope flags).
-			$action_url = self::get_current_admin_url_clean(['gov', 'scope_updated', 'scope_set']);
-
-			?>
-			<div class="container-fluid shadow-sm ps-0">
-				<div class="fi-scope-selector">
-					<div class="row">
-						<div class="col-12 col-lg-6 col-xl-4 py-1">
-							<form id="fi-scope-form" method="post" action="<?php echo esc_url($action_url); ?>">
-								<?php wp_nonce_field('fi_update_scope', 'fi_scope_nonce'); ?>
-								<label for="fi-gov" class="form-label fs-4 mb-0">Government:</label>
-								<select id="fi-gov" name="gov" class="form-select form-select-sm fw-bold fs-5 lh-1" style="width: 220px; padding: 4px 8px 10px 8px; line-height: 1.4 !important;" onchange="this.form.submit()">
-									<?php foreach ($governments as $gov): ?>
-										<option value="<?php echo esc_attr($gov); ?>" <?php selected($current_scope['gov'], $gov); ?>>
-											<?php echo esc_html(self::get_gov_display_name($gov)); ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
-								<noscript>
-									<button type="submit" class="btn btn-success btn-sm fw-bold">Change Government</button>
-								</noscript>
-							</form>
-						</div>
-						<div class="d-none d-lg-inline col-lg-6 col-xl-8 pt-2">
-							<?php echo self::display_recent_govs(); ?>
-						</div>
-					</div>
-				</div>
-			</div>
-			<?php
-		}
-
-		/**
-		 * Handle scope form submission
-		 *
-		 * IMPORTANT:
-		 * - Always redirect to a clean URL after POST (PRG pattern).
-		 */
-		public static function handle_form_submission(): void {
-			if (empty($_POST['fi_scope_nonce']) || !wp_verify_nonce($_POST['fi_scope_nonce'], 'fi_update_scope')) {
-				return;
-			}
-
-			if (!current_user_can(FI_CAP_MANAGE)) {
-				wp_die('Insufficient permissions');
-			}
-
-			$gov = strtoupper(sanitize_text_field($_POST['gov'] ?? ''));
-			if ($gov === '') return;
-
-			$allowed = self::get_available_governments();
-			if (!in_array($gov, $allowed, true)) return;
-
-			self::set_current(['gov' => $gov]);
-
-			// Redirect to prevent resubmission (PRG pattern). Include gov so bfcache is keyed per-scope.
-			$redirect_url = self::get_current_admin_url_clean(['gov', 'scope_updated', 'scope_set', '_']);
-			$redirect_url = add_query_arg('gov', $gov, $redirect_url);
-
-			wp_safe_redirect($redirect_url, 302);
-			exit;
-		}
-
-		/**
-		 * Handle scope updates from URL query string (e.g., admin.php?page=fi-legislators&gov=AR).
-		 *
-		 * Summary:
-		 * - gov=XX is now permanent in the URL; no redirect needed.
-		 * - Persists to usermeta so scope is remembered when navigating to URLs without gov.
-		 */
-		public static function handle_query_scope(): void {
-			if (!current_user_can(FI_CAP_MANAGE)) return;
-
-			// Never run on POST requests.
-			if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') return;
-
-			if (!isset($_GET['gov'])) return;
-
-			$gov = strtoupper(sanitize_text_field((string) ($_GET['gov'] ?? '')));
-			if ($gov === '') return;
-
-			$allowed = self::get_available_governments();
-			if (!in_array($gov, $allowed, true)) return;
-
-			// Always persist to usermeta — ensures scope is up-to-date even after
-			// bfcache restores a page or a browser navigates without the gov param.
-			// No redirect — gov stays in the URL for bfcache safety.
-			self::set_current(['gov' => $gov]);
-		}
-
-		/**
-		 * Get government display name
-		 */
-		private static function get_gov_display_name(string $gov): string {
-			$state_names = [
-				'US' => 'Congress',
-				'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
-				'CA' => 'California', 'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware',
-				'FL' => 'Florida', 'GA' => 'Georgia', 'HI' => 'Hawaii', 'ID' => 'Idaho',
-				'IL' => 'Illinois', 'IN' => 'Indiana', 'IA' => 'Iowa', 'KS' => 'Kansas',
-				'KY' => 'Kentucky', 'LA' => 'Louisiana', 'ME' => 'Maine', 'MD' => 'Maryland',
-				'MA' => 'Massachusetts', 'MI' => 'Michigan', 'MN' => 'Minnesota', 'MS' => 'Mississippi',
-				'MO' => 'Missouri', 'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada',
-				'NH' => 'New Hampshire', 'NJ' => 'New Jersey', 'NM' => 'New Mexico', 'NY' => 'New York',
-				'NC' => 'North Carolina', 'ND' => 'North Dakota', 'OH' => 'Ohio', 'OK' => 'Oklahoma',
-				'OR' => 'Oregon', 'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina',
-				'SD' => 'South Dakota', 'TN' => 'Tennessee', 'TX' => 'Texas', 'UT' => 'Utah',
-				'VT' => 'Vermont', 'VA' => 'Virginia', 'WA' => 'Washington', 'WV' => 'West Virginia',
-				'WI' => 'Wisconsin', 'WY' => 'Wyoming'
-			];
-
-			return $state_names[$gov] ?? $gov;
-		}
-
-		public static function get_available_governments(): array {
-			return [
-				'US', 'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI',
-				'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN',
-				'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH',
-				'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA',
-				'WV', 'WI', 'WY'
-			];
-		}
-
-		/**
-		 * Apply scope filter to admin queries
-		 */
-		public static function apply_scope_filter(array $query_vars): array {
-			$scope = self::get_current();
-			if (!empty($scope['gov'])) {
-				$query_vars['gov'] = $scope['gov'];
-			}
-			return $query_vars;
-		}
-
-		/**
-		 * Get scope-aware admin URL
-		 *
-		 * NOTE:
-		 * - If you keep this, it will intentionally append gov to links you build with this helper.
-		 * - That’s fine for sharable deep links, but don’t use it everywhere by default.
-		 */
-		public static function get_admin_url(string $page, array $args = []): string {
-			$scope = self::get_current();
-			$args['gov'] = $scope['gov'];
-			return add_query_arg($args, admin_url("admin.php?page={$page}"));
-		}
-
-		/**
-		 * Check if scope is valid
-		 */
-		public static function is_valid_scope(array $scope): bool {
-			return !empty($scope['gov']);
-		}
-
-		/**
-		 * Reset scope to default
-		 */
-		public static function reset_to_default(): bool {
-			return self::set_current(self::get_default_scope());
-		}
-
-		/**
-		 * Build the current admin URL and remove specific query args.
-		 *
-		 * IMPORTANT:
-		 * - Used by both the form action and redirects to guarantee we strip gov from the URL.
-		 */
-	private static function get_current_admin_url_clean(array $remove_keys = []): string {
-		// Base: admin.php + preserve "page" if present.
-		$base = admin_url('admin.php');
-
-		if (isset($_GET['page'])) {
-			$base = add_query_arg('page', sanitize_text_field((string) $_GET['page']), $base);
-		}
-
-		// Preserve other common admin args if you use them (optional):
-		// if (isset($_GET['post_type'])) $base = add_query_arg('post_type', sanitize_text_field((string) $_GET['post_type']), $base);
-
-		// Now remove any keys we explicitly want stripped.
-		if (!empty($remove_keys)) {
-			$base = remove_query_arg($remove_keys, $base);
-		}
-
-		return $base;
-	}
+	if ($set) {
+		$current_scope = $scope;
 	}
 
-	// Hook into WordPress.
-	add_action('admin_init', [Scope::class, 'handle_form_submission'], 0);
-	add_action('admin_init', [Scope::class, 'handle_query_scope'], 1);
-
-	// Prevent browser/proxy caching on FI admin pages so scope switches and nonces are always fresh.
-	// NOTE: `send_headers` is a front-end hook (fires inside wp()) and does NOT fire in wp-admin.
-	// We use `admin_init` at priority 20 (after WP's own wp_admin_headers() at priority 1) so the
-	// `no-store` directive is added, which disables browser bfcache (back/forward cache).
-	// Without `no-store`, browsers freeze edit pages in bfcache and restore stale nonces on Back.
-	// Priority -10 ensures headers fire before the save handler (priority 0) exits on POST,
-	// so the 302 redirect response also carries no-store (not just the subsequent GET).
-	add_action('admin_init', static function (): void {
-		$page = sanitize_key((string) ($_GET['page'] ?? ''));
-		if (str_starts_with($page, 'fi-')) {
-			header('Cache-Control: no-cache, no-store, must-revalidate');
-			header('Pragma: no-cache');
-			header('Expires: 0');
-		}
-	}, -10);
-
+	return $current_scope;
 }
 
-// Global helper functions
-namespace {
+/**
+ * Normalize a government code.
+ *
+ * @param string $gov Government code.
+ * @return string Normalized code.
+ */
+function fi_scope_normalize_gov(string $gov): string {
+	return strtoupper(sanitize_key($gov));
+}
 
-	function fi_scope_render_selector(?array $sessions = null): void {
-		\FI\Admin\Scope::render_selector($sessions);
-	}
+/**
+ * Get default admin scope.
+ *
+ * @return array Scope.
+ */
+function fi_scope_get_default(): array {
+	return [
+		'gov' => 'US',
+	];
+}
 
-	function fi_scope_get_current(): array {
-		return \FI\Admin\Scope::get_current();
-	}
-
-	function fi_scope_set_current(array $scope): bool {
-		return \FI\Admin\Scope::set_current($scope);
-	}
-
-	function fi_scope_get_session() {
-		return \FI\Admin\Scope::get_session();
-	}
-
-	function fi_scope_reset(): bool {
-		return \FI\Admin\Scope::reset_to_default();
-	}
-
-	function fi_scope_content_check(string $scope_gov, string $content_gov, string $content_type): void {
-		if($scope_gov != $content_gov) {
-			echo '<div class="container-fluid pt-3"><div class="card bg-white border border-2 border-danger rounded-3 text-danger p-2 fw-bold text-center fs-3">';
-			echo 'ATTENTION: This is a '.$content_gov . ' '.ucfirst($content_type).'. CHANGE GOV before editing.';
-			echo '</div></div>';
+/**
+ * Get available government codes.
+ *
+ * @return array Government codes.
+ */
+function fi_scope_get_available_governments(): array {
+	if (function_exists('fi_govs')) {
+		$govs = fi_govs();
+		if (is_array($govs) && !empty($govs)) {
+			return array_values(array_unique(array_map('strtoupper', array_map('sanitize_key', array_keys($govs)))));
 		}
 	}
 
-	/**
-	 * On fi-* admin pages: rewrite admin menu links to include gov, and update the current URL
-	 * via history.replaceState so bfcache keys on a per-gov URL.
-	 *
-	 * Summary:
-	 * - Gov is now permanent in the URL (e.g. ?page=fi-legislators&gov=US).
-	 * - Each scope+page combo is a unique URL, so bfcache correctly serves scoped content.
-	 * - Menu links are rewritten in JS because WP renders them without knowledge of our scope.
-	 * - history.replaceState handles the first load when gov isn't yet in the URL (e.g., bookmarks).
-	 */
-	add_action('admin_footer', static function (): void {
-		if (defined('DOING_AJAX') && DOING_AJAX) {
-			return;
-		}
-		$page = isset($_GET['page']) ? sanitize_key($_GET['page']) : '';
-		if ($page === '' || strpos($page, 'fi-') !== 0) {
-			return;
-		}
-		$gov = \FI\Admin\Scope::get_gov();
-		?>
-		<script>
-		(function(gov) {
-			// Rewrite FI admin menu links to include current gov.
-			document.querySelectorAll('#adminmenu a[href*="page=fi-"]').forEach(function(a) {
-				try {
-					var url = new URL(a.href);
-					url.searchParams.set('gov', gov);
-					a.href = url.toString();
-				} catch(e) {}
-			});
-			// Update current URL so bfcache keys on the correct gov (handles bookmarks / direct URLs).
-			if (history && history.replaceState) {
-				try {
-					var cur = new URL(window.location.href);
-					if (!cur.searchParams.has('gov')) {
-						cur.searchParams.set('gov', gov);
-						history.replaceState(null, '', cur.toString());
-					}
-				} catch(e) {}
-			}
-		})(<?php echo json_encode(\FI\Admin\Scope::get_gov()); ?>);
-		</script>
-		<?php
-	}, 1);
+	if (defined('FI_GOVERNMENTS') && is_array(FI_GOVERNMENTS)) {
+		return array_values(array_unique(array_map('strtoupper', array_map('sanitize_key', array_keys(FI_GOVERNMENTS)))));
+	}
 
+	return [
+		'US', 'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI',
+		'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN',
+		'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH',
+		'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA',
+		'WV', 'WI', 'WY',
+	];
+}
+
+/**
+ * Check whether a government code is available for admin scope.
+ *
+ * @param string $gov Government code.
+ * @return bool
+ */
+function fi_scope_is_valid_gov(string $gov): bool {
+	$gov = fi_scope_normalize_gov($gov);
+	return $gov !== '' && in_array($gov, fi_scope_get_available_governments(), true);
+}
+
+/**
+ * Get current admin scope.
+ *
+ * @return array Scope.
+ */
+function fi_scope_get_current(): array {
+	$cached = fi_scope_cache();
+	if ($cached !== null) {
+		return $cached;
+	}
+
+	$user_id = get_current_user_id();
+	$scope = $user_id > 0 ? get_user_meta($user_id, 'fi_admin_scope', true) : [];
+
+	if (!is_array($scope)) {
+		$scope = [];
+	}
+
+	$gov = fi_scope_normalize_gov((string) ($scope['gov'] ?? ''));
+	if (!fi_scope_is_valid_gov($gov)) {
+		$scope = fi_scope_get_default();
+	} else {
+		$scope = ['gov' => $gov];
+	}
+
+	fi_scope_cache($scope, true);
+
+	return $scope;
+}
+
+/**
+ * Set current admin scope for current user.
+ *
+ * @param array $scope Scope data.
+ * @return bool True on success.
+ */
+function fi_scope_set_current(array $scope): bool {
+	$user_id = get_current_user_id();
+	if ($user_id <= 0) {
+		return false;
+	}
+
+	$gov = fi_scope_normalize_gov((string) ($scope['gov'] ?? ''));
+	if (!fi_scope_is_valid_gov($gov)) {
+		return false;
+	}
+
+	$new_scope = ['gov' => $gov];
+	$result = update_user_meta($user_id, 'fi_admin_scope', $new_scope);
+
+	fi_scope_set_recent_govs($gov, $user_id);
+	fi_scope_cache($new_scope, true);
+
+	return $result !== false;
+}
+
+/**
+ * Add government code to a user's recent governments list.
+ *
+ * @param string $gov Government code.
+ * @param int|null $user_id User ID. Defaults to current user.
+ * @return void
+ */
+function fi_scope_set_recent_govs(string $gov, ?int $user_id = null): void {
+	$user_id = $user_id ?: get_current_user_id();
+	if ($user_id <= 0) {
+		return;
+	}
+
+	$gov = fi_scope_normalize_gov($gov);
+	if (!fi_scope_is_valid_gov($gov)) {
+		return;
+	}
+
+	$recent_govs = get_user_meta($user_id, 'fi_admin_scope_recent', true);
+	if (!is_array($recent_govs)) {
+		$recent_govs = [];
+	}
+
+	$recent_govs = array_values(array_filter(array_map('fi_scope_normalize_gov', $recent_govs)));
+	$recent_govs = array_values(array_diff($recent_govs, [$gov]));
+	array_unshift($recent_govs, $gov);
+	$recent_govs = array_slice(array_values(array_unique($recent_govs)), 0, 10);
+
+	update_user_meta($user_id, 'fi_admin_scope_recent', $recent_govs);
+}
+
+/**
+ * Get recent governments for current user.
+ *
+ * @return array Government codes.
+ */
+function fi_scope_get_recent_govs(): array {
+	$user_id = get_current_user_id();
+	if ($user_id <= 0) {
+		return [];
+	}
+
+	$recent_govs = get_user_meta($user_id, 'fi_admin_scope_recent', true);
+	if (!is_array($recent_govs)) {
+		return [];
+	}
+
+	$available = fi_scope_get_available_governments();
+	$recent_govs = array_values(array_filter(array_map('fi_scope_normalize_gov', $recent_govs), static function($gov) use ($available) {
+		return in_array($gov, $available, true);
+	}));
+
+	return array_values(array_unique($recent_govs));
+}
+
+/**
+ * Get government display name.
+ *
+ * @param string $gov Government code.
+ * @return string Display name.
+ */
+function fi_scope_get_gov_display_name(string $gov): string {
+	$gov = fi_scope_normalize_gov($gov);
+
+	if ($gov === 'US') {
+		return 'Congress';
+	}
+
+	if (function_exists('fi_gov_name')) {
+		$name = fi_gov_name($gov);
+		if ($name) {
+			return (string) $name;
+		}
+	}
+
+	if (function_exists('fi_govs')) {
+		$govs = fi_govs();
+		if (isset($govs[$gov])) {
+			return (string) $govs[$gov];
+		}
+	}
+
+	return $gov;
+}
+
+/**
+ * Display recent govs as a Bootstrap inline button group.
+ *
+ * @return string HTML.
+ */
+function fi_scope_display_recent_govs(): string {
+	$recent_govs = fi_scope_get_recent_govs();
+	if (empty($recent_govs)) {
+		return '';
+	}
+
+	$html = '<ul class="list-inline mb-0">';
+	foreach ($recent_govs as $gov) {
+		$html .= '<li class="list-inline-item mb-0"><a href="' . esc_url(fi_scope_get_switch_url($gov)) . '" class="btn btn-sm p-1 btn-warning text-black fw-bold px-3 fs-7">' . esc_html($gov) . '</a></li>';
+	}
+	$html .= '</ul>';
+
+	return $html;
+}
+
+/**
+ * Get current government code from admin scope.
+ *
+ * @return string Government code.
+ */
+function fi_scope_get_gov(): string {
+	$scope = fi_scope_get_current();
+	return $scope['gov'] ?? 'US';
+}
+
+/**
+ * Legacy placeholder: scope no longer stores session ID.
+ *
+ * @return int|null
+ */
+function fi_scope_get_session_id(): ?int {
+	return null;
+}
+
+/**
+ * Legacy placeholder: scope no longer stores session object.
+ *
+ * @return object|null
+ */
+function fi_scope_get_session(): ?object {
+	return null;
+}
+
+/**
+ * Render admin scope selector HTML.
+ *
+ * @param array|null $sessions Unused legacy parameter.
+ * @return void
+ */
+function fi_scope_render_selector(?array $sessions = null): void {
+	$current_scope = fi_scope_get_current();
+	$governments = fi_scope_get_available_governments();
+	$action_url = fi_scope_get_switch_url();
+	?>
+	<div class="container-fluid shadow-sm ps-0">
+		<div class="fi-scope-selector">
+			<div class="row">
+				<div class="col-12 col-lg-6 col-xl-4 py-1">
+					<form id="fi-scope-form" method="post" action="<?php echo esc_url($action_url); ?>">
+						<?php wp_nonce_field('fi_update_scope', 'fi_scope_nonce'); ?>
+						<label for="fi-gov" class="form-label fs-4 mb-0">Government:</label>
+						<select id="fi-gov" name="gov" class="form-select form-select-sm fw-bold fs-5 lh-1" style="width: 220px; padding: 4px 8px 10px 8px; line-height: 1.4 !important;" onchange="this.form.submit()">
+							<?php foreach ($governments as $gov): ?>
+								<option value="<?php echo esc_attr($gov); ?>" <?php selected($current_scope['gov'] ?? 'US', $gov); ?>>
+									<?php echo esc_html(fi_scope_get_gov_display_name($gov)); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+						<noscript>
+							<button type="submit" class="btn btn-success btn-sm fw-bold">Change Government</button>
+						</noscript>
+					</form>
+				</div>
+				<div class="d-none d-lg-inline col-lg-6 col-xl-8 pt-2">
+					<?php echo fi_scope_display_recent_govs(); ?>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Handle scope form submission.
+ *
+ * Uses PRG pattern.
+ *
+ * @return void
+ */
+function fi_scope_handle_form_submission(): void {
+	if (empty($_POST['fi_scope_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['fi_scope_nonce'])), 'fi_update_scope')) {
+		return;
+	}
+
+	$cap = defined('FI_CAP_MANAGE') ? FI_CAP_MANAGE : 'manage_options';
+	if (!current_user_can($cap)) {
+		wp_die(esc_html__('Insufficient permissions', 'freedom-index'));
+	}
+
+	$gov = fi_scope_normalize_gov((string) ($_POST['gov'] ?? ''));
+	if ($gov === '' || !fi_scope_is_valid_gov($gov)) {
+		return;
+	}
+
+	fi_scope_set_current(['gov' => $gov]);
+
+	wp_safe_redirect(fi_scope_get_redirect_url(), 302);
+	exit;
+}
+
+/**
+ * Apply scope filter to admin query vars.
+ *
+ * @param array $query_vars Query vars.
+ * @return array Query vars.
+ */
+function fi_scope_apply_filter(array $query_vars): array {
+	$scope = fi_scope_get_current();
+	if (!empty($scope['gov'])) {
+		$query_vars['gov'] = $scope['gov'];
+	}
+	return $query_vars;
+}
+
+/**
+ * Check if a scope array is valid.
+ *
+ * @param array $scope Scope.
+ * @return bool
+ */
+function fi_scope_is_valid_scope(array $scope): bool {
+	return !empty($scope['gov']) && fi_scope_is_valid_gov((string) $scope['gov']);
+}
+
+/**
+ * Reset scope to default.
+ *
+ * @return bool
+ */
+function fi_scope_reset(): bool {
+	return fi_scope_set_current(fi_scope_get_default());
+}
+
+/**
+ * Build current admin URL and remove specified query args.
+ *
+ * @param array $remove_keys Query keys to remove.
+ * @return string URL.
+ */
+function fi_scope_get_current_admin_url_clean(array $remove_keys = []): string {
+	$base = admin_url('admin.php');
+
+	if (isset($_GET['page'])) {
+		$base = add_query_arg('page', sanitize_key((string) $_GET['page']), $base);
+	}
+
+	if (!empty($remove_keys)) {
+		$base = remove_query_arg($remove_keys, $base);
+	}
+
+	return $base;
+}
+
+/**
+ * Get scope switch URL.
+ *
+ * @param string $gov Optional government code.
+ * @return string URL.
+ */
+function fi_scope_get_switch_url(string $gov = ''): string {
+	$args = ['action' => 'fi_switch_scope'];
+
+	$gov = fi_scope_normalize_gov($gov);
+	if ($gov !== '') {
+		$args['gov'] = $gov;
+	}
+
+	$args['redirect_to'] = rawurlencode(fi_scope_get_redirect_url(false));
+
+	return wp_nonce_url(add_query_arg($args, admin_url('admin-post.php')), 'fi_switch_scope', 'fi_scope_nonce');
+}
+
+/**
+ * Handle admin-post scope switch action.
+ *
+ * @return void
+ */
+function fi_scope_handle_switch_action(): void {
+	$cap = defined('FI_CAP_MANAGE') ? FI_CAP_MANAGE : 'manage_options';
+	if (!current_user_can($cap)) {
+		wp_die(esc_html__('Insufficient permissions', 'freedom-index'));
+	}
+
+	check_admin_referer('fi_switch_scope', 'fi_scope_nonce');
+
+	$gov = fi_scope_normalize_gov((string) ($_REQUEST['gov'] ?? ''));
+	if (!fi_scope_is_valid_gov($gov)) {
+		wp_die(esc_html__('Invalid government', 'freedom-index'));
+	}
+
+	fi_scope_set_current(['gov' => $gov]);
+
+	wp_safe_redirect(fi_scope_get_redirect_url(true));
+	exit;
+}
+
+/**
+ * Get redirect URL after scope switch.
+ *
+ * @param bool $from_request Whether to read redirect_to from request.
+ * @return string URL.
+ */
+function fi_scope_get_redirect_url(bool $from_request = true): string {
+	$redirect = '';
+
+	if ($from_request && isset($_REQUEST['redirect_to']) && is_string($_REQUEST['redirect_to'])) {
+		$redirect = wp_validate_redirect(rawurldecode(wp_unslash($_REQUEST['redirect_to'])), '');
+	}
+
+	if ($redirect === '') {
+		$redirect = fi_scope_get_current_admin_url_clean(['gov', 'scope_updated', 'scope_set', '_', '_fi_ts']);
+	}
+
+	return add_query_arg('_fi_ts', time(), remove_query_arg(['gov', 'scope_updated', 'scope_set', '_'], $redirect));
+}
+
+/**
+ * Render warning when content government differs from current scope.
+ *
+ * @param string $scope_gov Current scope government.
+ * @param string $content_gov Content government.
+ * @param string $content_type Content type label.
+ * @return void
+ */
+function fi_scope_content_check(string $scope_gov, string $content_gov, string $content_type): void {
+	$scope_gov = fi_scope_normalize_gov($scope_gov);
+	$content_gov = fi_scope_normalize_gov($content_gov);
+	$content_type = sanitize_text_field($content_type);
+
+	if ($scope_gov === $content_gov) {
+		return;
+	}
+
+	echo '<div class="container-fluid pt-3"><div class="card bg-white border border-2 border-danger rounded-3 text-danger p-2 fw-bold text-center fs-3">';
+	echo esc_html('ATTENTION: This is a ' . $content_gov . ' ' . ucfirst($content_type) . '. CHANGE GOV before editing.');
+	echo '</div></div>';
+}
+
+/**
+ * Send no-cache headers for FI admin screens.
+ *
+ * @return void
+ */
+function fi_scope_send_admin_no_cache_headers(): void {
+	$page = sanitize_key((string) ($_GET['page'] ?? ''));
+	if ($page !== '' && str_starts_with($page, 'fi-')) {
+		header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+		header('Pragma: no-cache');
+		header('Expires: Wed, 11 Jan 1984 05:00:00 GMT');
+	}
+}
+
+add_action('admin_init', 'fi_scope_handle_form_submission', 0);
+add_action('admin_post_fi_switch_scope', 'fi_scope_handle_switch_action');
+add_action('admin_init', 'fi_scope_send_admin_no_cache_headers', -10);
+
+/* -------------------------------------------------------------------------
+ * Compatibility aliases.
+ * ---------------------------------------------------------------------- */
+
+function fi_scope_get_available_govs(): array {
+	return fi_scope_get_available_governments();
+}
+
+function fi_scope_get_display_name(string $gov): string {
+	return fi_scope_get_gov_display_name($gov);
 }

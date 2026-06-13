@@ -92,7 +92,7 @@ function fi_api_census_households(string $gov = 'US'): int|false {
         //Census API endpoint for household data
         //Web: https://data.census.gov/table/ACSDT1Y2024.B09019?q=Households+by+Type&g=010XX00US
         $url = 'https://api.census.gov/data/2024/acs/acs1?get=group(B09019)&ucgid=0100000US';
-        $data = fi_api_fetch($url);
+        $data = fi_http_fetch_json($url);
 
         //B09019_003EA = Householder (132,737,146 @ 2024)
         if (isset($data['data'][1][8])) {
@@ -145,7 +145,7 @@ function fi_api_treasurygov_debt_now(): array|false {
 
     //Fetch the latest debt data from the Treasury.gov API
     $url = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?fields=record_date,tot_pub_debt_out_amt&sort=-record_date&format=json&page[number]=1&page[size]=1';
-    $data_raw = fi_api_fetch($url);
+    $data_raw = fi_http_fetch_json($url);
     if(isset($data_raw['data'][0]['tot_pub_debt_out_amt'])){
         $debt_amount = $data_raw['data'][0]['tot_pub_debt_out_amt'];
         $debt_date = $data_raw['data'][0]['record_date'];

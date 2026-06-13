@@ -14,7 +14,7 @@ $pdf_contacts = fi_pdf_contacts_get($user_id);
 $user_lists = fi_lists_get_by_user($user_id);
 ?>
 <div class="row">
-	<?php fi_get_template('partials/account-nav', ['current_page' => 'dashboard']); ?>
+	<?php fi_get_public_template('partials/account-nav', ['current_page' => 'dashboard']); ?>
 	<div class="col-12 col-md-9">
 		<div class="mb-2">
 			<h1 class="h2">Welcome back, <?php echo esc_html($user->display_name); ?>!</h1>
@@ -168,7 +168,7 @@ $user_lists = fi_lists_get_by_user($user_id);
 					</div>
 				</div>
 
-				<?php if ($has_address){fi_get_template('partials/account-findmy');}?>
+				<?php if ($has_address){fi_get_public_template('partials/account-findmy');}?>
 
 			</div>
 		</div>

@@ -7,6 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 get_header();
 
+//get_template_part('template-parts/debug_system');
+
 get_template_part('template-parts/home','0hero');
 get_template_part('template-parts/home','0stats');
 get_template_part('template-parts/home','1problem'); 	//Problem: Agitate
