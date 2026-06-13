@@ -1,0 +1,22 @@
+/* social share */
+.rumble a{background: url("/assets/theme/icon/icon-rumble-36-white.png") no-repeat; background-size:26px 26px; background-position:center;}
+.rumble a:hover{background: url("/assets/theme/icon/icon-rumble-36-black.png") no-repeat; background-size:26px 26px; background-position:center;}
+
+.gab a{background: url("/assets/theme/icon/icon-gab-17-white.png") no-repeat; background-size:17px 17px; background-position:center;}
+.gab a:hover{background: url("/assets/theme/icon/icon-gab-17-0053a4.png") no-repeat; background-size:17px 17px; background-position:center;}
+.roku a{background: url("/assets/theme/icon/icon-roku-17-white.png") no-repeat; background-size:17px 17px; background-position:center;}
+.roku a:hover{background: url("/assets/theme/icon/icon-roku-17-0053a4.png") no-repeat; background-size:17px 17px; background-position:center;}
+
+.tna-social-channels ul{list-style-type:none;}
+.tna-social-channels a{font-size:1.2em;}
+
+/* Widget - Social */
+.social-two .bg-parler, .btn-parler {background-color: #A50202 !important; color: #fff;}
+.social-two .parler img{height:24px; width:auto;margin:-3px 10px 0 8px;}
+.social-two .parler a{color:#fff !important;font-weight:bold;}
+.social-two .parler a:hover{color:#ddd !important;font-weight:bold;}
+.social-two .text-parler {color: #A50202 !important;}
+.hover-parler a{background: url("/assets/theme/icon/parler24-black.png") no-repeat; background-size:18px 18px;}
+.hover-parler a:hover {color: #A50202 !important; background: url("/assets/theme/icon/parler24-red.png")  no-repeat; background-size:18px 18px;}
+.social-no-fa{margin-left:25px;}
+#tna_bootnews_social-2{margin-bottom:-10px;}

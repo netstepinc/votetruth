@@ -289,6 +289,7 @@ FI.initBottomSheet = function() {
             .then(function(data) {
                 if (data.success && data.data.html) {
                     content.innerHTML = data.data.html;
+                    FI.initMapFromContent(content, contentType);
                 } else {
                     content.innerHTML = '<div class="alert alert-warning">Failed to load.</div>';
                 }
@@ -296,6 +297,175 @@ FI.initBottomSheet = function() {
             .catch(function() { content.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; });
         }
     });
+};
+
+// MAP INITIALIZATION - Federal and State vector maps with full config
+FI.initMapFromContent = function(content, contentType) {
+    if (typeof jsVectorMap === 'undefined') return;
+    
+    var mapId = contentType === 'federal' ? 'map-federal' : 'map-state';
+    var mapEl = content.querySelector('#' + mapId);
+    if (!mapEl) return;
+    
+    // State names for tooltips
+    var stateNames = {
+        'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+        'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+        'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+        'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+        'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+        'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+        'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+        'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+        'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VA': 'Virginia',
+        'VT': 'Vermont', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
+    };
+    
+    // Tiny states that get external buttons
+    var smallStates = ['CT','DE','MA','MD','NH','NJ','RI','VT'];
+    
+    // Label position offsets
+    var labelOffsets = {
+        'AK': { x: 0.7, y: 0.35 }, 'CA': { x: 0.4, y: 0.5 }, 'FL': { x: 0.75, y: 0.40 },
+        'HI': { x: 0.85, y: 0.9 }, 'ID': { x: 0.5, y: 0.72 }, 'KY': { x: 0.6, y: 0.5 },
+        'LA': { x: 0.3, y: 0.5 }, 'MI': { x: 0.7, y: 0.8 }, 'MN': { x: 0.4, y: 0.5 },
+        'OK': { x: 0.65, y: 0.5 }, 'VA': { x: 0.6, y: 0.6 }, 'WV': { x: 0.4, y: 0.6 }
+    };
+    
+    var mapInstance = null;
+    
+    // Apply 70% aspect ratio
+    function fi_apply_map_aspect() {
+        if (!mapEl) return;
+        var w = mapEl.offsetWidth;
+        if (w <= 0) return;
+        var h = Math.round(w * 0.7);
+        mapEl.style.aspectRatio = 'auto';
+        mapEl.style.minHeight = '0';
+        mapEl.style.height = h + 'px';
+        if (mapInstance && typeof mapInstance.updateSize === 'function') {
+            mapInstance.updateSize();
+        }
+        var mapContainer = mapEl.closest('.map-vector-container');
+        if (mapContainer) mapContainer.classList.add('fi-map-ready');
+    }
+    
+    // Draw state abbreviation labels
+    function fi_draw_state_labels() {
+        if (!mapInstance || !mapEl) return;
+        var group = mapEl.querySelector('#jvm-regions-group');
+        if (!group) return;
+        
+        group.querySelectorAll('.fi-map-state-label').forEach(function(el) { el.remove(); });
+        
+        Object.keys(mapInstance.regions).forEach(function(code) {
+            var abbr = code.replace('US-', '');
+            if (smallStates.indexOf(abbr) !== -1) return;
+            
+            var region = mapInstance.regions[code];
+            var shape = region && region.element && region.element.shape;
+            if (!shape || typeof shape.getBBox !== 'function') return;
+            
+            var bbox;
+            try { bbox = shape.getBBox(); } catch (e) { return; }
+            
+            var offset = labelOffsets[abbr];
+            var cx = offset ? bbox.x + (bbox.width * (offset.x || 0.5)) : bbox.x + (bbox.width / 2);
+            var cy = offset ? bbox.y + (bbox.height * (offset.y || 0.5)) : bbox.y + (bbox.height / 2);
+            
+            var label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', cx);
+            label.setAttribute('y', cy);
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dominant-baseline', 'central');
+            label.setAttribute('fill', '#fff');
+            label.setAttribute('font-size', '20');
+            label.setAttribute('font-family', 'inherit, sans-serif');
+            label.setAttribute('font-weight', '500');
+            label.classList.add('fi-map-state-label');
+            label.style.pointerEvents = 'none';
+            label.textContent = abbr;
+            group.appendChild(label);
+        });
+    }
+    
+    // Delay to ensure container has dimensions
+    setTimeout(function() {
+        try {
+            mapInstance = new jsVectorMap({
+                selector: '#' + mapId,
+                map: 'us_aea_en',
+                backgroundColor: 'transparent',
+                regionStyle: {
+                    initial: { fill: '#c41425', 'fill-opacity': 1, stroke: '#fff', 'stroke-width': 1 },
+                    hover: { fill: '#cccccc' },
+                    selected: { fill: '#228B22' }
+                },
+                zoomButtons: false,
+                zoomOnScroll: false,
+                zoomOnDoubleClick: false,
+                zoomMax: 1,
+                onRegionTooltipShow: function(event, tooltip, code) {
+                    var abbr = (code || '').replace('US-', '');
+                    tooltip.text(stateNames[abbr] || abbr);
+                },
+                onLoaded: function() {
+                    fi_apply_map_aspect();
+                    fi_draw_state_labels();
+                    requestAnimationFrame(function() {
+                        requestAnimationFrame(function() {
+                            fi_apply_map_aspect();
+                            fi_draw_state_labels();
+                        });
+                    });
+                    if (typeof ResizeObserver !== 'undefined') {
+                        var roScheduled = false;
+                        var ro = new ResizeObserver(function() {
+                            if (roScheduled) return;
+                            roScheduled = true;
+                            requestAnimationFrame(function() {
+                                roScheduled = false;
+                                fi_apply_map_aspect();
+                                fi_draw_state_labels();
+                            });
+                        });
+                        ro.observe(mapEl);
+                    }
+                },
+                onRegionClick: function(event, code) {
+                    var stateCode = code.replace('US-', '').toLowerCase();
+                    var gov = contentType === 'federal' ? 'US' : stateCode.toUpperCase();
+                    if (typeof fiLoadStateLegislators === 'function') {
+                        fiLoadStateLegislators(gov, stateCode);
+                    }
+                }
+            });
+            
+            // Tiny state button handlers
+            content.querySelectorAll('[data-state]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var code = this.dataset.state;
+                    if (mapInstance) mapInstance.setSelectedRegions(['US-' + code]);
+                    var gov = contentType === 'federal' ? 'US' : code.toUpperCase();
+                    if (typeof fiLoadStateLegislators === 'function') {
+                        fiLoadStateLegislators(gov, code.toLowerCase());
+                    }
+                });
+            });
+            
+            // Window resize handler
+            var fi_resize_timer = null;
+            window.addEventListener('resize', function() {
+                clearTimeout(fi_resize_timer);
+                fi_resize_timer = setTimeout(function() {
+                    fi_apply_map_aspect();
+                    fi_draw_state_labels();
+                }, 120);
+            });
+        } catch (e) {
+            console.error('Map init error:', e);
+        }
+    }, 100);
 };
 
 // Global function to load state legislators from map click
