@@ -30,9 +30,7 @@ FI.init = function(){
     FI.initUserPrefs();
 };
 
-// =============================================================================
 // UNIFIED SEARCH SYSTEM - Single source of truth for all search functionality
-// =============================================================================
 
 /**
  * Execute unified search AJAX call
@@ -174,10 +172,7 @@ FI.initLegislatorSearch = function() {
     })();
 };
 
-// =============================================================================
 // BOTTOM SHEET SYSTEM - Unified container for search results and selectors
-// =============================================================================
-
 FI.initBottomSheet = function() {
     var sheet = document.getElementById('fi-bottom-sheet');
     var backdrop = sheet?.querySelector('.fi-bottom-sheet-backdrop');
@@ -292,18 +287,101 @@ FI.initBottomSheet = function() {
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data.success && data.data.html) content.innerHTML = data.data.html;
-                else content.innerHTML = '<div class="alert alert-warning">Failed to load.</div>';
+                if (data.success && data.data.html) {
+                    content.innerHTML = data.data.html;
+                    FI.initMapFromContent(content, contentType);
+                } else {
+                    content.innerHTML = '<div class="alert alert-warning">Failed to load.</div>';
+                }
             })
             .catch(function() { content.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; });
         }
     });
 };
 
-// =============================================================================
-// LISTS SYSTEM
-// =============================================================================
+// MAP INITIALIZATION - Federal and State vector maps
+FI.initMapFromContent = function(content, contentType) {
+    if (typeof jsVectorMap === 'undefined') return;
+    
+    var mapId = contentType === 'federal' ? 'map-federal' : 'map-state';
+    var mapEl = content.querySelector('#' + mapId);
+    if (!mapEl) return;
+    
+    // Delay initialization to ensure container has dimensions
+    requestAnimationFrame(function() {
+    try {
+        var map = new jsVectorMap({
+            selector: '#' + mapId,
+            map: 'us_aea_en',
+            backgroundColor: 'transparent',
+            regionStyle: {
+                initial: {
+                    fill: '#e9ecef',
+                    stroke: '#ffffff',
+                    strokeWidth: 1
+                },
+                hover: {
+                    fill: '#0055a4'
+                },
+                selected: {
+                    fill: '#0055a4'
+                }
+            },
+            onRegionClick: function(event, code) {
+                var stateCode = code.toLowerCase();
+                var gov = contentType === 'federal' ? 'US' : stateCode.toUpperCase();
+                if (typeof fiLoadStateLegislators === 'function') {
+                    fiLoadStateLegislators(gov, stateCode);
+                }
+            }
+        });
+        
+        // Tiny state button handlers (buttons have data-state attribute)
+        content.querySelectorAll('[data-state]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var code = this.dataset.state;
+                var gov = contentType === 'federal' ? 'US' : code.toUpperCase();
+                if (typeof fiLoadStateLegislators === 'function') {
+                    fiLoadStateLegislators(gov, code);
+                }
+            });
+        });
+    } catch (e) {
+        console.error('Map init error:', e);
+    }
+    });
+};
 
+// Global function to load state legislators from map click
+window.fiLoadStateLegislators = function(gov, stateCode) {
+    var content = document.getElementById('fi-bottom-sheet-content');
+    var title = document.getElementById('fi-bottom-sheet-title');
+    if (!content) return;
+    
+    if (title) title.textContent = gov === 'US' ? 'Federal Legislators' : stateCode.toUpperCase() + ' Legislators';
+    content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    fetch(FI.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            action: 'fi_load_state_legislators',
+            nonce: FI.nonce,
+            gov: gov,
+            state: stateCode.toLowerCase()
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.data.html) content.innerHTML = data.data.html;
+        else content.innerHTML = '<div class="alert alert-warning">No legislators found.</div>';
+    })
+    .catch(function() {
+        content.innerHTML = '<div class="alert alert-danger">Failed to load legislators.</div>';
+    });
+};
+
+// LISTS SYSTEM
 FI.initLists = function() {
     $(document).on('click', '.fi-add-to-list', function() { FI.addToList($(this).data('legislator-id')); });
     $(document).on('click', '#fi-save-list', function() { FI.saveList(); });
@@ -334,10 +412,7 @@ FI.saveList = function() {
     $.ajax({ url: FI.ajaxurl, type: 'POST', data: { action: 'fi_save_list', nonce: FI.nonce, name: name, legislator_ids: list }, success: function(r) { if (r.success) { alert('List saved!'); window.location.href = r.data.url; } else { alert('Error: ' + r.data); } } });
 };
 
-// =============================================================================
 // USER PREFS
-// =============================================================================
-
 FI.initUserPrefs = function() {
     FI.loadUserPrefs();
     $(document).on('click', '#fi-save-prefs', function() { FI.saveUserPrefs(); });
@@ -357,11 +432,13 @@ FI.syncPrefs = function() { var p = localStorage.getItem('fi_user_prefs'); if (p
 })(jQuery);
 </script>
 <?php
-$script = ob_get_clean();
-$script = str_replace(['<script>', '</script>'], '', $script);
-$script = trim( $script );
-$script = preg_replace( '/\r\n|\r/', "\n", $script );
-$script = preg_replace( '/[ \t]+\n/', "\n", $script );
-wp_enqueue_script( 'jquery' );
-wp_add_inline_script( 'jquery', $script, 'after' );
+	$script = ob_get_clean();
+	$script = str_replace(['<script>', '</script>'], '', $script);
+	$script = trim( $script );
+	$script = preg_replace( '/\r\n|\r/', "\n", $script );
+	$script = preg_replace( '/[ \t]+\n/', "\n", $script );
+	wp_enqueue_script( 'jquery' );
+	wp_register_script( 'fi-public-inline', '', [], '1.0', true );
+	wp_enqueue_script( 'fi-public-inline' );
+	wp_add_inline_script( 'fi-public-inline', $script );
 }

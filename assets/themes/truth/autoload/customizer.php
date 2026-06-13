@@ -99,6 +99,15 @@ function vttt_customizer_styles() {
 	--fi-g-c: #D4B000;
 	--fi-g-d: #c95e1a;
 	--fi-g-f: #bf2b2b;
+
+	--fi-navy: #02275D; /*  #002b62; */
+
+	--map-bg: #F5C87A;
+	--map-bg-hover: #E8934A;
+	--map-bg-active: #D6813D;
+	--map-text-hover: #F8F5F0;
+	--map-text: #333;
+	--map-border: #333;
 }
 <?php
 //Load Customizer Styles
@@ -108,28 +117,7 @@ if(function_exists('vttt_load_css')){
 	echo "\n/*Customizer Loading Failed*/\n";
 }
 
-//Staff is willing to highlight the "A" legislators but not color code the rest at this time.
 ?>
-.fi-bg-a{background-color: var(--fi-g-a) !important;}
-.fi-bg-b{background-color: var(--fi-g-b) !important;}
-.fi-bg-c{background-color: var(--fi-g-c) !important;}
-.fi-bg-d{background-color: var(--fi-g-d) !important;}
-.fi-bg-f{background-color: var(--fi-g-f) !important;}
-.fi-bg-text-a{color:#ffffff !important;}
-.fi-bg-text-b{color:#ffffff !important;}
-.fi-bg-text-c{color:#ffffff !important;}
-.fi-bg-text-d{color:#ffffff !important;}
-.fi-bg-text-f{color:#ffffff !important;}
-.fi-text-a{color: var(--fi-g-a) !important;}
-.fi-text-b{color: var(--fi-g-b) !important;}
-.fi-text-c{color: var(--fi-g-c) !important;}
-.fi-text-d{color: var(--fi-g-d) !important;}
-.fi-text-f{color: var(--fi-g-f) !important;}
-.accordion-button:not(.collapsed) .badge.fi-bg-text-a {color: var(--fi-g-a) !important;}
-.accordion-button:not(.collapsed) .badge.fi-bg-text-b {color: var(--fi-g-b) !important;}
-.accordion-button:not(.collapsed) .badge.fi-bg-text-c {color: var(--fi-g-c) !important;}
-.accordion-button:not(.collapsed) .badge.fi-bg-text-d {color: var(--fi-g-d) !important;}
-.accordion-button:not(.collapsed) .badge.fi-bg-text-f {color: var(--fi-g-f) !important;}
 </style>
 <?php
 	$css = ob_get_clean();

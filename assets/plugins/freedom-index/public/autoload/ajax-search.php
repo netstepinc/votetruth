@@ -13,6 +13,8 @@ add_action('init', function(): void {
     add_action('wp_ajax_nopriv_fi_search_autocomplete', 'fi_public_ajax_handle_search_autocomplete');
     add_action('wp_ajax_fi_load_selector', 'fi_public_ajax_handle_load_selector');
     add_action('wp_ajax_nopriv_fi_load_selector', 'fi_public_ajax_handle_load_selector');
+    add_action('wp_ajax_fi_load_state_legislators', 'fi_public_ajax_handle_load_state_legislators');
+    add_action('wp_ajax_nopriv_fi_load_state_legislators', 'fi_public_ajax_handle_load_state_legislators');
 });
 
 /**
@@ -368,6 +370,36 @@ function fi_public_ajax_handle_load_selector(): void {
     }
 
     ob_start();
-    get_template_part('template-parts/sheet-select-state', '', ['type' => $type]);
+    get_template_part('global-templates/bottom-sheet-map', '', ['type' => $type]);
     wp_send_json_success(['html' => ob_get_clean(), 'type' => $type]);
+}
+
+/**
+ * Load legislators for a selected state.
+ */
+function fi_public_ajax_handle_load_state_legislators(): void {
+    check_ajax_referer('fi_ajax_nonce', 'nonce');
+
+    $gov   = sanitize_text_field($_POST['gov'] ?? '');
+    $state = sanitize_text_field($_POST['state'] ?? '');
+
+    if (empty($state)) {
+        wp_send_json_error(['message' => 'State code required']);
+    }
+
+    $results = fi_search_legislators('', ['state' => strtoupper($state), 'limit' => 50]);
+
+    if (is_wp_error($results)) {
+        wp_send_json_error(['message' => $results->get_error_message()]);
+    }
+
+    if (empty($results)) {
+        wp_send_json_error(['message' => 'No legislators found for this state.']);
+    }
+
+    ob_start();
+    foreach ($results as $legislator) {
+        fi_render_legislator_card($legislator);
+    }
+    wp_send_json_success(['html' => ob_get_clean(), 'count' => count($results)]);
 }

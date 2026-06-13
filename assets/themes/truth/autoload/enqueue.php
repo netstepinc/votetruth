@@ -10,13 +10,13 @@ function vttt_enqueue_assets() {
 	if( is_singular('legislator') ){
 		wp_enqueue_script('qr-code-styling', 'https://cdn.jsdelivr.net/npm/qr-code-styling/lib/qr-code-styling.min.js', array(), null, true);
 	}
-
+/*
 	if ( is_front_page() || is_page() || is_singular('post') ) {
 		wp_enqueue_script('gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js', [], null, true);
 		wp_enqueue_script('gsap-scrolltrigger', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js', ['gsap'], null, true);
 		wp_enqueue_script('gsap-init', STYLE_JS . 'gsap-animations.js', ['gsap', 'gsap-scrolltrigger'], '1.0.0', true);
 	}
-
+*/
 	wp_enqueue_script('jsvectormap', STYLE_JS . 'jsvectormap.min.js', [], null, true);
 	wp_enqueue_script('jsvectormap-us-en', STYLE_JS . 'jsvectormap-us-en.js', ['jsvectormap'], null, true);
 }

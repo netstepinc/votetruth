@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  */
 
 // Bottom sheet container for search results and state/federal selectors
-get_template_part('template-parts/bottom-sheet');
+get_template_part('global-templates/bottom-sheet');
 
 $has_footer_menu = has_nav_menu( 'footer' );
 ?>
@@ -57,59 +57,3 @@ $has_footer_menu = has_nav_menu( 'footer' );
 		</p>
 	</div>
 </footer>
-
-<style>
-/* ──────────────────────────────────────────────────────────────
-   FreedomIndex — v2605 footer styles
-   ────────────────────────────────────────────────────────────── */
-:root {
-	--fi-navy:    #002b62;
-}
-
-.fi-footer {
-	background: var(--fi-navy);
-	color: rgba(255, 255, 255, 0.5);
-	padding: 36px 24px 28px;
-	font-size: 14px;
-	line-height: 1.8;
-}
-.fi-footer a { color: rgba(255, 255, 255, 0.65); text-decoration: none; }
-.fi-footer a:hover, .fi-footer a:focus { color: #ffffff; }
-
-.fi-footer-closing {
-	font-size: 18px;
-	font-weight: 600;
-	color: rgba(255, 255, 255, 0.88);
-	margin-bottom: 20px;
-	letter-spacing: -0.01em;
-}
-
-/* WP-rendered footer menu */
-.fi-footer-nav {
-	gap: 0;
-	margin: 0 0 12px;
-	padding: 0;
-}
-.fi-footer-nav li {
-	display: inline-flex;
-	align-items: center;
-}
-.fi-footer-nav li::after {
-	content: "·";
-	color: rgba(255, 255, 255, 0.35);
-	margin: 0 10px;
-}
-.fi-footer-nav li:last-child::after { content: ""; margin: 0; }
-.fi-footer-nav li a { padding: 0; }
-
-.fi-footer-links { margin-bottom: 12px; }
-
-.fi-footer-attribution {
-	font-size: 13px;
-	color: rgba(255, 255, 255, 0.4);
-	margin-bottom: 8px;
-}
-.fi-footer-attribution a { color: rgba(255, 255, 255, 0.45); }
-
-.fi-footer-copy { margin: 4px 0 0; }
-</style>
