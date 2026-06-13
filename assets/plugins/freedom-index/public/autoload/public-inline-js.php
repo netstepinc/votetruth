@@ -289,66 +289,12 @@ FI.initBottomSheet = function() {
             .then(function(data) {
                 if (data.success && data.data.html) {
                     content.innerHTML = data.data.html;
-                    FI.initMapFromContent(content, contentType);
                 } else {
                     content.innerHTML = '<div class="alert alert-warning">Failed to load.</div>';
                 }
             })
             .catch(function() { content.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; });
         }
-    });
-};
-
-// MAP INITIALIZATION - Federal and State vector maps
-FI.initMapFromContent = function(content, contentType) {
-    if (typeof jsVectorMap === 'undefined') return;
-    
-    var mapId = contentType === 'federal' ? 'map-federal' : 'map-state';
-    var mapEl = content.querySelector('#' + mapId);
-    if (!mapEl) return;
-    
-    // Delay initialization to ensure container has dimensions
-    requestAnimationFrame(function() {
-    try {
-        var map = new jsVectorMap({
-            selector: '#' + mapId,
-            map: 'us_aea_en',
-            backgroundColor: 'transparent',
-            regionStyle: {
-                initial: {
-                    fill: '#e9ecef',
-                    stroke: '#ffffff',
-                    strokeWidth: 1
-                },
-                hover: {
-                    fill: '#0055a4'
-                },
-                selected: {
-                    fill: '#0055a4'
-                }
-            },
-            onRegionClick: function(event, code) {
-                var stateCode = code.toLowerCase();
-                var gov = contentType === 'federal' ? 'US' : stateCode.toUpperCase();
-                if (typeof fiLoadStateLegislators === 'function') {
-                    fiLoadStateLegislators(gov, stateCode);
-                }
-            }
-        });
-        
-        // Tiny state button handlers (buttons have data-state attribute)
-        content.querySelectorAll('[data-state]').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var code = this.dataset.state;
-                var gov = contentType === 'federal' ? 'US' : code.toUpperCase();
-                if (typeof fiLoadStateLegislators === 'function') {
-                    fiLoadStateLegislators(gov, code);
-                }
-            });
-        });
-    } catch (e) {
-        console.error('Map init error:', e);
-    }
     });
 };
 

@@ -17,7 +17,7 @@ function vttt_enqueue_assets() {
 		wp_enqueue_script('gsap-init', STYLE_JS . 'gsap-animations.js', ['gsap', 'gsap-scrolltrigger'], '1.0.0', true);
 	}
 */
-	wp_enqueue_script('jsvectormap', STYLE_JS . 'jsvectormap.min.js', [], null, true);
-	wp_enqueue_script('jsvectormap-us-en', STYLE_JS . 'jsvectormap-us-en.js', ['jsvectormap'], null, true);
+	//wp_enqueue_script('jsvectormap', STYLE_JS . 'jsvectormap.min.js', [], null, true);
+	//wp_enqueue_script('jsvectormap-us-en', STYLE_JS . 'jsvectormap-us-en.js', ['jsvectormap'], null, true);
 }
 add_action( 'wp_enqueue_scripts', 'vttt_enqueue_assets' );
