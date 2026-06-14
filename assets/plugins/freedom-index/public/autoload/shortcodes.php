@@ -12,7 +12,7 @@ function fi_latest_freedom_index_pdf($args = []) {
 	), $args);
 	$report = fi_report_latest_freedom_index();
 	if($report){
-		$payload = json_decode($report->payload_json ?? '', true);
+		$payload = json_decode($report['payload_json'] ?? '', true);
 		$report_pdf_url = $payload['report_pdf_url'] ?? '';
 		if($report_pdf_url){
 			return '<a href="'.$report_pdf_url.'" class="btn '.$args['class'].' w-100" target="_blank"><i class="fas fa-file-pdf me-2"></i>'.$args['text'].'</a>';

@@ -17,34 +17,46 @@ add_action('init', function(): void {
     add_action('wp_ajax_nopriv_fi_load_state_legislators', 'fi_public_ajax_handle_load_state_legislators');
 });
 
+
+
 /**
  * Main unified search handler.
  * Routes: ZIP/address → representatives, Name → legislator search.
  */
 function fi_public_ajax_handle_unified_search(): void {
+    fi_log( 'AJAX SEARCH: fi_unified_search called, POST=' . json_encode( $_POST ), __FILE__, __LINE__ );
     check_ajax_referer('fi_ajax_nonce', 'nonce');
 
     $query = sanitize_text_field(wp_unslash($_POST['query'] ?? $_POST['search'] ?? ''));
     $query = trim($query);
+    fi_log( 'AJAX SEARCH: query=' . $query, __FILE__, __LINE__ );
 
     if ($query === '') {
+        fi_log( 'AJAX SEARCH: empty query, returning early', __FILE__, __LINE__ );
         wp_send_json_success(['mode' => 'empty', 'html' => '', 'count' => 0]);
     }
 
     $route = fi_search_route($query, $_POST);
+    fi_log( 'AJAX SEARCH: route=' . $route, __FILE__, __LINE__ );
 
     if ($route === 'representatives') {
+        fi_log( 'AJAX SEARCH: routing to fi_search_representatives', __FILE__, __LINE__ );
         $result = fi_search_representatives($query, $_POST);
         if (is_wp_error($result)) {
+            fi_log( 'AJAX SEARCH ERROR: representatives error=' . $result->get_error_message(), __FILE__, __LINE__ );
             wp_send_json_error(['message' => $result->get_error_message()]);
         }
+        fi_log( 'AJAX SEARCH: representatives result count=' . ( $result['count'] ?? 0 ), __FILE__, __LINE__ );
         wp_send_json_success($result);
     }
 
+    fi_log( 'AJAX SEARCH: routing to fi_search_legislators', __FILE__, __LINE__ );
     $result = fi_search_legislators($query);
     if (is_wp_error($result)) {
+        fi_log( 'AJAX SEARCH ERROR: legislators error=' . $result->get_error_message(), __FILE__, __LINE__ );
         wp_send_json_error(['message' => $result->get_error_message()]);
     }
+    fi_log( 'AJAX SEARCH: legislators result count=' . ( $result['count'] ?? 0 ), __FILE__, __LINE__ );
     wp_send_json_success($result);
 }
 
@@ -53,6 +65,7 @@ function fi_public_ajax_handle_unified_search(): void {
  */
 function fi_search_route(string $query, array $source): string {
     $zip = fi_extract_zip($query);
+    fi_log( 'AJAX ROUTE: query=' . $query . ', extracted_zip=' . $zip . ', source_zip=' . ( $source['zip'] ?? '' ), __FILE__, __LINE__ );
 
     // Explicit address components
     if (!empty($source['zip']) && fi_extract_zip((string)$source['zip'])) return 'representatives';
@@ -97,33 +110,39 @@ function fi_build_address(string $query, array $source): string {
  */
 function fi_search_representatives(string $query, array $source) {
     $address = fi_build_address($query, $source);
+    fi_log( 'AJAX REPS: address built=' . $address, __FILE__, __LINE__ );
     if ($address === '') {
+        fi_log( 'AJAX REPS ERROR: empty address', __FILE__, __LINE__ );
         return new WP_Error('address_required', 'ZIP code or address is required.');
     }
+	$address_encoded = rawurlencode($address);
 
     // Check cache first
-    $cache_key = 'findmy/' . rawurlencode(strtolower($address));
-    if (function_exists('fi_cache')) {
-        $cached = fi_cache($cache_key);
-        if (is_array($cached) && isset($cached['officials'])) {
-            $district_check = fi_check_multiple_districts($cached['officials']);
-            return [
-                'mode' => 'representatives',
-                'html' => fi_render_representatives($cached['officials'], $address, $district_check['has_multiple'], $district_check),
-                'address' => $address,
-                'count' => count($cached['officials']),
-                'officials' => $cached['officials'],
-                'has_multiple_districts' => $district_check['has_multiple'],
-                'multiple_districts_type' => $district_check['type'],
-                'multiple_districts_message' => $district_check['has_multiple']
-                    ? "Your zip code spans {$district_check['count']} " . ($district_check['type'] === 'federal' ? 'congressional' : 'state legislative') . " districts."
-                    : '',
-            ];
-        }
-    }
+    $cache_key = fi_cache_key('findmy/' . $address_encoded);
+    fi_log( 'AJAX REPS: cache_key=' . $cache_key, __FILE__, __LINE__ );
+	$cached = fi_cache($cache_key);
+	fi_log( 'AJAX REPS: cache hit=' . ( is_array($cached) && isset($cached['officials']) ? 'YES (' . count($cached['officials']) . ' officials)' : 'NO' ), __FILE__, __LINE__ );
+	if (is_array($cached) && !empty($cached['officials'])) {
+		$district_check = fi_check_multiple_districts($cached['officials']);
+		return [
+			'mode' => 'representatives',
+			'html' => fi_render_representatives($cached['officials'], $address, $district_check['has_multiple'], $district_check),
+			'address' => $address,
+			'count' => count($cached['officials']),
+			'officials' => $cached['officials'],
+			'has_multiple_districts' => $district_check['has_multiple'],
+			'multiple_districts_type' => $district_check['type'],
+			'multiple_districts_message' => $district_check['has_multiple']
+				? "Your zip code spans {$district_check['count']} " . ($district_check['type'] === 'federal' ? 'congressional' : 'state legislative') . " districts."
+				: '',
+		];
+	}
+
 
     // Call Geocod API directly with address
-    $officials = fi_geocod_fetch_officials(rawurlencode($address));
+    fi_log( 'AJAX REPS: calling fi_geocod_fetch_officials with=' . $address_encoded, __FILE__, __LINE__ );
+    $officials = fi_geocod_fetch_officials($address_encoded);
+    fi_log( 'AJAX REPS: fi_geocod_fetch_officials returned ' . ( is_array($officials) ? count($officials) : 'non-array' ) . ' officials', __FILE__, __LINE__ );
     if (!is_array($officials)) $officials = [];
 
     // Check for multiple districts
@@ -144,10 +163,7 @@ function fi_search_representatives(string $query, array $source) {
     ];
 
     // Cache the result
-    if (function_exists('fi_cache')) {
-        fi_cache($cache_key, $result);
-    }
-
+    //fi_cache($cache_key, $result);
     return $result;
 }
 
@@ -277,7 +293,7 @@ function fi_search_legislators(string $query) {
         LIMIT 50
     ";
 
-    $rows = $wpdb->get_results($wpdb->prepare($sql, $like, $like, $like));
+    $rows = $wpdb->get_results($wpdb->prepare($sql, $like, $like, $like), ARRAY_A);
 
     ob_start();
     echo '<div class="row g-3">';
@@ -287,8 +303,7 @@ function fi_search_legislators(string $query) {
         echo '<div class="col-12 col-md-8 col-lg-6 mx-auto"><div class="alert alert-info text-center"><h4>No results found for: <strong>' . esc_html($query) . '</strong></h4><p>Try a different or partial name.</p></div></div>';
     } else {
         foreach ($rows as $row) {
-            if (!function_exists('legislators_list_format_legislator')) break;
-            $leg = legislators_list_format_legislator($row);
+            $leg = fi_legislators_format_row($row);
             if (empty($leg['gov'])) continue;
             $count++;
             echo '<div class="col-12 col-md-6">';
@@ -314,11 +329,9 @@ function fi_public_ajax_handle_search_autocomplete(): void {
     if (strlen($term) < 3) wp_send_json_success([]);
 
     // Check cache
-    $cache_key = 'fi_ac_' . md5(strtolower($term) . '|' . $limit);
-    if (function_exists('fi_cache')) {
-        $cached = fi_cache($cache_key);
-        if (is_array($cached)) wp_send_json_success($cached);
-    }
+    $cache_key = fi_cache_key('fi_ac_' . $term . '|' . $limit);
+    $cached = fi_cache($cache_key);
+    if (is_array($cached)) wp_send_json_success($cached);
 
     global $wpdb;
     $search_term = '%' . $wpdb->esc_like($term) . '%';
@@ -351,9 +364,7 @@ function fi_public_ajax_handle_search_autocomplete(): void {
     }
 
     // Cache results
-    if (function_exists('fi_cache')) {
-        fi_cache($cache_key, $suggestions);
-    }
+    fi_cache($cache_key, $suggestions);
 
     wp_send_json_success($suggestions);
 }

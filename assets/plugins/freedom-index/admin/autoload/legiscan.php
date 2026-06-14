@@ -445,7 +445,7 @@ function fi_legiscan_create_legislator(array $args) : int|false {
 				if ($session_id_legiscan) {
 					// Find session by legiscan_id column
 					$session = fi_session_get_by_legiscan_id((int) $session_id_legiscan, $gov);
-					$session_id = $session ? $session->id : null;
+					$session_id = $session ? $session['id'] : null;
 					
 					if ($session_id) {
 						//CHAMBERFLAG
@@ -523,11 +523,11 @@ function fi_legiscan_list_votes(array $args = []) : array {
 			$vote_records = $wpdb->get_results($sql, OBJECT);
 			
 			foreach ($vote_records as $vote) {
-				if ($vote->legiscan_rcid) {
-					$votes[$vote->legiscan_rcid] = [
-						'id' => $vote->id,
-						'legiscan_bid' => $vote->legiscan_bid,
-						'legiscan_rcid' => $vote->legiscan_rcid,
+				if ($vote['legiscan_rcid']) {
+					$votes[$vote['legiscan_rcid']] = [
+						'id' => $vote['id'],
+						'legiscan_bid' => $vote['legiscan_bid'],
+						'legiscan_rcid' => $vote['legiscan_rcid'],
 					];
 				}
 			}
@@ -565,7 +565,7 @@ function fi_legiscan_create_vote(array $args) : int|false {
 			
 			// Find session by legiscan_id column
 			$session = fi_session_get_by_legiscan_id((int) $session_id_legiscan, $gov);
-			$session_id = $session ? $session->id : null;
+			$session_id = $session ? $session['id'] : null;
 			
 			if (!$session_id) {
 				return false;
@@ -1331,10 +1331,10 @@ function fi_legiscan_vote_data(array $args) : array {
 		// If we don't have LS_session_id, try to get it from the vote
 		if (!$LS_session_id && $fi_vote_id) {
 			$vote = fi_vote_get((int) $fi_vote_id);
-			if ($vote && !empty($vote->session_id)) {
-				$session = fi_session_get((int) $vote->session_id);
-				if ($session && !empty($session->legiscan_id)) {
-					$LS_session_id = (int) $session->legiscan_id;
+			if ($vote && !empty($vote['session_id'])) {
+				$session = fi_session_get((int) $vote['session_id']);
+				if ($session && !empty($session['legiscan_id'])) {
+					$LS_session_id = (int) $session['legiscan_id'];
 				}
 			}
 		}

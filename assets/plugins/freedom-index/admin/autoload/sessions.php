@@ -46,25 +46,25 @@ function fi_admin_sessions_get_parent_options(string $gov, ?int $exclude_id = nu
 	//FORCE TOP LEVEL ONLY: Chidren can't have children.
 	$options = ['' => 'None (Top-level Session)'];
 	foreach ($sessions as $session) {
-		if ($exclude_id && (int) $session->id === $exclude_id) {
+		if ($exclude_id && (int) $session['id'] === $exclude_id) {
 			continue;
 		}
-		if ($session->parent_id) {
+		if ($session['parent_id']) {
 			continue;
 		}
-//' (' . ($session->date_start ? date('Y', strtotime($session->date_start)) : '') . ')'
+//' (' . ($session['date_start'] ? date('Y', strtotime($session['date_start'])) : '') . ')'
 		$dates = '';
-		if ($session->date_start) {
-			$dates .= date('Y', strtotime($session->date_start));
+		if ($session['date_start']) {
+			$dates .= date('Y', strtotime($session['date_start']));
 		}
-		if ($session->date_end) {
-			$dates .= ' - ' . date('Y', strtotime($session->date_end));
+		if ($session['date_end']) {
+			$dates .= ' - ' . date('Y', strtotime($session['date_end']));
 		}
 		if ($dates) {
 			$dates = ' (' . $dates . ')';
 		}
 
-		$options[$session->id] = $session->name . $dates;
+		$options[$session['id']] = $session['name'] . $dates;
 	}
 
 	return $options;
@@ -74,7 +74,7 @@ function fi_admin_sessions_get_parent_options(string $gov, ?int $exclude_id = nu
  * Meta entries not surfaced via the form
  */
 function fi_admin_sessions_get_extra_meta(object $session): array {
-	$meta = is_array($session->meta ?? null) ? $session->meta : [];
+	$meta = is_array($session['meta'] ?? null) ? $session['meta'] : [];
 	return $meta;
 }
 
@@ -194,7 +194,7 @@ function fi_admin_sessions_maybe_handle_delete(): void {
 		wp_die('Session not found.');
 	}
 
-	$session_name = $session->name;
+	$session_name = $session['name'];
 	$result = fi_session_delete($session_id);
 	$redirect_url = fi_admin_url('fi-sessions', [
 		'deleted' => $result ? '1' : '0',

@@ -321,6 +321,16 @@ FI.initMapFromContent = function(content, contentType) {
         'VT': 'Vermont', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
     };
     
+    // Build state links based on type (federal or state)
+    var stateLinks = {};
+    var allStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+    allStates.forEach(function(abbr) {
+        var url = contentType === 'federal' 
+            ? FI.homeUrl + 'us/legislators/state/' + abbr.toLowerCase() + '/'
+            : FI.homeUrl + abbr.toLowerCase() + '/legislators/';
+        stateLinks['US-' + abbr] = url;
+    });
+    
     // Tiny states that get external buttons
     var smallStates = ['CT','DE','MA','MD','NH','NJ','RI','VT'];
     
@@ -388,7 +398,8 @@ FI.initMapFromContent = function(content, contentType) {
             group.appendChild(label);
         });
     }
-    
+
+
     // Delay to ensure container has dimensions
     setTimeout(function() {
         try {
@@ -397,9 +408,9 @@ FI.initMapFromContent = function(content, contentType) {
                 map: 'us_aea_en',
                 backgroundColor: 'transparent',
                 regionStyle: {
-                    initial: { fill: '#c41425', 'fill-opacity': 1, stroke: '#fff', 'stroke-width': 1 },
-                    hover: { fill: '#cccccc' },
-                    selected: { fill: '#228B22' }
+                    initial: { fill: '#F5C87A', 'fill-opacity': 1, stroke: '#333', 'stroke-width': 1 },
+                    hover: { fill: '#E8934A' },
+                    selected: { fill: '#D6813D' }
                 },
                 zoomButtons: false,
                 zoomOnScroll: false,
@@ -433,10 +444,8 @@ FI.initMapFromContent = function(content, contentType) {
                     }
                 },
                 onRegionClick: function(event, code) {
-                    var stateCode = code.replace('US-', '').toLowerCase();
-                    var gov = contentType === 'federal' ? 'US' : stateCode.toUpperCase();
-                    if (typeof fiLoadStateLegislators === 'function') {
-                        fiLoadStateLegislators(gov, stateCode);
+                    if (stateLinks[code]) {
+                        window.location.href = stateLinks[code];
                     }
                 }
             });
@@ -446,10 +455,8 @@ FI.initMapFromContent = function(content, contentType) {
                 btn.addEventListener('click', function() {
                     var code = this.dataset.state;
                     if (mapInstance) mapInstance.setSelectedRegions(['US-' + code]);
-                    var gov = contentType === 'federal' ? 'US' : code.toUpperCase();
-                    if (typeof fiLoadStateLegislators === 'function') {
-                        fiLoadStateLegislators(gov, code.toLowerCase());
-                    }
+                    var url = stateLinks['US-' + code];
+                    if (url) window.location.href = url;
                 });
             });
             
@@ -467,6 +474,7 @@ FI.initMapFromContent = function(content, contentType) {
         }
     }, 100);
 };
+
 
 // Global function to load state legislators from map click
 window.fiLoadStateLegislators = function(gov, stateCode) {
@@ -496,6 +504,7 @@ window.fiLoadStateLegislators = function(gov, stateCode) {
         content.innerHTML = '<div class="alert alert-danger">Failed to load legislators.</div>';
     });
 };
+
 
 // LISTS SYSTEM
 FI.initLists = function() {
@@ -527,6 +536,7 @@ FI.saveList = function() {
     if (!name) return;
     $.ajax({ url: FI.ajaxurl, type: 'POST', data: { action: 'fi_save_list', nonce: FI.nonce, name: name, legislator_ids: list }, success: function(r) { if (r.success) { alert('List saved!'); window.location.href = r.data.url; } else { alert('Error: ' + r.data); } } });
 };
+
 
 // USER PREFS
 FI.initUserPrefs = function() {

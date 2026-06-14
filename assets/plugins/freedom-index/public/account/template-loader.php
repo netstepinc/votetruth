@@ -2,7 +2,7 @@
 /**
  * Freedom Index Public Template Loader
  *
- * Procedural replacement for former TemplateLoader class.
+ * replacement for former TemplateLoader class.
  */
 
 if (!defined('ABSPATH')) {

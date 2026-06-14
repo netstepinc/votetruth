@@ -646,7 +646,7 @@ function fi_admin_data_validation_validate_reports(int $limit = 100): array {
 
 	$invalid = [];
 	foreach ($reports as $report) {
-		json_decode((string) $report->payload_json, true);
+		json_decode((string) $report['payload_json'], true);
 		if (json_last_error() !== JSON_ERROR_NONE) {
 			$invalid[] = $report;
 		}

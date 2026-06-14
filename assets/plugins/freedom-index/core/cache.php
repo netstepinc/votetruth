@@ -16,20 +16,21 @@ function fi_cache_key($base_key, array $args = []): string {
 		}
         $cache_key .= '_' . $arg_key . '-' . $value;
     }
-    return $cache_key;
+    return strtolower($cache_key);
 }
 
 
 //CACHE TO FILE: DB queries, data or code
 //Return false instead of 0 / Many instances rely on '0' so need a switch until all instances are updated.
-function fi_cache($key,$data='',$expires=1,$force=false){ //default time = 1 day.
+function fi_cache($key,$data='',$expires=1){ //default time = 1 day.
 	//Stop if no key is provided.
 	if($key == ''){
-		return '';
+		return false;
 	}
 	$expires = $expires * DAY_IN_SECONDS;
 	//fi_log('HIT: '.$key.' | expires: '.$expires, __FILE__, __LINE__);
 	//Enable override of cache by setting $force to true.
+/*
 	if($force === false){
 		// If the cache root isn't set or doesn't exist, fail soft.
 		if (defined('DOING_AJAX') && DOING_AJAX) {
@@ -40,9 +41,11 @@ function fi_cache($key,$data='',$expires=1,$force=false){ //default time = 1 day
 			return '';
 		}
 	}
+*/
+	
 	//fi_log('CONTINUE: '.$key, __FILE__, __LINE__);
 	if (!defined('FI_DIR_CACHE') || !FI_DIR_CACHE) {
-		return '';
+		return false;
 	}
 	$file = FI_DIR_CACHE.$key;
 	//fi_log('FILE: '.$file, __FILE__, __LINE__);
@@ -59,7 +62,7 @@ function fi_cache($key,$data='',$expires=1,$force=false){ //default time = 1 day
 				return $contents;
 			}
 		}else{
-			return '';
+			return false;
 		}
 	}elseif($data == 'DUMP'){
 		if( file_exists($file) ){
@@ -70,7 +73,7 @@ function fi_cache($key,$data='',$expires=1,$force=false){ //default time = 1 day
 			$data = serialize($data); //We already handle json files as string }elseif( substr($key,-4,4) == 'json' ){
 		}
 		// file_put_contents returns the number of bytes written on success, or false on failure.
-		$result = file_put_contents($file, $data);
+//TEMP DISABLE		$result = file_put_contents($file, $data);
 		//fi_log('CACHE WRITE '. ($result === false ? 'FAIL' : 'SUCCESS').': '.$file, __FILE__, __LINE__);
 		return $result;
 	}

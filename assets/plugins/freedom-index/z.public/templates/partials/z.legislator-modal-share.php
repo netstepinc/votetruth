@@ -7,7 +7,7 @@ $url = $args['url'];
 $freedom_score = $args['freedom_score'];
 
 /*
-Array ( [id] => 3879 [first_name] => Solomon [middle_name] => [last_name] => Adesanya [display_name] => Solomon Adesanya [image_id] => 15603 [image_url] => https://votestellthetruth.us/assets/sites/5/img/5390/3879-Solomon-Adesanya-200x250-f50_50.jpg [bioguide_id] => [lis_id] => [legiscan_id] => 24419 [govtrack_id] => [votesmart_id] => 207193 [ballotpedia_id] => Solomon_Adesanya [url] => https://votestellthetruth.us/legislator/3879/ 
+Array ( [id] => 3879 [first_name] => Solomon [middle_name] => [last_name] => Adesanya [display_name] => Solomon Adesanya [image_id] => 15603 [image_url] => https://votetruth.us/assets/sites/5/img/5390/3879-Solomon-Adesanya-200x250-f50_50.jpg [bioguide_id] => [lis_id] => [legiscan_id] => 24419 [govtrack_id] => [votesmart_id] => 207193 [ballotpedia_id] => Solomon_Adesanya [url] => https://votetruth.us/legislator/3879/ 
 [freedom_score] => 18 [freedom_score_data] => stdClass Object ( [score] => 18 [total] => 18 [good] => 3 [bad] => 14 [not] => 1 [scored] => 17 ) [freedom_score_date] => 2026-02-18 19:34:32 [meta] => Array ( [legacy_post] => Array ( [id] => 1379 [post_name] => 24419 [image_url] => https://thefreedomindex.org/assets/sites/18/Solomon-Adesanya.jpg ) 
 [contact] => Array ( [email] => solomon.adesanya@house.ga.gov [phone] => (404) 656-0220 ) 
 [address] => Array ( [0] => Array ( [name] => Capitol Office [type] => capitol [address] => 509-E Coverdell Legislative Office Bldg. ) ) 

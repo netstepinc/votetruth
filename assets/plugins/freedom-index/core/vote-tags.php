@@ -45,7 +45,7 @@ function fi_vote_tags_get_tags_by_vote(int $vote_id): array {
 		AND t.taxonomy = 'tag'
 		ORDER BY t.name ASC",
 		$vote_id
-	));
+	), ARRAY_A);
 }
 
 /**
@@ -235,7 +235,7 @@ function fi_vote_tags_get_tags_by_vote_ids(array $vote_ids): array {
 		ORDER BY vt.vote_id ASC, t.name ASC
 	";
 
-	return $wpdb->get_results($wpdb->prepare($sql, $vote_ids));
+	return $wpdb->get_results($wpdb->prepare($sql, $vote_ids), ARRAY_A);
 }
 
 /**
@@ -283,8 +283,8 @@ function fi_vote_tags_get_tag_counts(?string $gov = null, ?int $session_id = nul
 	";
 
 	if (!empty($where_values)) {
-		return $wpdb->get_results($wpdb->prepare($sql, $where_values));
+		return $wpdb->get_results($wpdb->prepare($sql, $where_values), ARRAY_A);
 	}
 
-	return $wpdb->get_results($sql);
+	return $wpdb->get_results($sql, ARRAY_A);
 }

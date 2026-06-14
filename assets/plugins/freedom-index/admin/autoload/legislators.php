@@ -104,7 +104,6 @@ function fi_admin_legislators_handle_save(array $scope): void {
 	// Build redirect URL using helper function
 	$redirect = fi_admin_edit_legislator_url($saved_id, [
 		'updated' => 1,
-		'_fi_ts' => time(),
 		'return_url' => $return_url,
 	]);
 	
@@ -116,8 +115,8 @@ function fi_admin_legislators_handle_save(array $scope): void {
 /**
  * Default legislator blueprint for new entries
  */
-function fi_admin_legislators_get_defaults(): object {
-	return (object) [
+function fi_admin_legislators_get_defaults(): array {
+	return [
 		'id'             => null,
 		'first_name'     => '',
 		'middle_name'    => '',
@@ -186,8 +185,8 @@ function fi_admin_legislators_get_meta_field_groups(): array {
 /**
  * Meta entries not surfaced via the form
  */
-function fi_admin_legislators_get_extra_meta(object $legislator, array $meta_groups): array {
-	$meta = is_array($legislator->meta ?? null) ? $legislator->meta : [];
+function fi_admin_legislators_get_extra_meta(array $legislator, array $meta_groups): array {
+	$meta = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
 	if (empty($meta)) {
 		return [];
 	}
@@ -232,8 +231,8 @@ function fi_admin_legislators_build_meta_payload(?int $legislator_id, array $met
 	$existing_meta = [];
 	if ($legislator_id) {
 		$existing = fi_legislator_get($legislator_id);
-		if ($existing && is_array($existing->meta ?? null)) {
-			$existing_meta = fi_legislator_meta_normalize($existing->meta);
+		if ($existing && is_array($existing['meta'] ?? null)) {
+			$existing_meta = fi_legislator_meta_normalize($existing['meta']);
 		}
 	} else {
 		$existing_meta = [];
@@ -402,7 +401,7 @@ function fi_admin_legislators_apply_api_updates(int $legislator_id, string $sour
 	}
 
 	$update_data = [];
-	$meta = is_array($legislator->meta ?? null) ? $legislator->meta : [];
+	$meta = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
 	$updated_count = 0;
 	$needs_legislator_save = false;
 
@@ -507,12 +506,12 @@ function fi_admin_legislators_apply_api_updates(int $legislator_id, string $sour
 					$url .= '.jpg';
 				}
 
-				// Latest assigned session on the legislator object (ordered DESC by session start date).
+				// Latest assigned session on the legislator array (ordered DESC by session start date).
 				$latest = null;
-				if (is_array($legislator->sessions ?? null) && !empty($legislator->sessions)) {
-					$latest = reset($legislator->sessions);
+				if (is_array($legislator['sessions'] ?? null) && !empty($legislator['sessions'])) {
+					$latest = reset($legislator['sessions']);
 				}
-				$session_id = is_object($latest) ? (int) ($latest->session_id ?? 0) : 0;
+				$session_id = is_array($latest) ? (int) ($latest['session_id'] ?? 0) : 0;
 
 				if ($session_id <= 0) {
 					continue;
@@ -526,8 +525,8 @@ function fi_admin_legislators_apply_api_updates(int $legislator_id, string $sour
 				}
 				$target_basename = $session_id . '_' . $remote_name;
 
-				$gov_label = strtoupper((string) ($legislator->gov ?? ($latest->gov ?? 'US')));
-				$display = trim((string) ($legislator->display_name ?? ''));
+				$gov_label = strtoupper((string) ($legislator['gov'] ?? ($latest['gov'] ?? 'US')));
+				$display = trim((string) ($legislator['display_name'] ?? ''));
 				$attachment_title = trim($gov_label . ' ' . $display . ' ' . (string) $legislator_id . ' s' . (string) $session_id);
 				$attachment_slug = (string) $legislator_id . '-s' . (string) $session_id . '-' . (string) $target_basename;
 

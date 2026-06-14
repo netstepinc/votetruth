@@ -69,8 +69,8 @@ $datasets = fi_legiscan_get_datasets($legiscan_state);
 $existing_sessions = [];
 $sessions = fi_sessions_get_by_gov($gov);
 foreach ($sessions as $session) {
-	if (!empty($session->legiscan_id)) {
-		$existing_sessions[$session->legiscan_id] = $session->id;
+	if (!empty($session['legiscan_id'])) {
+		$existing_sessions[$session['legiscan_id']] = $session['id'];
 	}
 }
 

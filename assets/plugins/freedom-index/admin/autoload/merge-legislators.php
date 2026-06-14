@@ -14,23 +14,23 @@ We need to flag for investigation based on display name match. If it is the same
 
 function fi_merge_legislators_duplicate_check($legislator){
 	global $wpdb;
-	$similar_legislators = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}fi_legislators WHERE first_name = %s AND last_name = %s AND id != %d", $legislator->first_name, $legislator->last_name, $legislator->id));
+	$similar_legislators = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}fi_legislators WHERE first_name = %s AND last_name = %s AND id != %d", $legislator['first_name'], $legislator['last_name'], $legislator['id']));
 	if($similar_legislators){
 		foreach($similar_legislators as $similar_legislator){
 			echo '<div class="card-footer bg-warning">';
-			echo '<a href="'.fi_admin_url('fi-legislators', ['action' => 'edit', 'legislator_id' => $similar_legislator->id]).'" target="_blank" rel="noopener" class="me-3 btn btn-sm btn-dark">Is ['.$similar_legislator->id.'] '.$similar_legislator->display_name.' a duplicate?</a>';
-			if(isset($legislator->gov) && $legislator->gov != 'US'){
+			echo '<a href="'.fi_admin_url('fi-legislators', ['action' => 'edit', 'legislator_id' => $similar_legislator['id']]).'" target="_blank" rel="noopener" class="me-3 btn btn-sm btn-dark">Is ['.$similar_legislator['id'].'] '.$similar_legislator->display_name.' a duplicate?</a>';
+			if(isset($legislator['gov']) && $legislator['gov'] != 'US'){
 				echo '<button 
 					type="button" 
 					class="btn btn-sm btn-danger ms-auto fi-merge-legislators-btn" 
-					data-merge-from-legislator="'.esc_attr($legislator->id).'" 
-					data-merge-to-legislator="'.esc_attr($similar_legislator->id).'"
-					data-from-display-name="'.esc_attr($legislator->display_name).'"
+					data-merge-from-legislator="'.esc_attr($legislator['id']).'" 
+					data-merge-to-legislator="'.esc_attr($similar_legislator['id']).'"
+					data-from-display-name="'.esc_attr($legislator['display_name']).'"
 					data-to-display-name="'.esc_attr($similar_legislator->display_name).'"
-				>Merge into ['.$similar_legislator->id.'] '.$similar_legislator->display_name.'</button>';
+				>Merge into ['.$similar_legislator['id'].'] '.$similar_legislator->display_name.'</button>';
 			}
 			echo '</div>';
-fi_log("DUPLICATE CHECK: {$legislator->id} = {$similar_legislator->id}", __FILE__, __LINE__, 'info');
+fi_log("DUPLICATE CHECK: {$legislator['id']} = {$similar_legislator['id']}", __FILE__, __LINE__, 'info');
 			// Inline script for merge confirmation dialog and redirect to admin handler
 			?>
 			<script>

@@ -109,12 +109,12 @@ function fi_taxonomy_log(string $message, string $file = '', int $line = 0, stri
 }
 
 /**
- * Get taxonomies with optional filtering.
+ * Query taxonomies with optional filtering (DB-only, no cache).
  *
  * @param array $args Query arguments.
  * @return array|int Array of taxonomy objects or count if count=true.
  */
-function fi_taxonomies_get(array $args = []): array|int {
+function fi_taxonomies_query(array $args = []): array|int {
 	global $wpdb;
 
 	$defaults = [
@@ -134,19 +134,6 @@ function fi_taxonomies_get(array $args = []): array|int {
 
 	if ($args['taxonomy'] === 'tag') {
 		$args['gov'] = null;
-	}
-
-	$cache_key = md5(serialize($args));
-	$cached = fi_taxonomy_request_cache('get', $cache_key);
-	if ($cached !== null) {
-		return $cached;
-	}
-
-	$cacheKey = fi_cache_key('taxonomy/get', $args);
-	$results = fi_cache($cacheKey);
-	if ($results) {
-		fi_taxonomy_request_cache('get', $cache_key, $results, true);
-		return $results;
 	}
 
 	$where_conditions = [];
@@ -205,10 +192,7 @@ function fi_taxonomies_get(array $args = []): array|int {
 			$sql = $wpdb->prepare($sql, $where_values);
 		}
 
-		$results = (int) $wpdb->get_var($sql);
-		fi_taxonomy_request_cache('get', $cache_key, $results, true);
-		fi_cache($cacheKey, $results);
-		return $results;
+		return (int) $wpdb->get_var($sql);
 	}
 
 	$sql = "
@@ -222,20 +206,36 @@ function fi_taxonomies_get(array $args = []): array|int {
 		$sql = $wpdb->prepare($sql, $where_values);
 	}
 
-	$results = $wpdb->get_results($sql);
-	fi_cache($cacheKey, $results);
-	fi_taxonomy_request_cache('get', $cache_key, $results, true);
-
-	return $results;
+	return $wpdb->get_results($sql, ARRAY_A);
 }
 
+
+
+/**
+ * Get taxonomies with optional filtering (cached for front-end).
+ *
+ * @param array $args Query arguments.
+ * @return array|int Array of taxonomy objects or count if count=true.
+ */
+function fi_taxonomies_get(array $args = []): array|int {
+	$cacheKey = fi_cache_key('taxonomy/get', $args);
+
+	$results = fi_cache($cacheKey);
+	if ($results) {
+		return $results;
+	}
+
+	$results = fi_taxonomies_query($args);
+	fi_cache($cacheKey, $results);
+	return $results;
+}
 /**
  * Get a single taxonomy item by ID.
  *
  * @param int $taxonomy_id Taxonomy item ID.
- * @return object|null
+ * @return array|null
  */
-function fi_taxonomy_get(int $taxonomy_id): ?object {
+function fi_taxonomy_get(int $taxonomy_id): ?array {
 	$cached = fi_taxonomy_request_cache('by_id', (string) $taxonomy_id);
 	if ($cached !== null) {
 		return $cached ?: null;
@@ -711,16 +711,16 @@ function fi_districts_get(?string $gov = null, array $filters = []): array {
  * Get district by ID, trimmed for front-end use.
  *
  * @param int $district_id District taxonomy ID.
- * @return object|null
+ * @return array|null
  */
-function fi_district_get(int $district_id): ?object {
+function fi_district_get(int $district_id): ?array {
 	$district = fi_taxonomy_get($district_id);
 	if (!$district) {
 		return null;
 	}
 
-	unset($district->legacy_id, $district->taxonomy, $district->meta, $district->date_created, $district->date_updated);
-	$district->name_short = preg_replace('/^[A-Z]{2} /', '', $district->name);
+	unset($district['legacy_id'], $district['taxonomy'], $district['meta'], $district['date_created'], $district['date_updated']);
+	$district['name_short'] = preg_replace('/^[A-Z]{2} /', '', $district['name'] ?? '');
 
 	return $district;
 }
@@ -831,10 +831,10 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
 		LIMIT 1",
 		$gov,
 		$needle
-	));
+	), ARRAY_A);
 
-	if ($row && !empty($row->id)) {
-		return (int) $row->id;
+	if ($row && !empty($row['id'])) {
+		return (int) $row['id'];
 	}
 
 	$like = $wpdb->esc_like($needle) . '%';
@@ -846,10 +846,10 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
 		LIMIT 1",
 		$gov,
 		$like
-	));
+	), ARRAY_A);
 
-	if ($row2 && !empty($row2->id)) {
-		$existing_slug = (string) ($row2->slug ?? '');
+	if ($row2 && !empty($row2['id'])) {
+		$existing_slug = (string) ($row2['slug'] ?? '');
 		if ($existing_slug !== '' && $existing_slug !== $needle) {
 			$exists_target = (int) $wpdb->get_var($wpdb->prepare(
 				"SELECT id FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy='district' AND gov=%s AND slug=%s LIMIT 1",

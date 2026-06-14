@@ -121,7 +121,8 @@ function fi_member_get_congressional_officials(object $zip_data): array {
 		"SELECT * FROM {$wpdb->prefix}fi_sessions
 		WHERE gov = 'US'
 		ORDER BY date_start DESC
-		LIMIT 1"
+		LIMIT 1",
+		ARRAY_A
 	);
 
 	if (!$us_session) {
@@ -135,28 +136,28 @@ function fi_member_get_congressional_officials(object $zip_data): array {
 		INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
 		WHERE ls.session_id = %d AND s.gov = 'US'
 		ORDER BY ls.chamber, l.last_name",
-		$us_session->id
-	));
+		$us_session['id']
+	), ARRAY_A);
 
 	foreach ($legislators as $legislator) {
 		$score = $wpdb->get_row($wpdb->prepare(
 			"SELECT ls.score FROM {$wpdb->prefix}fi_legislator_sessions ls
 			WHERE legislator_id = %d AND session_id = %d",
-			$legislator->id,
-			$us_session->id
-		));
+			$legislator['id'],
+			$us_session['id']
+		), ARRAY_A);
 
 		$officials[] = [
-			'id'        => $legislator->id,
-			'name'      => $legislator->display_name,
-			'chamber'   => $legislator->chamber,
-			'district'  => $legislator->district,
-			'party'     => $legislator->party,
+			'id'        => $legislator['id'],
+			'name'      => $legislator['display_name'],
+			'chamber'   => $legislator['chamber'],
+			'district'  => $legislator['district'],
+			'party'     => $legislator['party'],
 			'gov'       => 'US',
-			'session'   => $us_session->name,
-			'score'     => $score ? $score->score : null,
-			'grade'     => $score && isset($score->score) ? fi_score_calculate_grade((float) $score->score) : null,
-			'image_url' => function_exists('fi_legislator_image') ? fi_legislator_image($legislator->id, $us_session->id, 'medium') : '',
+			'session'   => $us_session['name'],
+			'score'     => $score ? $score['score'] : null,
+			'grade'     => $score && isset($score['score']) ? fi_score_calculate_grade((float) $score['score']) : null,
+			'image_url' => function_exists('fi_legislator_image') ? fi_legislator_image($legislator['id'], $us_session['id'], 'medium') : '',
 		];
 	}
 
@@ -189,7 +190,7 @@ function fi_member_get_state_officials(object $zip_data, string $state): array {
 		ORDER BY date_start DESC
 		LIMIT 1",
 		$state
-	));
+	), ARRAY_A);
 
 	if (!$state_session) {
 		return $officials;
@@ -202,29 +203,29 @@ function fi_member_get_state_officials(object $zip_data, string $state): array {
 		INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
 		WHERE ls.session_id = %d AND s.gov = %s
 		ORDER BY ls.chamber, l.last_name",
-		$state_session->id,
+		$state_session['id'],
 		$state
-	));
+	), ARRAY_A);
 
 	foreach ($legislators as $legislator) {
 		$score = $wpdb->get_row($wpdb->prepare(
 			"SELECT ls.score FROM {$wpdb->prefix}fi_legislator_sessions ls
 			WHERE legislator_id = %d AND session_id = %d",
-			$legislator->id,
-			$state_session->id
-		));
+			$legislator['id'],
+			$state_session['id']
+		), ARRAY_A);
 
 		$officials[] = [
-			'id'        => $legislator->id,
-			'name'      => $legislator->display_name,
-			'chamber'   => $legislator->chamber,
-			'district'  => $legislator->district,
-			'party'     => $legislator->party,
+			'id'        => $legislator['id'],
+			'name'      => $legislator['display_name'],
+			'chamber'   => $legislator['chamber'],
+			'district'  => $legislator['district'],
+			'party'     => $legislator['party'],
 			'gov'       => $state,
-			'session'   => $state_session->name,
-			'score'     => $score ? $score->score : null,
-			'grade'     => $score && isset($score->score) ? fi_score_calculate_grade((float) $score->score) : null,
-			'image_url' => function_exists('fi_legislator_image') ? fi_legislator_image($legislator->id, $state_session->id, 'medium') : '',
+			'session'   => $state_session['name'],
+			'score'     => $score ? $score['score'] : null,
+			'grade'     => $score && isset($score['score']) ? fi_score_calculate_grade((float) $score['score']) : null,
+			'image_url' => function_exists('fi_legislator_image') ? fi_legislator_image($legislator['id'], $state_session['id'], 'medium') : '',
 		];
 	}
 

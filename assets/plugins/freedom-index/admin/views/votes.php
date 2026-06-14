@@ -22,7 +22,7 @@ $gov = strtoupper((string) ($scope['gov'] ?? ''));
 $sessions_for_filter = $gov !== '' ? fi_sessions_get_by_gov($gov) : [];
 $session_ids_for_filter = [];
 foreach ($sessions_for_filter as $s) {
-	$session_ids_for_filter[(int) ($s->id ?? 0)] = true;
+	$session_ids_for_filter[(int) ($s['id'] ?? 0)] = true;
 }
 
 $resolved = function_exists('fi_admin_session_filter_resolve')
@@ -49,8 +49,8 @@ $query_filters = [
 	'search' => $filters['search'] ?: null,
 	// Performance: always paginate admin vote lists (prevents loading huge rollcall_data JSON sets).
 	// Staff can filter/search to narrow further.
-	'per_page' => 100,
-	'page' => max(1, (int) ($_GET['paged'] ?? 1)),
+	'limit' => 100,
+	'offset' => (max(1, (int) ($_GET['paged'] ?? 1)) - 1) * 100,
 	'cache' => false,
 	//Admin order by ID descending like WP:posts
 	'orderby' => 'date_voted',
@@ -103,13 +103,13 @@ if ($has_session) {
 }
 
 if (!empty($votes)) {
-	$vote_ids = array_map(static fn($vote) => (int) ($vote->id ?? 0), $votes);
+	$vote_ids = array_map(static fn($vote) => (int) ($vote['id'] ?? 0), $votes);
 	$vote_ids = array_filter($vote_ids);
 
 	if (!empty($vote_ids)) {
 		$tag_rows = fi_vote_tags_get_tags_by_vote_ids($vote_ids);
 		foreach ($tag_rows as $row) {
-			$tags_by_vote[$row->vote_id][] = $row;
+			$tags_by_vote[(int) ($row['vote_id'] ?? 0)][] = $row;
 		}
 
 		$rollcall_counts = fi_rollcalls_get_counts_by_vote_ids($vote_ids);
@@ -121,7 +121,7 @@ $senate_count = 0;
 $house_count = 0;
 $total_count = 0;
 foreach ($votes as $vote) {
-	$chamber = strtoupper($vote->chamber ?? '');
+	$chamber = strtoupper($vote['chamber'] ?? '');
 	if ($chamber === 'S') {
 		$senate_count++;
 	} elseif ($chamber === 'H') {
@@ -195,8 +195,8 @@ $sessions_for_filter = $sessions_for_filter ?? [];
 					<select class="form-select form-select-sm" id="fi-filter-session" name="session_id">
 						<option value="">All Sessions</option>
 						<?php foreach ($sessions_for_filter as $s): ?>
-							<option value="<?php echo esc_attr((string) ($s->id ?? '')); ?>" <?php selected((int) ($s->id ?? 0), (int) ($filters['session_id'] ?? 0)); ?>>
-								<?php echo esc_html((string) ($s->name ?? '')); ?>
+							<option value="<?php echo esc_attr((string) ($s['id'] ?? '')); ?>" <?php selected((int) ($s['id'] ?? 0), (int) ($filters['session_id'] ?? 0)); ?>>
+								<?php echo esc_html((string) ($s['name'] ?? '')); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>
@@ -288,22 +288,22 @@ $sessions_for_filter = $sessions_for_filter ?? [];
 				<tbody>
 					<?php foreach ($votes as $vote): ?>
 						<?php
-						$vote_id = (int) $vote->id;
+						$vote_id = (int) $vote['id'];
 						$tags = $tags_by_vote[$vote_id] ?? [];
 						$rollcall_total = $rollcall_counts[$vote_id] ?? 0;
 						//Is this vote in a report?
 						$report_link = '';
-						if($vote->chamber != ''){
-							$reports = fi_report_get_by_vote_id($vote_id, $vote->chamber);
+						if($vote['chamber'] != ''){
+							$reports = fi_report_get_by_vote_id($vote_id, $vote['chamber']);
 							if(!empty($reports)){
 								foreach($reports as $report){
-									$report_link .= '<br><a href="'.esc_url(fi_admin_url('fi-reports', ['action' => 'edit', 'report_id' => $report->id])).'" target="_blank">'.$report->title.'</a>';
+									$report_link .= '<br><a href="'.esc_url(fi_admin_url('fi-reports', ['action' => 'edit', 'report_id' => $report['id']])).'" target="_blank">'.$report['title'].'</a>';
 								}
 							}
 						}
 
 						$is_constitutional = '<span class="badge ';
-						$const = $vote->constitutional;
+						$const = $vote['constitutional'];
 						if($const === 'Y'){
 							$is_constitutional .= 'bg-success">Yes';
 						}elseif( $const === 'N'){
@@ -321,22 +321,22 @@ $sessions_for_filter = $sessions_for_filter ?? [];
 								</div>
 							</td>
 							<td>
-								<strong><?php echo esc_html($vote->title ?? 'Untitled'); ?></strong><br>
-								<small class="text-muted">ID: <?= $vote->id;?> <?php echo esc_html($vote->bill_number ?? '') . ($vote->rollcall_number ? '<span class="mx-3">RC#'.esc_html($vote->rollcall_number ?? '').'</span>' : ''); ?></small>
+								<strong><?php echo esc_html($vote['title'] ?? 'Untitled'); ?></strong><br>
+								<small class="text-muted">ID: <?= $vote['id'];?> <?php echo esc_html($vote['bill_number'] ?? '') . ($vote['rollcall_number'] ? '<span class="mx-3">RC#'.esc_html($vote['rollcall_number'] ?? '').'</span>' : ''); ?></small>
 							</td>
 							<td>
 								<?php
-									if (!empty($vote->date_voted) && $vote->date_voted !== '0000-00-00 00:00:00') {
-										echo esc_html(date('m/d/Y', strtotime($vote->date_voted)));
+									if (!empty($vote['date_voted']) && $vote['date_voted'] !== '0000-00-00 00:00:00') {
+										echo esc_html(date('m/d/Y', strtotime($vote['date_voted'])));
 									} else {
 										echo '—';
 									}
 								?>
 							</td>
-							<td><?php echo esc_html((string) ($vote->session_name ?? '—')).$report_link; ?></td>
+							<td><?php echo esc_html((string) ($vote['session_name'] ?? '—')).$report_link; ?></td>
 							<td><?php 
-								$chamber = $vote->chamber ?? '';
-								$gov = $vote->gov ?? ($scope['gov'] ?? 'US');
+								$chamber = $vote['chamber'] ?? '';
+								$gov = $vote['gov'] ?? ($scope['gov'] ?? 'US');
 								if ($chamber) {
 									$chamber_label = fi_chamber_label($gov, $chamber);
 									echo esc_html((string) ($chamber_label ?? $chamber));
@@ -353,15 +353,15 @@ $sessions_for_filter = $sessions_for_filter ?? [];
 								<?php else: ?>
 									<div class="d-flex flex-wrap gap-1">
 										<?php foreach ($tags as $tag): ?>
-											<span class="badge bg-secondary"><?php echo esc_html($tag->tag_name ?? $tag->tag_slug); ?></span>
+											<span class="badge bg-secondary"><?php echo esc_html($tag['tag_name'] ?? $tag['tag_slug'] ?? ''); ?></span>
 										<?php endforeach; ?>
 									</div>
 								<?php endif; ?>
 							</td>
-							<td><?php echo $vote->rollcall_number ? esc_html($vote->rollcall_number) : '—'; ?></td>
+							<td><?php echo $vote['rollcall_number'] ? esc_html($vote['rollcall_number']) : '—'; ?></td>
 							<td><?php echo esc_html($rollcall_total); ?></td>
 							<td><?php 
-								$status_value = $vote->status ?? 'publish';
+								$status_value = $vote['status'] ?? 'publish';
 								$status_display = $status_options[$status_value] ?? ucfirst($status_value);
 								// Ensure status_display is a string
 								$status_display = is_array($status_display) ? (string) $status_value : (string) ($status_display ?? $status_value);

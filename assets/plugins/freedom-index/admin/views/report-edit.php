@@ -24,11 +24,11 @@ $sessions = fi_sessions_get_by_gov($scope['gov'] ?? 'US', [
 ]);
 
 $selected_vote_ids = fi_admin_reports_decode_selected_votes($report);
-$session_for_votes = $report->session_id
+$session_for_votes = $report['session_id']
 	?: ($scope['session_id'] ?? null)
 	?: (!empty($sessions) ? (int) ($sessions[0]->id ?? null) : null);
 // Summary: only show vote selector after report session is saved.
-$has_report_session = !empty($report->session_id) && (int) $report->session_id > 0;
+$has_report_session = !empty($report['session_id']) && (int) $report['session_id'] > 0;
 
 $votes = $session_for_votes ? fi_votes_get_by_session((int) $session_for_votes, ['status' => null, 'cache' => false]) : [];
 
@@ -38,13 +38,13 @@ $used_in_other_reports = $session_for_votes
 	: [];
 
 // Extract payload data using ReportsPayload class (normalized)
-$payload = fi_report_payload_normalize($report->payload_json ?? null);
+$payload = fi_report_payload_normalize($report['payload_json'] ?? null);
 
 // Get intro_text from payload content (migrated from post_content)
 $intro_text = $payload['content'] ?? '';
 
 // Report format from DB column (not payload)
-$report_format = $report->format ?? 'scorecard';
+$report_format = $report['format'] ?? 'scorecard';
 $report_cph = $payload['cph'] ?? 'hide';
 $vote_start = $payload['vote_start'] ?? '1';
 
@@ -63,10 +63,10 @@ $votes_h_order = $payload['votes_h_order'] ?? [];
 $votes_s_order = $payload['votes_s_order'] ?? [];
 
 // Get status (from report object, not payload)
-$report_status = $report->status ?? 'draft';
+$report_status = $report['status'] ?? 'draft';
 
 //Report Gov
-$report_gov = $report->gov ?? '';
+$report_gov = $report['gov'] ?? '';
 
 $session_for_votes = $session_for_votes ?? null;
 $action = $action ?? 'add';
@@ -124,7 +124,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 							<div class="col-md-4">
 								<?php fi_form_field('report_title', [
 									'label' => 'Report Title',
-									'value' => $report->title ?? '',
+									'value' => $report['title'] ?? '',
 									'required' => true,
 									'attributes' => ['id' => 'fi-report-title']
 								]); ?>
@@ -133,7 +133,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 							<div class="col-md-4">
 								<?php fi_form_field('title_menu', [
 									'label' => 'Menu Title (Short Title)',
-									'value' => $report->title_menu ?? '',
+									'value' => $report['title_menu'] ?? '',
 									'attributes' => ['id' => 'fi-menu-title']
 								]); ?>
 							</div>
@@ -142,13 +142,13 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 								<?php
 								$session_options = ['' => 'Select Session'];
 								foreach ($sessions as $session) {
-									$session_options[$session->id] = ($session->parent_id ? '— ' : '') . $session->name;
+									$session_options[$session['id']] = ($session['parent_id'] ? '— ' : '') . $session['name'];
 								}
 								fi_form_field('session_id', [
 									'label' => 'Session',
 									'type' => 'select',
 									'options' => $session_options,
-									'value' => $report->session_id ?? $session_for_votes,
+									'value' => $report['session_id'] ?? $session_for_votes,
 									'required' => true,
 									'attributes' => ['id' => 'fi-report-session']
 								]);
@@ -171,9 +171,9 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 								<?php 
 								// Format date for HTML5 date input (requires Y-m-d format)
 								$date_publish_value = '';
-								if (!empty($report->date_publish)) {
+								if (!empty($report['date_publish'])) {
 									// Extract date portion from DATETIME (first 10 characters: YYYY-MM-DD)
-									$date_publish_value = substr($report->date_publish, 0, 10);
+									$date_publish_value = substr($report['date_publish'], 0, 10);
 								}
 								fi_form_field('date_publish', [
 									'label' => 'Date Published',
@@ -321,7 +321,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 						$house_votes = array_filter($votes, function($v) { return ($v->chamber ?? '') === 'H'; });
 						$house_votes_map = [];
 						foreach ($house_votes as $vote) {
-							$house_votes_map[$vote->id] = $vote;
+							$house_votes_map[$vote['id']] = $vote;
 						}
 						
 						// Sort selected votes by order array if it exists, otherwise by date
@@ -356,7 +356,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 						// Unselected votes: all session votes not selected for this report (default order by date)
 						$unselected_house_votes = [];
 						foreach ($house_votes as $vote) {
-							$vid = (int) $vote->id;
+							$vid = (int) $vote['id'];
 							if (!in_array($vid, $selected_votes_h, true)) {
 								$unselected_house_votes[] = $vote;
 							}
@@ -374,7 +374,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 								<h4 class="h6 text-primary mb-2">Selected (<?php echo count($selected_house_votes); ?>)</h4>
 								<div class="list-group mb-3" id="fi-selected-votes-h" data-chamber="h">
 									<?php foreach ($selected_house_votes as $idx => $vote): ?>
-										<div class="list-group-item d-flex align-items-start gap-2 fi-vote-item-selected border-success" data-vote-id="<?php echo esc_attr($vote->id); ?>">
+										<div class="list-group-item d-flex align-items-start gap-2 fi-vote-item-selected border-success" data-vote-id="<?php echo esc_attr($vote['id']); ?>">
 											<div class="d-flex flex-column gap-1 me-2">
 												<button type="button" class="btn btn-sm btn-outline-secondary p-1 fi-vote-move-up" style="width: 24px; height: 24px; line-height: 1;" title="Move Up" <?php echo $idx === 0 ? 'disabled' : ''; ?>>
 													<span class="dashicons dashicons-arrow-up-alt" style="font-size: 16px; width: 16px; height: 16px;"></span>
@@ -383,23 +383,23 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 													<span class="dashicons dashicons-arrow-down-alt" style="font-size: 16px; width: 16px; height: 16px;"></span>
 												</button>
 											</div>
-											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_h[]" value="<?php echo esc_attr($vote->id); ?>" checked>
-											<input type="hidden" name="votes_h_order[]" value="<?php echo esc_attr($vote->id); ?>" class="fi-vote-order-input">
+											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_h[]" value="<?php echo esc_attr($vote['id']); ?>" checked>
+											<input type="hidden" name="votes_h_order[]" value="<?php echo esc_attr($vote['id']); ?>" class="fi-vote-order-input">
 											<div class="flex-grow-1">
 												<div class="d-flex align-items-center gap-2 mb-1">
-													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote->id); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
+													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote['id']); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
 														<i class="bi bi-file-earmark" style="font-size: 16px;"></i>
 													</button>
 													<strong>
-														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote->id)); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
-															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote->title); ?>
+														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote['id'])); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
+															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote['title']); ?>
 														</a>
 													</strong>
 												</div>
 												<span class="text-muted small">
 													<?php 
-													$bill_number = $vote->bill_number ?? '';
-													$date_voted = $vote->date_voted ?? $vote->date_created ?? '';
+													$bill_number = $vote['bill_number'] ?? '';
+													$date_voted = $vote['date_voted'] ?? $vote['date_created'] ?? '';
 													$formatted_date = '';
 													if ($date_voted) {
 														$ts = strtotime($date_voted);
@@ -418,7 +418,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 														<?php echo esc_html($formatted_date); ?>
 													<?php endif; ?>
 													<?php if ($formatted_date || $bill_number): ?> · <?php endif; ?>
-													Good: <?php echo esc_html($vote->constitutional); ?>
+													Good: <?php echo esc_html($vote['constitutional']); ?>
 												</span>
 											</div>
 										</div>
@@ -436,22 +436,22 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 								<?php else: ?>
 									<?php foreach ($unselected_house_votes as $vote): ?>
 										<label class="list-group-item d-flex align-items-start gap-3 fi-vote-item fi-vote-item-h">
-											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_h[]" value="<?php echo esc_attr($vote->id); ?>">
+											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_h[]" value="<?php echo esc_attr($vote['id']); ?>">
 											<div class="flex-grow-1">
 												<div class="d-flex align-items-center gap-2 mb-1">
-													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote->id); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
+													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote['id']); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
 														<i class="bi bi-file-earmark" style="font-size: 16px;"></i>
 													</button>
 													<strong>
-														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote->id)); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
-															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote->title); ?>
+														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote['id'])); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
+															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote['title']); ?>
 														</a>
 													</strong>
 												</div>
 												<span class="text-muted small">
 													<?php 
-													$bill_number = $vote->bill_number ?? $vote->slug ?? '';
-													$date_voted = $vote->date_voted ?? $vote->date ?? '';
+													$bill_number = $vote['bill_number'] ?? $vote['slug'] ?? '';
+													$date_voted = $vote['date_voted'] ?? $vote['date'] ?? '';
 													$formatted_date = '';
 													if ($date_voted) {
 														$ts = strtotime($date_voted);
@@ -470,7 +470,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 														<?php echo esc_html($formatted_date); ?>
 													<?php endif; ?>
 													<?php if ($formatted_date || $bill_number): ?> · <?php endif; ?>
-													Good: <?php echo esc_html($vote->constitutional); ?>
+													Good: <?php echo esc_html($vote['constitutional']); ?>
 												</span>
 											</div>
 										</label>
@@ -494,7 +494,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 						$senate_votes = array_filter($votes, function($v) { return ($v->chamber ?? '') === 'S'; });
 						$senate_votes_map = [];
 						foreach ($senate_votes as $vote) {
-							$senate_votes_map[$vote->id] = $vote;
+							$senate_votes_map[$vote['id']] = $vote;
 						}
 						
 						// Sort selected votes by order array if it exists, otherwise by date
@@ -529,7 +529,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 						// Unselected votes: all session votes not selected for this report (default order by date)
 						$unselected_senate_votes = [];
 						foreach ($senate_votes as $vote) {
-							$vid = (int) $vote->id;
+							$vid = (int) $vote['id'];
 							if (!in_array($vid, $selected_votes_s, true)) {
 								$unselected_senate_votes[] = $vote;
 							}
@@ -547,7 +547,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 								<h4 class="h6 text-primary mb-2">Selected (<?php echo count($selected_senate_votes); ?>)</h4>
 								<div class="list-group mb-3" id="fi-selected-votes-s" data-chamber="s">
 									<?php foreach ($selected_senate_votes as $idx => $vote): ?>
-										<div class="list-group-item d-flex align-items-start gap-2 fi-vote-item-selected border-success" data-vote-id="<?php echo esc_attr($vote->id); ?>">
+										<div class="list-group-item d-flex align-items-start gap-2 fi-vote-item-selected border-success" data-vote-id="<?php echo esc_attr($vote['id']); ?>">
 											<div class="d-flex flex-column gap-1 me-2">
 												<button type="button" class="btn btn-sm btn-outline-secondary p-1 fi-vote-move-up" style="width: 24px; height: 24px; line-height: 1;" title="Move Up" <?php echo $idx === 0 ? 'disabled' : ''; ?>>
 													<span class="dashicons dashicons-arrow-up-alt" style="font-size: 16px; width: 16px; height: 16px;"></span>
@@ -556,23 +556,23 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 													<span class="dashicons dashicons-arrow-down-alt" style="font-size: 16px; width: 16px; height: 16px;"></span>
 												</button>
 											</div>
-											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_s[]" value="<?php echo esc_attr($vote->id); ?>" checked>
-											<input type="hidden" name="votes_s_order[]" value="<?php echo esc_attr($vote->id); ?>" class="fi-vote-order-input">
+											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_s[]" value="<?php echo esc_attr($vote['id']); ?>" checked>
+											<input type="hidden" name="votes_s_order[]" value="<?php echo esc_attr($vote['id']); ?>" class="fi-vote-order-input">
 											<div class="flex-grow-1">
 												<div class="d-flex align-items-center gap-2 mb-1">
-													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote->id); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
+													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote['id']); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
 														<i class="bi bi-file-earmark" style="font-size: 16px;"></i>
 													</button>
 													<strong>
-														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote->id)); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
-															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote->title); ?>
+														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote['id'])); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
+															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote['title']); ?>
 														</a>
 													</strong>
 												</div>
 												<span class="text-muted small">
 													<?php 
-													$bill_number = $vote->bill_number ?? $vote->slug ?? '';
-													$date_voted = $vote->date_voted ?? $vote->date ?? '';
+													$bill_number = $vote['bill_number'] ?? $vote['slug'] ?? '';
+													$date_voted = $vote['date_voted'] ?? $vote['date'] ?? '';
 													$formatted_date = '';
 													if ($date_voted) {
 														$ts = strtotime($date_voted);
@@ -591,7 +591,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 														<?php echo esc_html($formatted_date); ?>
 													<?php endif; ?>
 													<?php if ($formatted_date || $bill_number): ?> · <?php endif; ?>
-													Good: <?php echo esc_html($vote->constitutional); ?>
+													Good: <?php echo esc_html($vote['constitutional']); ?>
 												</span>
 											</div>
 										</div>
@@ -609,22 +609,22 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 								<?php else: ?>
 									<?php foreach ($unselected_senate_votes as $vote): ?>
 										<label class="list-group-item d-flex align-items-start gap-3 fi-vote-item fi-vote-item-s">
-											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_s[]" value="<?php echo esc_attr($vote->id); ?>">
+											<input type="checkbox" class="form-check-input mt-2" name="selected_votes_s[]" value="<?php echo esc_attr($vote['id']); ?>">
 											<div class="flex-grow-1">
 												<div class="d-flex align-items-center gap-2 mb-1">
-													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote->id); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
+													<button type="button" class="btn btn-sm btn-link p-0 text-muted fi-vote-preview" data-vote-id="<?php echo esc_attr($vote['id']); ?>" title="Preview Vote" style="line-height: 1; font-size: 14px;">
 														<i class="bi bi-file-earmark" style="font-size: 16px;"></i>
 													</button>
 													<strong>
-														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote->id)); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
-															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote->title); ?>
+														<a href="<?php echo esc_url(fi_admin_edit_vote_url((int) $vote['id'])); ?>" target="_blank" rel="noopener" class="text-decoration-none fw-normal fs-5">
+															<i class="bi bi-pencil-square me-1"></i><?php echo esc_html($vote['title']); ?>
 														</a>
 													</strong>
 												</div>
 												<span class="text-muted small">
 													<?php 
-													$bill_number = $vote->bill_number ?? $vote->slug ?? '';
-													$date_voted = $vote->date_voted ?? $vote->date ?? '';
+													$bill_number = $vote['bill_number'] ?? $vote['slug'] ?? '';
+													$date_voted = $vote['date_voted'] ?? $vote['date'] ?? '';
 													$formatted_date = '';
 													if ($date_voted) {
 														$ts = strtotime($date_voted);
@@ -643,7 +643,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 														<?php echo esc_html($formatted_date); ?>
 													<?php endif; ?>
 													<?php if ($formatted_date || $bill_number): ?> · <?php endif; ?>
-													Good: <?php echo esc_html($vote->constitutional); ?>
+													Good: <?php echo esc_html($vote['constitutional']); ?>
 												</span>
 											</div>
 										</label>

@@ -5,7 +5,7 @@ namespace Safe;
 use Safe\Exceptions\DatetimeException;
 
 /**
- * This is the procedural version of
+ * This is the version of
  * DateTimeImmutable::__construct.
  *
  * Unlike the DateTimeImmutable constructor, it will return
@@ -34,7 +34,7 @@ function date_create_immutable(string $datetime = "now", ?\DateTimeZone $timezon
 
 
 /**
- * This is the procedural version of
+ * This is the version of
  * DateTime::__construct.
  *
  * Unlike the DateTime constructor, it will return

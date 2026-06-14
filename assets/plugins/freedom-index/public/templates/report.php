@@ -8,7 +8,7 @@ global $fi_gov, $fi_report;
 // Report is already loaded by the rewrite handler
 $report = $fi_report;
 // SEO Meta Tags
-$gov = $fi_gov ?? $report->gov ?? 'US';
+$gov = $fi_gov ?? $report['gov'] ?? 'US';
 $gov_slug = strtolower($gov);
 $gov_name = fi_gov_name($gov);
 
@@ -19,13 +19,13 @@ if (!$report) {
 }
 
 // Decode payload to get report content and options
-$payload = fi_report_decode_payload($report->payload_json ?? null);
+$payload = fi_report_decode_payload($report['payload_json'] ?? null);
 //Check if pay load has report_pdf_url
 $report_pdf_url = $payload['report_pdf_url'] ?? '';
 
 
 
-$format = $report->format ?? 'scorecard';
+$format = $report['format'] ?? 'scorecard';
 if($format === 'freedomindex') {
 	$report_format_text = 'Freedom Index';
 }else{
@@ -45,11 +45,11 @@ $filter_party_slug = (fi_party_validate($party_slug_lower) ? $party_slug_lower :
 $filter_party = $filter_party_slug !== '' ? fi_party_name($filter_party_slug) : '';
 $filter_name = get_query_var('fi_report_search') ? rawurldecode(sanitize_text_field(get_query_var('fi_report_search'))) : '';
 
-$current_url = fi_url_report($report->id, $gov_slug);
+$current_url = fi_url_report($report['id'], $gov_slug);
 $intro_text = $payload['content'] ?? '';
 $description = wp_trim_words(strip_tags($intro_text), 25, '...');
 if (empty($description)) {
-    $description = $report->title . ' - Vote report for ' . ($report->session_name ?? '') . '. View legislator scores and voting records.';
+    $description = $report['title'] . ' - Vote report for ' . ($report['session_name'] ?? '') . '. View legislator scores and voting records.';
 }
 
 $vote_start = (int)($payload['vote_start'] ?? 1);
@@ -108,7 +108,7 @@ if (!empty($vote_ids)) {
         $ordered_votes = [];
         foreach ($vote_order as $ordered_id) {
             foreach ($votes as $key => $vote) {
-                if ($vote->id == $ordered_id) {
+                if ($vote['id'] == $ordered_id) {
                     $ordered_votes[] = $vote;
                     unset($votes[$key]);
                     break;
@@ -122,7 +122,7 @@ if (!empty($vote_ids)) {
     // Batch load tags for all votes to prevent N+1 queries
     $tags_by_vote = [];
     if (!empty($votes)) {
-        $all_vote_ids = array_map(static fn($vote) => (int) $vote->id, $votes);
+        $all_vote_ids = array_map(static fn($vote) => (int) $vote['id'], $votes);
         $tag_rows = fi_vote_tags_get_tags_by_vote_ids($all_vote_ids);
         foreach ($tag_rows as $row) {
             $tags_by_vote[$row->vote_id][] = (object) [
@@ -136,8 +136,8 @@ if (!empty($vote_ids)) {
 
 
 //Report Title
-if(strpos($report->title, 'Freedom Index') !== false) {
-	$report_title = $report->title;
+if(strpos($report['title'], 'Freedom Index') !== false) {
+	$report_title = $report['title'];
 	$gov_title = 'Congressional';
 }else{
 	if($gov === 'US') {
@@ -145,7 +145,7 @@ if(strpos($report->title, 'Freedom Index') !== false) {
 	}else{
 		$gov_title = 'Legislative';
 	}
-	$report_title = fi_report_title_reformat($gov, $report->title);
+	$report_title = fi_report_title_reformat($gov, $report['title']);
 }
 
 fi_seo_tags([
@@ -217,8 +217,8 @@ fi_get_public_template('partials/template-header', $header_args);
 			if (!empty($filter_state)) { $filter_suffix .= '/state/' . strtolower($filter_state); }
 			if (!empty($filter_party_slug)) { $filter_suffix .= '/party/' . $filter_party_slug; }
 			if (!empty($filter_name)) { $filter_suffix .= '/search/' . rawurlencode($filter_name); }
-			$sen_url = home_url($gov_slug . '/report/' . (int) $report->id . '/chamber/S' . $filter_suffix . '/');
-			$rep_url = home_url($gov_slug . '/report/' . (int) $report->id . '/chamber/H' . $filter_suffix . '/');
+			$sen_url = home_url($gov_slug . '/report/' . (int) $report['id'] . '/chamber/S' . $filter_suffix . '/');
+			$rep_url = home_url($gov_slug . '/report/' . (int) $report['id'] . '/chamber/H' . $filter_suffix . '/');
 		?>
 			<div class="row mb-4 py-1">
 				<div class="col-6 col-md-4 mx-auto">
@@ -251,9 +251,9 @@ fi_get_public_template('partials/template-header', $header_args);
 			foreach ($votes as $vote) {
 				$v++;
 				$a++;
-				$vote_id = $vote->id;
+				$vote_id = $vote['id'];
 				$vote_meta = fi_vote_decode_meta($vote);
-				$constitutional = $vote->constitutional ?? '';
+				$constitutional = $vote['constitutional'] ?? '';
 				
 				// Get descriptions based on format
 				$descriptions = fi_vote_get_description($vote_meta);
@@ -264,7 +264,7 @@ fi_get_public_template('partials/template-header', $header_args);
 				$img_tag = '';
 				$attachment_id = $vote_meta['image_id'] ?? null;
 				if($attachment_id) {
-					$img_html = jis_get_attachment_image($attachment_id,[300,200],true,['retina' => true,'alt' => $vote->title ?? '','class' => 'img-fluid vote-image','id' => 'vote-image-'.$attachment_id]);
+					$img_html = jis_get_attachment_image($attachment_id,[300,200],true,['retina' => true,'alt' => $vote['title'] ?? '','class' => 'img-fluid vote-image','id' => 'vote-image-'.$attachment_id]);
 					$caption = wp_strip_all_tags(get_post_field('post_excerpt', $attachment_id));
 					if($caption != ''){
 						$img_html .= '<div class="text-muted small">' . $caption . '</div>';
@@ -278,12 +278,12 @@ fi_get_public_template('partials/template-header', $header_args);
 
 				// Format date
 				$date_formatted = '';
-				if (!empty($vote->date_voted)) {
-					$timestamp = strtotime($vote->date_voted);
+				if (!empty($vote['date_voted'])) {
+					$timestamp = strtotime($vote['date_voted']);
 					if ($timestamp) {
 						$date_formatted = date('M j, Y', $timestamp);
 					} else {
-						$date_formatted = $vote->date_voted;
+						$date_formatted = $vote['date_voted'];
 					}
 				}
 				
@@ -301,21 +301,21 @@ fi_get_public_template('partials/template-header', $header_args);
 				}
 				
 				// Get bill info
-				$bill_number = $vote->bill_number ?? '';
+				$bill_number = $vote['bill_number'] ?? '';
 				$bill_url = $vote_meta['url_bill'] ?? '';
 				
 				// Build vote URL
-				$url_vote = fi_url_vote($gov, $vote->id ?? 0);
+				$url_vote = fi_url_vote($gov, $vote['id'] ?? 0);
 				
 				// Get tags from batch-loaded array
-				$tags = $tags_by_vote[$vote->id] ?? [];
+				$tags = $tags_by_vote[$vote['id']] ?? [];
 				
 				// Build title with number
 				$vote_number = $v;
 				if(isset($vote_meta['vote_start'])){
 					$vote_number = (int) $vote_meta['vote_start'] + $v;
 				}
-				$title = $vote_number . '. ' . ($vote->title ?? $bill_number ?? 'Untitled Vote');
+				$title = $vote_number . '. ' . ($vote['title'] ?? $bill_number ?? 'Untitled Vote');
 				
 				// Build search text
 				$search_text = strtolower($title . ' ' . $bill_number . ' ' . strip_tags($description_short ?? ''));
@@ -383,7 +383,7 @@ fi_get_public_template('partials/template-header', $header_args);
 				// Build config for vote-card
 				/*
 				fi_get_public_template('partials/vote-card', [
-					'id' => $vote->id,
+					'id' => $vote['id'],
 					'title' => $title,
 					'text' => $description_long, //$description_short,
 					'text_more' => '', //$description_long,
@@ -410,10 +410,10 @@ fi_get_public_template('partials/template-header', $header_args);
 
 
 		// Legislator list: shared data built once; filter and grid/table receive args.
-		if (!empty($votes) && !empty($report->session_id)):
-			$report_base_path = '/' . $gov_slug . '/report/' . (int) $report->id . '/chamber/' . $chamber.'/';
+		if (!empty($votes) && !empty($report['session_id'])):
+			$report_base_path = '/' . $gov_slug . '/report/' . (int) $report['id'] . '/chamber/' . $chamber.'/';
 			$leg_data = fi_report_legislators_build_data(
-				$report->session_id,
+				$report['session_id'],
 				$chamber,
 				$gov,
 				$votes,
@@ -436,7 +436,7 @@ fi_get_public_template('partials/template-header', $header_args);
 				</div>
 				<?php
 				fi_get_public_template('partials/report-legislators-filter', [
-					'session_id' => $report->session_id,
+					'session_id' => $report['session_id'],
 					'chamber' => $chamber,
 					'gov' => $gov,
 					'filter_state' => $filter_state,

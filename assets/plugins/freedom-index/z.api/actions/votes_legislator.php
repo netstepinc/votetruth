@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *   We want to present ONLY the parent session info to users, but need to fetch and map this after fetching the votes.
  *
  * Note: This file generates a fi_api_sessions() function for in-file only use (to be moved out later).
- * TEST: https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=votes_legislator&legislator_id=1024
+ * TEST: https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=votes_legislator&legislator_id=1024
  */
 
 header('Content-Type: application/json; charset=utf-8');

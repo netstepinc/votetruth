@@ -21,8 +21,8 @@ fi_legislator_sessions[LS]:WHERE LEGISLATOR_ID|ORDER BY date_end,id DESC
 	L.chamber_label = FI_CHAMBERS[L.chamber]
 	L.chamber_title = FI_CHAMBERS[L.chamber]	
 District Info: fi_taxonomy[T]:WHERE type=district|WHERE ID = L.district
-https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislator&legislator_id=995
-https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislator&legislator_id=1414
+https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislator&legislator_id=995
+https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislator&legislator_id=1414
 */
 header('Content-Type: application/json; charset=utf-8');
 
@@ -280,7 +280,7 @@ try {
 					}
 				}
 				$v['date_formatted'] = $formatted_date;
-				$v['url_vote'] = 'https://votestellthetruth.us/'.strtolower($gov).'/vote/'.$vid.'/';
+				$v['url_vote'] = 'https://votetruth.us/'.strtolower($gov).'/vote/'.$vid.'/';
 
 				$search_description = '';
 				if(isset($meta['description_long']) && !empty($meta['description_long'])){

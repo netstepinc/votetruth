@@ -79,7 +79,7 @@ $join_clauses[] = "LEFT JOIN {$sessions_table} s ON v.session_id = s.id";
 
 // Government filter
 if (!empty($args['gov'])) {
-$where_conditions[] = "s.gov = %s";
+$where_conditions[] = "v.gov = %s";
 $where_values[] = $args['gov'];
 }
 
@@ -169,7 +169,7 @@ $sql = $wpdb->prepare($sql, $where_values);
 if ($args['count']) {
 $results = (int) $wpdb->get_var($sql);
 } else {
-$results = $wpdb->get_results($sql);
+$results = $wpdb->get_results($sql, ARRAY_A);
 }
 
 // Store in request-level cache
@@ -182,9 +182,9 @@ return $results;
  * Get a single vote by ID
  * 
  * @param int $vote_id
- * @return object|null
+ * @return array|null
  */
-function fi_vote_get(int $vote_id): ?object {
+function fi_vote_get(int $vote_id): ?array {
 global $wpdb;
 
 $sql = "
@@ -195,7 +195,7 @@ WHERE v.id = %d
 LIMIT 1
 ";
 
-return $wpdb->get_row($wpdb->prepare($sql, $vote_id));
+return $wpdb->get_row($wpdb->prepare($sql, $vote_id), ARRAY_A) ?: null;
 }
 
 /**
@@ -203,9 +203,9 @@ return $wpdb->get_row($wpdb->prepare($sql, $vote_id));
  * 
  * @param int $legiscan_rcid Legiscan rollcall ID
  * @param int|null $session_id Optional session ID for additional filtering
- * @return object|null
+ * @return array|null
  */
-function fi_vote_get_by_legiscan_rcid(int $legiscan_rcid, ?int $session_id = null): ?object {
+function fi_vote_get_by_legiscan_rcid(int $legiscan_rcid, ?int $session_id = null): ?array {
 global $wpdb;
 
 $where_conditions = ['v.legiscan_rcid = %d'];
@@ -226,7 +226,7 @@ LEFT JOIN {$wpdb->prefix}fi_sessions s ON v.session_id = s.id
 LIMIT 1
 ";
 
-return $wpdb->get_row($wpdb->prepare($sql, $where_values));
+return $wpdb->get_row($wpdb->prepare($sql, $where_values), ARRAY_A) ?: null;
 }
 
 /**

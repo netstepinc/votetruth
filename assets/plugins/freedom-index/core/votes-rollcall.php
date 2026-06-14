@@ -57,7 +57,7 @@ function fi_vote_rollcall_map(array $vote_ids): array {
 	
 	$rollcall_map = [];
 	foreach ($rollcalls as $rollcall) {
-		$rollcall_map[$rollcall->vote_id][$rollcall->legislator_id] = $rollcall->cast;
+		$rollcall_map[$rollcall['vote_id']][$rollcall['legislator_id']] = $rollcall['cast'];
 	}
 	
 	return $rollcall_map;

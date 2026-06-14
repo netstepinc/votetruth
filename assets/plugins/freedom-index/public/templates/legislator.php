@@ -37,8 +37,8 @@ Social media shares must be able to share the exact page vairant being viewed, n
 $base_url = home_url("/legislator/{$legislator_id}/");
 
 // Extract chamber for filters
-$chamber = $legislator->chamber ?? '';
-$sessions = $legislator->sessions ?? [];
+$chamber = $legislator['chamber'] ?? '';
+$sessions = $legislator['sessions'] ?? [];
 
 // Determine current session (for header score display)
 if (!$current_session_id && !empty($sessions)) {
@@ -51,7 +51,7 @@ if (!$current_session_id && !empty($sessions)) {
 // Find current session data for score display
 $current_session = null;
 foreach ($sessions as $session) {
-    if ((int) $session->session_id === $current_session_id) {
+    if ((int) $session['session_id'] === $current_session_id) {
         $current_session = $session;
         break;
     }
@@ -99,8 +99,8 @@ if ($current_report_id && !empty($votes_data)) {
     // Get report data to find vote IDs
     $report_vote_ids = [];
     foreach ($reports as $report) {
-        if ((int) $report->id === $current_report_id) {
-            $payload = json_decode($report->payload_json ?? '{}', true);
+        if ((int) $report['id'] === $current_report_id) {
+            $payload = json_decode($report['payload_json'] ?? '{}', true);
             $key = ($chamber === 'S') ? 'votes_s' : 'votes_h';
             $report_vote_ids = array_map('intval', (array) ($payload[$key] ?? []));
             break;
@@ -110,14 +110,14 @@ if ($current_report_id && !empty($votes_data)) {
     // Filter votes to only those in the report
     if (!empty($report_vote_ids)) {
         $votes_data = array_filter($votes_data, function($vote) use ($report_vote_ids) {
-            return in_array((int) ($vote->id ?? 0), $report_vote_ids);
+            return in_array((int) ($vote['id'] ?? 0), $report_vote_ids);
         });
     }
 }
 
 // Build page data
-$page_title = ($legislator->display_name ?? 'Legislator') . ' | Freedom Index';
-$gov = $legislator->gov ?? 'US';
+$page_title = ($legislator['display_name'] ?? 'Legislator') . ' | Freedom Index';
+$gov = $legislator['gov'] ?? 'US';
 $gov_slug = strtolower($gov);
 
 // Get legislator meta (TODO: rebuild meta function)
@@ -125,26 +125,26 @@ $gov_slug = strtolower($gov);
 
 // Contact info - use direct legislator data
 $contact = [
-    'website' => $legislator->website ?? '',
-    'phone' => $legislator->phone ?? '',
-    'email' => $legislator->email ?? '',
-    'office' => $legislator->address ?? '',
+    'website' => $legislator['website'] ?? '',
+    'phone' => $legislator['phone'] ?? '',
+    'email' => $legislator['email'] ?? '',
+    'office' => $legislator['address'] ?? '',
 ];
 
 // Get image
 $image_html = fi_legislator_image(
-    $legislator->image_id ?? 0, 
-    $legislator->session_image_id ?? null,
+    $legislator['image_id'] ?? 0, 
+    $legislator['session_image_id'] ?? null,
     [
         'size' => [200, 250],
         'crop' => true,
-        'alt' => $legislator->display_name ?? '', 
+        'alt' => $legislator['display_name'] ?? '', 
         'class' => 'img-fluid rounded-4 shadow',
     ]
 );
 
 // Score data
-$freedom_score = $legislator->freedom_score ?? null;
+$freedom_score = $legislator['freedom_score'] ?? null;
 $current_session_score = $current_session->score ?? null;
 
 // Determine if this is an HTMX request
@@ -159,9 +159,9 @@ if ($is_htmx && isset($_GET['votes_only'])) {
 // SEO Meta Tags
 $description = sprintf(
     '%s (%s, %s) - Freedom Score: %s%%. View voting record, scores, and reports.',
-    $legislator->display_name ?? '',
-    $legislator->chamber_label ?? '',
-    $legislator->party_name ?? '',
+    $legislator['display_name'] ?? '',
+    $legislator['chamber_label'] ?? '',
+    $legislator['party_name'] ?? '',
     $freedom_score ?? 'N/A'
 );
 
@@ -175,13 +175,13 @@ fi_seo_tags([
         'og:description' => $description,
         'og:url' => $base_url,
         'og:type' => 'profile',
-        'og:image' => $legislator->image_url ?? '',
+        'og:image' => $legislator['image_url'] ?? '',
     ],
     'twitter' => [
         'twitter:card' => 'summary',
         'twitter:title' => $page_title,
         'twitter:description' => $description,
-        'twitter:image' => $legislator->image_url ?? '',
+        'twitter:image' => $legislator['image_url'] ?? '',
     ],
 ]);
 

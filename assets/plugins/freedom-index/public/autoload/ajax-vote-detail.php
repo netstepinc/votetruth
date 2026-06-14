@@ -64,20 +64,20 @@ function fi_public_ajax_handle_vote_detail(): void {
  * @return string HTML.
  */
 function fi_public_vote_detail_render_html(object $vote, int $legislator_id): string {
-	$vote_id = absint($vote->id ?? 0);
+	$vote_id = absint($vote['id'] ?? 0);
 
 	$rollcall = ($vote_id > 0 && function_exists('fi_rollcall_get'))
 		? fi_rollcall_get($vote_id, $legislator_id)
 		: null;
 
-	$cast = is_object($rollcall) && isset($rollcall->cast)
-		? (string) $rollcall->cast
+	$cast = is_array($rollcall) && isset($rollcall['cast'])
+		? (string) $rollcall['cast']
 		: 'X';
 
 	$vote_format = function_exists('fi_vote_format')
 		? fi_vote_format([
 			'cast'           => $cast,
-			'constitutional' => $vote->constitutional ?? '',
+			'constitutional' => $vote['constitutional'] ?? '',
 			'format'         => 'full',
 		])
 		: [
@@ -88,18 +88,18 @@ function fi_public_vote_detail_render_html(object $vote, int $legislator_id): st
 
 	$constitutional_format = function_exists('fi_vote_format')
 		? fi_vote_format([
-			'constitutional' => $vote->constitutional ?? '',
+			'constitutional' => $vote['constitutional'] ?? '',
 			'format'         => 'full',
 		])
 		: [
 			'vote_class'      => '',
 			'vote_class_icon' => '',
-			'vote_text'       => (string) ($vote->constitutional ?? ''),
+			'vote_text'       => (string) ($vote['constitutional'] ?? ''),
 		];
 
 	$meta = function_exists('fi_vote_decode_meta')
 		? fi_vote_decode_meta($vote)
-		: fi_public_vote_detail_decode_meta($vote->meta ?? null);
+		: fi_public_vote_detail_decode_meta($vote['meta'] ?? null);
 
 	$description_short = function_exists('fi_vote_get_description')
 		? fi_vote_get_description($meta, 'scorecard')
@@ -110,17 +110,17 @@ function fi_public_vote_detail_render_html(object $vote, int $legislator_id): st
 	ob_start();
 	?>
 	<div class="fi-vote-detail">
-		<h5><?php echo esc_html($vote->title ?? 'Untitled Vote'); ?></h5>
+		<h5><?php echo esc_html($vote['title'] ?? 'Untitled Vote'); ?></h5>
 
-		<?php if (!empty($vote->bill_number)): ?>
+		<?php if (!empty($vote['bill_number'])): ?>
 			<p class="text-muted mb-2">
-				<strong>Bill:</strong> <?php echo esc_html($vote->bill_number); ?>
+				<strong>Bill:</strong> <?php echo esc_html($vote['bill_number']); ?>
 			</p>
 		<?php endif; ?>
 
-		<?php if (!empty($vote->date_voted)): ?>
+		<?php if (!empty($vote['date_voted'])): ?>
 			<p class="text-muted mb-2">
-				<strong>Date:</strong> <?php echo esc_html(fi_public_vote_detail_format_date((string) $vote->date_voted)); ?>
+				<strong>Date:</strong> <?php echo esc_html(fi_public_vote_detail_format_date((string) $vote['date_voted'])); ?>
 			</p>
 		<?php endif; ?>
 
@@ -221,11 +221,11 @@ function fi_public_vote_detail_decode_meta($meta): array {
  * @return string Description.
  */
 function fi_public_vote_detail_get_rollcall_description(object $vote): string {
-	if (empty($vote->rollcall_data)) {
+	if (empty($vote['rollcall_data'])) {
 		return '';
 	}
 
-	$rollcall_data = json_decode((string) $vote->rollcall_data, true);
+	$rollcall_data = json_decode((string) $vote['rollcall_data'], true);
 
 	if (!is_array($rollcall_data) || empty($rollcall_data['description'])) {
 		return '';

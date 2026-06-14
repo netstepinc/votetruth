@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) exit;
             <div class="modal-header">
                 <h5 class="modal-title" id="fi-contact-modal-label">
                     <i class="bi bi-envelope me-2"></i>
-                    Contact <?php echo esc_html($legislator->display_name ?? ''); ?>
+                    Contact <?php echo esc_html($legislator['display_name'] ?? ''); ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -150,7 +150,7 @@ if (!defined('ABSPATH')) exit;
             </div>
             <div class="modal-body">
                 <p class="text-muted">
-                    Generate a printable scorecard for <?php echo esc_html($legislator->display_name ?? ''); ?>.
+                    Generate a printable scorecard for <?php echo esc_html($legislator['display_name'] ?? ''); ?>.
                     The PDF will include all votes for the current filter selection.
                 </p>
                 

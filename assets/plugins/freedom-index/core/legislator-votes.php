@@ -75,9 +75,10 @@ function fi_legislator_votes_on_rollcall_saved(int $rollcall_id, array $data): v
 		return;
 	}
 
-	$vote = function_exists('fi_vote_get') ? fi_vote_get((int) $data['vote_id']) : null;
-	if ($vote && !empty($vote->session_id)) {
-		fi_session_votes_cache_invalidate((int) $vote->session_id);
+	$vote = fi_vote_get((int) $data['vote_id']);
+	$vote_session_id = (int) ($vote['session_id'] ?? 0);
+	if ($vote_session_id > 0) {
+		fi_session_votes_cache_invalidate($vote_session_id);
 	}
 }
 
@@ -101,7 +102,7 @@ function fi_legislator_votes_decode_array($value): array {
 }
 
 /**
- * Get votes for a session through procedural core API.
+ * Get votes for a session through core API.
  *
  * @param int $session_id Session ID.
  * @param array $args Query args.
@@ -123,7 +124,7 @@ function fi_legislator_votes_get_votes_by_session(int $session_id, array $args =
 }
 
 /**
- * Get votes for a tag through procedural core API.
+ * Get votes for a tag through core API.
  *
  * @param int $tag_id Tag ID.
  * @param array $args Query args.
@@ -139,7 +140,7 @@ function fi_legislator_votes_get_votes_by_tag_public(int $tag_id, array $args = 
 }
 
 /**
- * Get rollcalls by vote IDs through procedural core API.
+ * Get rollcalls by vote IDs through core API.
  *
  * @param array $vote_ids Vote IDs.
  * @return array
@@ -159,7 +160,7 @@ function fi_legislator_votes_get_rollcalls_by_vote_ids(array $vote_ids): array {
 }
 
 /**
- * Get rollcalls through procedural core API.
+ * Get rollcalls through core API.
  *
  * @param array $args Query args.
  * @return array
@@ -174,7 +175,7 @@ function fi_legislator_votes_get_rollcalls(array $args = []): array {
 }
 
 /**
- * Get one rollcall by vote and legislator through procedural core API.
+ * Get one rollcall by vote and legislator through core API.
  *
  * @param int $vote_id Vote ID.
  * @param int $legislator_id Legislator ID.
@@ -193,7 +194,7 @@ function fi_legislator_votes_get_rollcall(int $vote_id, int $legislator_id) {
 }
 
 /**
- * Get vote tags by vote IDs through procedural core API.
+ * Get vote tags by vote IDs through core API.
  *
  * @param array $vote_ids Vote IDs.
  * @return array
@@ -220,52 +221,41 @@ function fi_legislator_votes_get_tags_by_vote_ids(array $vote_ids): array {
 /**
  * Normalize a rollcall result into array form.
  *
- * @param object|array|null $rollcall Rollcall result.
+ * @param array|null $rollcall Rollcall result.
  * @return array|null Rollcall array.
  */
-function fi_legislator_votes_normalize_rollcall($rollcall): ?array {
+function fi_legislator_votes_normalize_rollcall(?array $rollcall): ?array {
 	if (!$rollcall) {
 		return null;
 	}
 
-	if (is_array($rollcall)) {
-		return [
-			'cast'         => (string) ($rollcall['cast'] ?? ''),
-			'is_override'  => (bool) ($rollcall['is_override'] ?? false),
-			'date_created' => $rollcall['date_created'] ?? null,
-		];
-	}
-
-	if (is_object($rollcall)) {
-		return [
-			'cast'         => (string) ($rollcall->cast ?? ''),
-			'is_override'  => (bool) ($rollcall->is_override ?? false),
-			'date_created' => $rollcall->date_created ?? null,
-		];
-	}
-
-	return null;
+	return [
+		'cast'         => (string) ($rollcall['cast'] ?? ''),
+		'is_override'  => (bool) ($rollcall['is_override'] ?? false),
+		'date_created' => $rollcall['date_created'] ?? null,
+	];
 }
 
 /**
- * Format a vote object for legislator vote display/cache arrays.
+ * Format a vote (array) for legislator vote display/cache arrays.
  *
- * @param object $vote Vote object.
+ * @param array      $vote         Vote array.
  * @param array|null $session_cache Optional session cache data keyed by session ID.
  * @return array
  */
-function fi_legislator_votes_format_vote(object $vote, ?array $session_cache = null): array {
-	$meta = fi_legislator_votes_decode_array($vote->meta ?? []);
+function fi_legislator_votes_format_vote(array $vote, ?array $session_cache = null): array {
+	$meta = fi_legislator_votes_decode_array($vote['meta'] ?? []);
+	$session_id = (int) ($vote['session_id'] ?? 0);
 
 	$formatted = [
-		'vote_id'            => (int) $vote->id,
-		'title'              => $vote->title ?? '',
-		'bill_number'        => $vote->bill_number ?? ($meta['bill_number'] ?? $meta['bill_key'] ?? null),
-		'date_voted'         => $vote->date_voted ?? null,
-		'constitutional'     => $vote->constitutional ?? '',
-		'chamber'            => $vote->chamber ?? '',
-		'gov'                => $vote->gov ?? '',
-		'session_id'         => (int) ($vote->session_id ?? 0),
+		'vote_id'            => (int) ($vote['id'] ?? 0),
+		'title'              => $vote['title'] ?? '',
+		'bill_number'        => $vote['bill_number'] ?? ($meta['bill_number'] ?? $meta['bill_key'] ?? null),
+		'date_voted'         => $vote['date_voted'] ?? null,
+		'constitutional'     => $vote['constitutional'] ?? '',
+		'chamber'            => $vote['chamber'] ?? '',
+		'gov'                => $vote['gov'] ?? '',
+		'session_id'         => $session_id,
 		'description_short'  => $meta['description_short'] ?? $meta['text_scorecard'] ?? null,
 		'description_medium' => $meta['description_medium'] ?? $meta['text_freedomindex'] ?? null,
 		'description_long'   => $meta['description_long'] ?? $meta['text_scorecard_more'] ?? null,
@@ -275,8 +265,8 @@ function fi_legislator_votes_format_vote(object $vote, ?array $session_cache = n
 		'meta'               => $meta,
 	];
 
-	if ($session_cache !== null && isset($session_cache[(int) ($vote->session_id ?? 0)])) {
-		$formatted['session_name'] = $session_cache[(int) $vote->session_id]['name'] ?? '';
+	if ($session_cache !== null && isset($session_cache[$session_id])) {
+		$formatted['session_name'] = $session_cache[$session_id]['name'] ?? '';
 	}
 
 	return $formatted;
@@ -297,15 +287,15 @@ function fi_legislator_votes_get(int $legislator_id, string $chamber): array {
 		return [];
 	}
 
-	$legislator = function_exists('fi_legislator_get') ? fi_legislator_get($legislator_id) : null;
-	if (!$legislator || empty($legislator->sessions) || !is_array($legislator->sessions)) {
+	$legislator = fi_legislator_get($legislator_id);
+	if (!$legislator || empty($legislator['sessions'])) {
 		return [];
 	}
 
 	$sessions_data = [];
 
-	foreach ($legislator->sessions as $session) {
-		$session_id = (int) ($session->session_id ?? 0);
+	foreach ($legislator['sessions'] as $session) {
+		$session_id = (int) ($session['session_id'] ?? 0);
 		if ($session_id <= 0) {
 			continue;
 		}
@@ -315,17 +305,18 @@ function fi_legislator_votes_get(int $legislator_id, string $chamber): array {
 			continue;
 		}
 
-		$reports = function_exists('fi_reports_get_by_session') ? fi_reports_get_by_session($session_id) : [];
+		$reports = fi_reports_get_by_session($session_id);
 		$reports = is_array($reports) ? $reports : [];
 
+		$score_data_raw = $session['session_score_data'] ?? null;
 		$session_data = [
 			'session_id'   => $session_id,
-			'session_name' => $session->session_name ?? ($session_cache['session_name'] ?? ''),
-			'gov'          => $session->gov ?? ($session_cache['gov'] ?? ''),
-			'date_start'   => $session->date_start ?? null,
-			'date_end'     => $session->date_end ?? null,
-			'score'        => $session->score ?? null,
-			'score_data'   => is_string($session->score_data ?? null) ? json_decode($session->score_data, true) : ($session->score_data ?? null),
+			'session_name' => $session['session_name'] ?? ($session_cache['session_name'] ?? ''),
+			'gov'          => $session['gov'] ?? ($session_cache['gov'] ?? ''),
+			'date_start'   => $session['date_start'] ?? null,
+			'date_end'     => $session['date_end'] ?? null,
+			'score'        => $session['session_score'] ?? null,
+			'score_data'   => is_string($score_data_raw) ? json_decode($score_data_raw, true) : $score_data_raw,
 			'reports'      => [],
 			'all_votes'    => [],
 		];
@@ -361,14 +352,14 @@ function fi_legislator_votes_get(int $legislator_id, string $chamber): array {
 /**
  * Build report data with calculated score.
  *
- * @param object $report Report object.
- * @param array $session_cache Cached session data.
- * @param int $legislator_id Legislator ID.
- * @param string $chamber Legislator chamber H or S.
+ * @param array  $report       Report array.
+ * @param array  $session_cache Cached session data.
+ * @param int    $legislator_id Legislator ID.
+ * @param string $chamber       Legislator chamber H or S.
  * @return array|null Report data or null if invalid.
  */
-function fi_legislator_votes_build_report_data(object $report, array $session_cache, int $legislator_id, string $chamber): ?array {
-	$payload = fi_legislator_votes_decode_array($report->payload_json ?? '{}');
+function fi_legislator_votes_build_report_data(array $report, array $session_cache, int $legislator_id, string $chamber): ?array {
+	$payload = fi_legislator_votes_decode_array($report['payload_json'] ?? '{}');
 	if (empty($payload)) {
 		return null;
 	}
@@ -400,10 +391,10 @@ function fi_legislator_votes_build_report_data(object $report, array $session_ca
 	$score_data = fi_legislator_votes_calculate_score_from_votes($report_votes, $legislator_id);
 
 	return [
-		'report_id'   => (int) $report->id,
-		'report_name' => $report->title ?? '',
+		'report_id'   => (int) ($report['id'] ?? 0),
+		'report_name' => $report['title'] ?? '',
 		'content'     => $payload['content'] ?? '',
-		'format'      => $payload['format'] ?? ($report->format ?? 'scorecard'),
+		'format'      => $payload['format'] ?? ($report['format'] ?? 'scorecard'),
 		'score'       => $score_data['score'] ?? null,
 		'score_data'  => $score_data,
 		'votes'       => $report_votes,
@@ -448,7 +439,7 @@ function fi_session_votes_cache_get(int $session_id): array {
  */
 function fi_session_votes_cache_build(int $session_id): array {
 	$session_id = absint($session_id);
-	$session = function_exists('fi_session_get') ? fi_session_get($session_id) : null;
+	$session = fi_session_get($session_id);
 	if (!$session) {
 		return [];
 	}
@@ -464,11 +455,12 @@ function fi_session_votes_cache_build(int $session_id): array {
 	$vote_ids = [];
 
 	foreach ($votes as $vote) {
-		if (!in_array($vote->constitutional ?? '', ['Y', 'N'], true)) {
+		$vote = is_object($vote) ? (array) $vote : $vote;
+		if (!in_array($vote['constitutional'] ?? '', ['Y', 'N'], true)) {
 			continue;
 		}
 
-		$vote_ids[] = (int) $vote->id;
+		$vote_ids[] = (int) ($vote['id'] ?? 0);
 		$formatted_votes[] = fi_legislator_votes_format_vote($vote);
 	}
 
@@ -477,8 +469,9 @@ function fi_session_votes_cache_build(int $session_id): array {
 		$rollcall_results = fi_legislator_votes_get_rollcalls_by_vote_ids($vote_ids);
 
 		foreach ($rollcall_results as $rc) {
-			$vote_id = (int) ($rc->vote_id ?? 0);
-			$legislator_id = (int) ($rc->legislator_id ?? 0);
+			$rc = is_object($rc) ? (array) $rc : $rc;
+			$vote_id = (int) ($rc['vote_id'] ?? 0);
+			$legislator_id = (int) ($rc['legislator_id'] ?? 0);
 			if ($vote_id <= 0 || $legislator_id <= 0) {
 				continue;
 			}
@@ -488,9 +481,9 @@ function fi_session_votes_cache_build(int $session_id): array {
 			}
 
 			$rollcalls[$vote_id][$legislator_id] = [
-				'cast'         => (string) ($rc->cast ?? ''),
-				'is_override'  => (bool) ($rc->is_override ?? false),
-				'date_created' => $rc->date_created ?? null,
+				'cast'         => (string) ($rc['cast'] ?? ''),
+				'is_override'  => (bool) ($rc['is_override'] ?? false),
+				'date_created' => $rc['date_created'] ?? null,
 			];
 		}
 	}
@@ -500,7 +493,8 @@ function fi_session_votes_cache_build(int $session_id): array {
 		$tag_results = fi_legislator_votes_get_tags_by_vote_ids($vote_ids);
 
 		foreach ($tag_results as $tag) {
-			$vote_id = (int) ($tag->vote_id ?? 0);
+			$tag = is_object($tag) ? (array) $tag : $tag;
+			$vote_id = (int) ($tag['vote_id'] ?? 0);
 			if ($vote_id <= 0) {
 				continue;
 			}
@@ -510,8 +504,8 @@ function fi_session_votes_cache_build(int $session_id): array {
 			}
 
 			$vote_tags[$vote_id][] = [
-				'id'   => (int) ($tag->tag_id ?? 0),
-				'name' => (string) ($tag->tag_name ?? ''),
+				'id'   => (int) ($tag['tag_id'] ?? 0),
+				'name' => (string) ($tag['tag_name'] ?? ''),
 			];
 		}
 	}
@@ -521,10 +515,12 @@ function fi_session_votes_cache_build(int $session_id): array {
 	}
 	unset($vote);
 
+	$session_arr = is_array($session) ? $session : (array) $session;
+
 	return [
 		'session_id'   => $session_id,
-		'session_name' => $session->name ?? '',
-		'gov'          => $session->gov ?? '',
+		'session_name' => $session_arr['name'] ?? '',
+		'gov'          => $session_arr['gov'] ?? '',
 		'votes'        => $formatted_votes,
 		'rollcalls'    => $rollcalls,
 		'tags'         => $vote_tags,
@@ -659,15 +655,15 @@ function fi_legislator_tags_get(int $legislator_id, string $chamber): array {
 
 	global $wpdb;
 
-	$legislator = function_exists('fi_legislator_get') ? fi_legislator_get($legislator_id) : null;
-	if (!$legislator || empty($legislator->sessions) || !is_array($legislator->sessions)) {
+	$legislator = fi_legislator_get($legislator_id);
+	if (!$legislator || empty($legislator['sessions'])) {
 		fi_legislator_votes_tags_request_cache($cache_key, [], true);
 		return [];
 	}
 
 	$session_ids = [];
-	foreach ($legislator->sessions as $session) {
-		$session_ids[] = (int) ($session->session_id ?? 0);
+	foreach ($legislator['sessions'] as $session) {
+		$session_ids[] = (int) ($session['session_id'] ?? 0);
 	}
 
 	$session_ids = array_values(array_filter(array_map('absint', $session_ids)));
@@ -735,14 +731,14 @@ function fi_legislator_votes_get_by_tag(int $legislator_id, string $chamber, int
 		return [];
 	}
 
-	$legislator = function_exists('fi_legislator_get') ? fi_legislator_get($legislator_id) : null;
-	if (!$legislator || empty($legislator->sessions) || !is_array($legislator->sessions)) {
+	$legislator = fi_legislator_get($legislator_id);
+	if (!$legislator || empty($legislator['sessions'])) {
 		return [];
 	}
 
 	$session_ids = [];
-	foreach ($legislator->sessions as $session) {
-		$session_ids[] = (int) ($session->session_id ?? 0);
+	foreach ($legislator['sessions'] as $session) {
+		$session_ids[] = (int) ($session['session_id'] ?? 0);
 	}
 	$session_ids = array_values(array_filter(array_map('absint', $session_ids)));
 
@@ -763,7 +759,8 @@ function fi_legislator_votes_get_by_tag(int $legislator_id, string $chamber, int
 	}
 
 	$vote_ids = array_values(array_filter(array_map(static function($vote) {
-		return absint($vote->id ?? 0);
+		$vote = is_object($vote) ? (array) $vote : $vote;
+		return absint($vote['id'] ?? 0);
 	}, $tag_votes)));
 
 	if (empty($vote_ids)) {
@@ -775,14 +772,15 @@ function fi_legislator_votes_get_by_tag(int $legislator_id, string $chamber, int
 	$rollcalls_by_vote = [];
 
 	foreach ($rollcall_results as $rc) {
-		if ((int) ($rc->legislator_id ?? 0) !== $legislator_id) {
+		$rc = is_object($rc) ? (array) $rc : $rc;
+		if ((int) ($rc['legislator_id'] ?? 0) !== $legislator_id) {
 			continue;
 		}
 
-		$rollcalls_by_vote[(int) $rc->vote_id] = [
-			'cast'         => (string) ($rc->cast ?? ''),
-			'is_override'  => (bool) ($rc->is_override ?? false),
-			'date_created' => $rc->date_created ?? null,
+		$rollcalls_by_vote[(int) ($rc['vote_id'] ?? 0)] = [
+			'cast'         => (string) ($rc['cast'] ?? ''),
+			'is_override'  => (bool) ($rc['is_override'] ?? false),
+			'date_created' => $rc['date_created'] ?? null,
 		];
 	}
 
@@ -794,7 +792,8 @@ function fi_legislator_votes_get_by_tag(int $legislator_id, string $chamber, int
 	$tags_by_vote = [];
 
 	foreach ($tag_results as $tag) {
-		$vote_id = (int) ($tag->vote_id ?? 0);
+		$tag = is_object($tag) ? (array) $tag : $tag;
+		$vote_id = (int) ($tag['vote_id'] ?? 0);
 		if ($vote_id <= 0) {
 			continue;
 		}
@@ -804,25 +803,28 @@ function fi_legislator_votes_get_by_tag(int $legislator_id, string $chamber, int
 		}
 
 		$tags_by_vote[$vote_id][] = [
-			'id'   => (int) ($tag->tag_id ?? 0),
-			'name' => (string) ($tag->tag_name ?? ''),
+			'id'   => (int) ($tag['tag_id'] ?? 0),
+			'name' => (string) ($tag['tag_name'] ?? ''),
 		];
 	}
 
 	$session_cache = [];
 	foreach ($tag_votes as $vote) {
-		$session_id = (int) ($vote->session_id ?? 0);
+		$vote = is_object($vote) ? (array) $vote : $vote;
+		$session_id = (int) ($vote['session_id'] ?? 0);
 		if ($session_id > 0 && !isset($session_cache[$session_id])) {
-			$session_obj = function_exists('fi_session_get') ? fi_session_get($session_id) : null;
+			$session_obj = fi_session_get($session_id);
+			$session_arr = is_array($session_obj) ? $session_obj : (array) $session_obj;
 			$session_cache[$session_id] = [
-				'name' => $session_obj->name ?? '',
+				'name' => $session_arr['name'] ?? '',
 			];
 		}
 	}
 
 	$formatted_votes = [];
 	foreach ($tag_votes as $vote) {
-		$vote_id = (int) ($vote->id ?? 0);
+		$vote = is_object($vote) ? (array) $vote : $vote;
+		$vote_id = (int) ($vote['id'] ?? 0);
 		if ($vote_id <= 0 || empty($rollcalls_by_vote[$vote_id])) {
 			continue;
 		}

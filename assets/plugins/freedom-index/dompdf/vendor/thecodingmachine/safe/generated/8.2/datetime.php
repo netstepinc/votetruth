@@ -5,7 +5,7 @@ namespace Safe;
 use Safe\Exceptions\DatetimeException;
 
 /**
- * This is the procedural version of
+ * This is the version of
  * DateTime::__construct.
  *
  * Unlike the DateTime constructor, it will return
@@ -15,7 +15,7 @@ use Safe\Exceptions\DatetimeException;
  * @param null|string $datetime
  * @param \DateTimeZone|null $timezone
  * @return \DateTime Returns a new DateTime instance.
- * Procedural style returns FALSE on failure.
+ * style returns FALSE on failure.
  * @throws DatetimeException
  *
  */

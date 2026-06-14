@@ -252,7 +252,7 @@ function fi_legislator_meta_normalize(array $meta): array {
  * @return array Normalized meta array.
  */
 function fi_legislator_meta_from_object(object $legislator): array {
-	$meta = $legislator->meta ?? [];
+	$meta = $legislator['meta'] ?? [];
 
 	if (is_string($meta) && $meta !== '') {
 		$decoded = json_decode($meta, true);

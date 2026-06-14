@@ -17,7 +17,7 @@ Replaced:
 	\FICore\Logger::get_log_size()
 	\FICore\Logger::get_logs()
 
-	with the procedural helpers we already refactored:
+	with the helpers we already refactored:
 
 	fi_log_clear()
 	fi_log_get_file()

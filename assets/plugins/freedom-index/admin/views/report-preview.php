@@ -34,21 +34,21 @@ foreach ($votes as $vote) {
 	$html .= '<div class="fi-vote-item">';
 	
 	if ($options['number_votes'] ?? true) {
-		$html .= '<h3>Vote ' . $vote_number . ': ' . esc_html($vote->bill_number ?? $vote->slug ?? 'N/A') . '</h3>';
+		$html .= '<h3>Vote ' . $vote_number . ': ' . esc_html($vote['bill_number'] ?? $vote['slug'] ?? 'N/A') . '</h3>';
 	} else {
-		$html .= '<h3>' . esc_html($vote->bill_number ?? $vote->slug ?? 'N/A') . '</h3>';
+		$html .= '<h3>' . esc_html($vote['bill_number'] ?? $vote['slug'] ?? 'N/A') . '</h3>';
 	}
 	
-	$html .= '<p><strong>' . esc_html($vote->title) . '</strong></p>';
-	$chamber = $vote->chamber ?? '';
-	$gov = $vote->gov ?? 'US';
+	$html .= '<p><strong>' . esc_html($vote['title']) . '</strong></p>';
+	$chamber = $vote['chamber'] ?? '';
+	$gov = $vote['gov'] ?? 'US';
 	$chamber_label = $chamber ? fi_chamber_label($gov, $chamber) : '';
-	$html .= '<p>Date: ' . esc_html($vote->date_voted ?? $vote->date ?? '') . ' | Chamber: ' . esc_html($chamber_label) . '</p>';
-	$html .= '<p>Good Position: ' . esc_html($vote->constitutional) . '</p>';
+	$html .= '<p>Date: ' . esc_html($vote['date_voted'] ?? $vote['date'] ?? '') . ' | Chamber: ' . esc_html($chamber_label) . '</p>';
+	$html .= '<p>Good Position: ' . esc_html($vote['constitutional']) . '</p>';
 	
-	if (!empty($vote->description)) {
+	if (!empty($vote['description'])) {
 		$html .= '<div class="fi-vote-description">';
-		$html .= wp_kses_post($vote->description);
+		$html .= wp_kses_post($vote['description']);
 		$html .= '</div>';
 	}
 	

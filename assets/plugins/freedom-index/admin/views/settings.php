@@ -3,11 +3,12 @@
 
 $scope = function_exists('fi_scope_get_current') ? fi_scope_get_current() : ['gov' => 'US'];
 $gov = strtoupper((string) ($scope['gov'] ?? 'US'));
-$tab = $_GET['tab'] ?? 'images';
-// Redirect logging tab to images (logging tab is disabled)
-if ($tab === 'logging') {
-	$tab = 'images';
+$tab = $_GET['tab'] ?? 'cache';
+// Redirect removed/disabled tabs to cache
+if (in_array($tab, ['images', 'api', 'logging'], true)) {
+	$tab = 'cache';
 }
+
 
 // Handle disk cache clearing (uses same fi_clear_disk_cache() as merge-legislators)
 if (isset($_POST['clear_disk_cache']) && wp_verify_nonce($_POST['fi_disk_cache_nonce'], 'fi_clear_disk_cache')) {
@@ -225,261 +226,22 @@ fi_scope_render_selector();
 
 	<ul class="nav nav-tabs mb-4" role="tablist">
 		<li class="nav-item" role="presentation">
-			<button class="nav-link <?php echo $tab === 'images' ? 'active' : ''; ?>" 
-					id="images-tab" data-bs-toggle="tab" data-bs-target="#images" 
-					type="button" role="tab" aria-controls="images" aria-selected="<?php echo $tab === 'images' ? 'true' : 'false'; ?>">
-				Images
-			</button>
-		</li>
-		<li class="nav-item" role="presentation">
-			<button class="nav-link <?php echo $tab === 'api' ? 'active' : ''; ?>" 
-					id="api-tab" data-bs-toggle="tab" data-bs-target="#api" 
-					type="button" role="tab" aria-controls="api" aria-selected="<?php echo $tab === 'api' ? 'true' : 'false'; ?>">
-				API
-			</button>
-		</li>
-		<?php /* Logging tab disabled
-		<li class="nav-item" role="presentation">
-			<button class="nav-link <?php echo $tab === 'logging' ? 'active' : ''; ?>" 
-					id="logging-tab" data-bs-toggle="tab" data-bs-target="#logging" 
-					type="button" role="tab" aria-controls="logging" aria-selected="<?php echo $tab === 'logging' ? 'true' : 'false'; ?>">
-				Logging
-			</button>
-		</li>
-		*/ ?>
-		<li class="nav-item" role="presentation">
 			<button class="nav-link <?php echo $tab === 'cache' ? 'active' : ''; ?>" 
 					id="cache-tab" data-bs-toggle="tab" data-bs-target="#cache" 
 					type="button" role="tab" aria-controls="cache" aria-selected="<?php echo $tab === 'cache' ? 'true' : 'false'; ?>">
 				Cache Management
 			</button>
 		</li>
+		<li class="nav-item" role="presentation">
+			<button class="nav-link <?php echo $tab === 'data' ? 'active' : ''; ?>" 
+					id="data-tab" data-bs-toggle="tab" data-bs-target="#data" 
+					type="button" role="tab" aria-controls="data" aria-selected="<?php echo $tab === 'data' ? 'true' : 'false'; ?>">
+				Legislator Cache
+			</button>
+		</li>
 	</ul>
 
 	<div class="tab-content">
-		<!-- Images Settings -->
-		<div class="tab-pane fade <?php echo $tab === 'images' ? 'show active' : ''; ?>" 
-			 id="images" role="tabpanel" aria-labelledby="images-tab">
-			<form method="post" class="fi-settings-form">
-				<?php wp_nonce_field('fi_save_settings', 'fi_settings_nonce'); ?>
-				
-				<div class="card shadow-sm mb-4">
-					<div class="card-header bg-white border-0 pb-0">
-						<h2 class="h4 mb-0">Image Settings</h2>
-					</div>
-					<div class="card-body">
-						<div class="row g-3">
-							<div class="col-md-6">
-								<?php fi_form_field('images[default_size]', [
-									'label' => 'Default Image Size',
-									'type' => 'select',
-									'options' => [
-										'thumbnail' => 'Thumbnail',
-										'medium' => 'Medium',
-										'large' => 'Large',
-										'full' => 'Full'
-									],
-									'value' => $settings['images']['default_size'] ?? 'medium',
-									'help' => 'Default size for legislator images'
-								]); ?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('images[fallback_image]', [
-									'label' => 'Fallback Image ID',
-									'value' => $settings['images']['fallback_image'] ?? '',
-									'help' => 'WordPress media library ID for default legislator image'
-								]); ?>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="mb-3">
-					<?php submit_button('Save Image Settings', 'primary', 'submit', false); ?>
-				</div>
-			</form>
-<?php include FI_PUBLIC_DIR . 'admin/views/settings-image-check.php'; ?>
-		</div>
-
-		<!-- API Settings -->
-		<div class="tab-pane fade <?php echo $tab === 'api' ? 'show active' : ''; ?>" 
-			 id="api" role="tabpanel" aria-labelledby="api-tab">
-			<form method="post" class="fi-settings-form">
-				<?php wp_nonce_field('fi_save_settings', 'fi_settings_nonce'); ?>
-				
-				<div class="card shadow-sm mb-4">
-					<div class="card-header bg-white border-0 pb-0">
-						<h2 class="h4 mb-0">API Configuration</h2>
-					</div>
-					<div class="card-body">
-						<div class="row g-3">
-							<div class="col-md-6">
-								<?php fi_form_field('api[version]', [
-									'label' => 'API Version',
-									'value' => $settings_global['api']['version'] ?? '1.0',
-									'help' => 'API version number'
-								]); ?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('api[rate_limit]', [
-									'label' => 'Rate Limit',
-									'type' => 'number',
-									'value' => $settings_global['api']['rate_limit'] ?? 1000,
-									'help' => 'Maximum API requests per hour'
-								]); ?>
-							</div>
-							<div class="col-12">
-								<hr>
-								<h5 class="mb-3">API Keys</h5>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('api[legiscan_key]', [
-									'label' => 'Legiscan API Key',
-									'type' => 'password',
-									'value' => $settings_global['api']['legiscan_key'] ?? (defined('API_KEY_LEGISCAN') ? API_KEY_LEGISCAN : ''),
-									'help' => 'API key for Legiscan data imports. Get your key from <a href="https://legiscan.com/gaits/documentation/legiscan" target="_blank">legiscan.com</a>',
-									'attributes' => ['autocomplete' => 'new-password']
-								]); ?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('api[geocod_key]', [
-									'label' => 'Geocod.io API Key',
-									'type' => 'password',
-									'value' => $settings_global['api']['geocod_key'] ?? (defined('API_KEY_GEOCOD') ? API_KEY_GEOCOD : ''),
-									'help' => 'API key for Geocod.io geocoding service',
-									'attributes' => ['autocomplete' => 'new-password']
-								]); ?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('api[govtrack_key]', [
-									'label' => 'GovTrack API Key',
-									'type' => 'password',
-									'value' => $settings_global['api']['govtrack_key'] ?? (defined('API_KEY_GOVTRACK') ? API_KEY_GOVTRACK : ''),
-									'help' => 'API key for GovTrack.us service',
-									'attributes' => ['autocomplete' => 'new-password']
-								]); ?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('api[votesmart_key]', [
-									'label' => 'VoteSmart API Key',
-									'type' => 'password',
-									'value' => $settings_global['api']['votesmart_key'] ?? (defined('API_KEY_VOTESMART') ? API_KEY_VOTESMART : ''),
-									'help' => 'API key for VoteSmart.org service',
-									'attributes' => ['autocomplete' => 'new-password']
-								]); ?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('api[openstates_key]', [
-									'label' => 'OpenStates API Key',
-									'type' => 'password',
-									'value' => $settings_global['api']['openstates_key'] ?? (defined('API_KEY_OPENSTATES') ? API_KEY_OPENSTATES : ''),
-									'help' => 'API key for OpenStates.org service',
-									'attributes' => ['autocomplete' => 'new-password']
-								]); ?>
-							</div>
-							<div class="col-12">
-								<hr>
-								<h5 class="mb-3">CORS Configuration</h5>
-							</div>
-							<div class="col-12">
-								<?php 
-								$cors_value = is_array($settings_global['api']['cors_origins'] ?? []) 
-									? implode("\n", $settings_global['api']['cors_origins']) 
-									: '';
-								fi_form_field('api[cors_origins]', [
-									'label' => 'CORS Origins',
-									'type' => 'textarea',
-									'value' => $cors_value,
-									'help' => 'Allowed CORS origins (one per line)',
-									'attributes' => ['rows' => 5]
-								]);
-								?>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="mb-3">
-					<?php submit_button('Save API Settings', 'primary', 'submit', false); ?>
-				</div>
-			</form>
-		</div>
-
-		<?php /* Logging Settings tab disabled
-		<div class="tab-pane fade <?php echo $tab === 'logging' ? 'show active' : ''; ?>"
-			 id="logging" role="tabpanel" aria-labelledby="logging-tab">
-			<form method="post" class="fi-settings-form">
-				<?php wp_nonce_field('fi_save_settings', 'fi_settings_nonce'); ?>
-
-				<?php
-				$logging = $settings_global['logging'] ?? [];
-				$logging_enabled = !empty($logging['enabled']);
-				$logging_min_level = $logging['min_level'] ?? 'debug';
-				$logging_area_values = is_array($logging['areas'] ?? null) ? $logging['areas'] : [];
-				?>
-
-				<div class="card shadow-sm mb-4">
-					<div class="card-header bg-white border-0 pb-0">
-						<h2 class="h4 mb-0">Logging</h2>
-					</div>
-					<div class="card-body">
-						<p class="text-muted mb-3">
-							Logging is global across all governments. Enable only what you need while debugging.
-						</p>
-
-						<div class="row g-3">
-							<div class="col-12">
-								<div class="form-check">
-									<input class="form-check-input" type="checkbox" id="fi-logging-enabled" name="logging[enabled]" value="1" <?php checked($logging_enabled); ?>>
-									<label class="form-check-label fw-semibold" for="fi-logging-enabled">Enable Freedom Index logging</label>
-								</div>
-							</div>
-
-							<div class="col-md-6">
-								<label for="fi-logging-min-level" class="form-label fw-semibold">Minimum level</label>
-								<select id="fi-logging-min-level" name="logging[min_level]" class="form-select">
-									<option value="debug" <?php selected($logging_min_level, 'debug'); ?>>Debug</option>
-									<option value="info" <?php selected($logging_min_level, 'info'); ?>>Info</option>
-									<option value="warning" <?php selected($logging_min_level, 'warning'); ?>>Warning</option>
-									<option value="error" <?php selected($logging_min_level, 'error'); ?>>Error</option>
-								</select>
-								<div class="form-text">Lower levels are more verbose.</div>
-							</div>
-
-							<div class="col-12">
-								<hr>
-								<h5 class="mb-2">Areas</h5>
-								<div class="row g-2">
-									<?php foreach ($logging_areas as $area_key => $area_label): ?>
-										<?php
-										$checked = !empty($logging_area_values[$area_key]);
-										$input_id = 'fi-logging-area-' . $area_key;
-										?>
-										<div class="col-12 col-md-6 col-lg-4">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox"
-													   id="<?php echo esc_attr($input_id); ?>"
-													   name="logging[areas][<?php echo esc_attr($area_key); ?>]"
-													   value="1"
-													   <?php checked($checked); ?>>
-												<label class="form-check-label" for="<?php echo esc_attr($input_id); ?>">
-													<?php echo esc_html($area_label); ?>
-												</label>
-											</div>
-										</div>
-									<?php endforeach; ?>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="mb-3">
-					<?php submit_button('Save Logging Settings', 'primary', 'submit', false); ?>
-				</div>
-			</form>
-		</div>
-		*/ ?>
 
 		<!-- Cache Management -->
 		<div class="tab-pane fade <?php echo $tab === 'cache' ? 'show active' : ''; ?>" 
@@ -566,8 +328,47 @@ fi_scope_render_selector();
 				</div>
 			</div>
 		</div>
-	</div>
-</div>
+
+		<div class="tab-pane fade <?php echo $tab === 'data' ? 'show active' : ''; ?>"
+		     id="data" role="tabpanel" aria-labelledby="data-tab">
+			<p id="fi-rebuild-status" class="description" style="margin:8px 0;"></p>
+			<table class="wp-list-table widefat fixed striped" style="font-size:12px;">
+				<thead>
+					<tr>
+						<th style="width:70px;">ID</th>
+						<th>Name</th>
+						<th>Cached Values</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php
+				global $wpdb;
+				$all_legs = $wpdb->get_results(
+					"SELECT id, display_name, gov, state, chamber, district, party, session_id FROM {$wpdb->prefix}fi_legislators ORDER BY id ASC",
+					ARRAY_A
+				);
+				foreach ($all_legs as $leg):
+					$cached = implode(' | ', array_filter([
+						$leg['gov'],
+						$leg['state'],
+						$leg['chamber'],
+						$leg['district'],
+						$leg['party'],
+						$leg['session_id'] ? 'session:' . $leg['session_id'] : '',
+					]));
+				?>
+				<tr>
+					<td><?php echo (int) $leg['id']; ?></td>
+					<td><?php echo esc_html($leg['display_name']); ?></td>
+					<td id="fi-row-<?php echo (int) $leg['id']; ?>"><code><?php echo esc_html($cached ?: '—'); ?></code></td>
+				</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+
+	</div><!-- /.tab-content -->
+</div><!-- /.wrap -->
 
 <script>
 (function($) {
@@ -583,6 +384,105 @@ fi_scope_render_selector();
 	$('#select-all-cache').on('change', function() {
 		$('.cache-checkbox').prop('checked', this.checked);
 	});
+
+	// -------------------------------------------------------------------------
+	// Legislator cache rebuild — one-pass, ID-driven, concurrent batches
+	// -------------------------------------------------------------------------
+	(function() {
+		var nonce          = <?php echo wp_json_encode(wp_create_nonce('fi_admin_nonce')); ?>;
+		var BATCH_SIZE     = 50;
+		var MAX_CONCURRENT = 3;
+		var started        = false;
+		var queue          = [];   // all pending IDs
+		var total          = 0;
+		var done           = 0;
+		var active         = 0;
+
+		function setStatus(msg) {
+			var el = document.getElementById('fi-rebuild-status');
+			if (el) el.textContent = msg;
+		}
+
+		function updateCell(r) {
+			var cell = document.getElementById('fi-row-' + r.id);
+			if (!cell) return;
+			if (r.status === 'ok') {
+				cell.innerHTML = '<code>' + r.cached + '</code>';
+			} else if (r.status === 'skip') {
+				cell.innerHTML = '<em style="color:#999;font-size:11px;">no session assignments</em>';
+			} else {
+				cell.innerHTML = '<em style="color:#c00;font-size:11px;">error</em>';
+			}
+		}
+
+		function processBatch(ids) {
+			active++;
+			var body = 'action=fi_admin_action&sub_action=sync_legislators_by_ids&nonce=' + nonce;
+			ids.forEach(function(id) { body += '&ids[]=' + id; });
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', ajaxurl, true);
+			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			xhr.onload = function() {
+				active--;
+				var res;
+				try { res = JSON.parse(xhr.responseText); } catch(e) {
+					setStatus('Error: bad response'); pump(); return;
+				}
+				if (res.success && res.data.results) {
+					res.data.results.forEach(function(r) {
+						done++;
+						updateCell(r);
+					});
+					setStatus('Rebuilding: ' + done + ' of ' + total);
+				}
+				if (done >= total) setStatus('✓ Complete — ' + done + ' legislators processed.');
+				else pump();
+			};
+			xhr.onerror = function() { active--; setStatus('Network error'); pump(); };
+			xhr.send(body);
+		}
+
+		function pump() {
+			while (active < MAX_CONCURRENT && queue.length > 0) {
+				processBatch(queue.splice(0, BATCH_SIZE));
+			}
+		}
+
+		function startRebuild() {
+			if (started) return;
+			started = true;
+			setStatus('Purging cached data…');
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', ajaxurl, true);
+			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			xhr.onload = function() {
+				var res;
+				try { res = JSON.parse(xhr.responseText); } catch(e) {
+					setStatus('Purge error: bad response'); return;
+				}
+				if (!res.success) { setStatus('Purge failed: ' + (res.data || 'unknown')); return; }
+
+				// Collect all row IDs from the DOM now that the purge is done
+				queue = Array.from(document.querySelectorAll('#data tbody tr')).map(function(tr) {
+					return parseInt(tr.querySelector('td').textContent, 10);
+				}).filter(function(id) { return id > 0; });
+
+				total = queue.length;
+				setStatus('Purged. Rebuilding ' + total + ' legislators…');
+				pump();
+			};
+			xhr.onerror = function() { setStatus('Network error on purge'); };
+			xhr.send('action=fi_admin_action&sub_action=purge_cached_sessions&nonce=' + nonce);
+		}
+
+		// Fire immediately if data tab is already active, or when it gets shown
+		if (document.querySelector('#data.active')) {
+			startRebuild();
+		}
+		document.getElementById('data-tab').addEventListener('shown.bs.tab', startRebuild);
+	})();
 
 	// Handle CORS origins textarea (convert to array on submit)
 	$('form').on('submit', function() {

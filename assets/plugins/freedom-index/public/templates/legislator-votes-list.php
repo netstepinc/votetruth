@@ -19,13 +19,13 @@ $is_htmx_context = !empty($is_htmx) || !empty($_SERVER['HTTP_HX_REQUEST']);
     <!-- Votes Container -->
     <div id="fi-votes-container" class="vstack gap-3">
         <?php foreach ($votes_data as $vote): 
-            $vote_id = (int) ($vote->id ?? 0);
+            $vote_id = (int) ($vote['id'] ?? 0);
             $vote_url = home_url("/vote/{$vote_id}/");
-            $meta = is_string($vote->meta ?? '') ? json_decode($vote->meta, true) : ($vote->meta ?? []);
-            $rollcall = $vote->rollcall ?? null;
+            $meta = is_string($vote['meta'] ?? '') ? json_decode($vote['meta'], true) : ($vote['meta'] ?? []);
+            $rollcall = $vote['rollcall'] ?? null;
             $cast = $rollcall['cast'] ?? 'X';
-            $is_correct = ($cast === ($vote->constitutional ?? ''));
-            $tags = $vote->tags ?? [];
+            $is_correct = ($cast === ($vote['constitutional'] ?? ''));
+            $tags = $vote['tags'] ?? [];
         ?>
             <div class="card fi-vote-card border-0 shadow-sm overflow-hidden" data-vote-id="<?php echo $vote_id; ?>">
                 <div class="card-body p-0">
@@ -50,13 +50,13 @@ $is_htmx_context = !empty($is_htmx) || !empty($_SERVER['HTTP_HX_REQUEST']);
                                     <h5 class="card-title mb-0">
                                         <a href="<?php echo esc_url($vote_url); ?>" 
                                            class="text-decoration-none text-dark stretched-link">
-                                            <?php echo esc_html($vote->title ?? 'Untitled Vote'); ?>
+                                            <?php echo esc_html($vote['title'] ?? 'Untitled Vote'); ?>
                                         </a>
                                     </h5>
                                     
-                                    <?php if ($vote->bill_number): ?>
+                                    <?php if ($vote['bill_number']): ?>
                                         <span class="badge bg-light text-dark border">
-                                            <?php echo esc_html($vote->bill_number); ?>
+                                            <?php echo esc_html($vote['bill_number']); ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -75,13 +75,13 @@ $is_htmx_context = !empty($is_htmx) || !empty($_SERVER['HTTP_HX_REQUEST']);
                                 <div class="d-flex flex-wrap align-items-center gap-3 small text-muted">
                                     <span>
                                         <i class="bi bi-calendar3 me-1"></i>
-                                        <?php echo esc_html(date('M j, Y', strtotime($vote->date_voted ?? 'now'))); ?>
+                                        <?php echo esc_html(date('M j, Y', strtotime($vote['date_voted'] ?? 'now'))); ?>
                                     </span>
                                     
-                                    <?php if ($vote->chamber): ?>
+                                    <?php if ($vote['chamber']): ?>
                                         <span>
                                             <i class="bi bi-building me-1"></i>
-                                            <?php echo esc_html(fi_chamber_title($gov, $vote->chamber)); ?>
+                                            <?php echo esc_html(fi_chamber_title($gov, $vote['chamber'])); ?>
                                         </span>
                                     <?php endif; ?>
                                     

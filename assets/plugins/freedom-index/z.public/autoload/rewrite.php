@@ -1471,7 +1471,7 @@ namespace FI\Public{
 		/**
 		* Handle legislators list request
 		* Formats: list,cards
-		* https://votestellthetruth.us/?fi_gov=fl&fi_entity=legislators&fi_session=85&fi_pdf=cards
+		* https://votetruth.us/?fi_gov=fl&fi_entity=legislators&fi_session=85&fi_pdf=cards
 		*/
 		private function handle_legislators_list_request(string $gov): void {
 			self::log('handle_legislators_list_request: gov=' . $gov);

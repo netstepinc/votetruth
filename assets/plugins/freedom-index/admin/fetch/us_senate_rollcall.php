@@ -1,6 +1,6 @@
 <?php if(!defined('ABSPATH')) exit;
 /* us_senate_rollcall fetcher
-Procedural code to parse and display xml feed data array.
+code to parse and display xml feed data array.
 US Senate Rollcall (HTML): https://www.senate.gov/legislative/LIS/roll_call_votes/vote1182/vote_118_2_00176.htm
 US Senate Rollcall (XML):  https://www.senate.gov/legislative/LIS/roll_call_votes/vote1182/vote_118_2_00176.xml
 

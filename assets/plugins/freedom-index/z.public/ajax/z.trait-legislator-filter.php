@@ -6,7 +6,7 @@
  * To run an AJAX request via URL in WordPress (as in this example):
  * 1. Use the URL structure: 
  * IMPORTANT: To use this AJAX handler directly via a GET request (from logged-in or logged-out state),
- * call: https://votestellthetruth.us/wp-admin/admin-ajax.php?action=fi_legislator_filter&gov=US&session=119&party=R&chamber=S&search=&state=
+ * call: https://votetruth.us/wp-admin/admin-ajax.php?action=fi_legislator_filter&gov=US&session=119&party=R&chamber=S&search=&state=
  *
  * If you are being redirected to /admin.php or seeing an error, check the following:
  * - Make sure this AJAX action is registered with 'wp_ajax_' and/or 'wp_ajax_nopriv_' hook

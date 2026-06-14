@@ -8,7 +8,7 @@
  * legislators_cards args:
  * - If session_id is OMITTED: API defaults to latest parent session.
  * - If session_id=0: "All Sessions" search is allowed ONLY when bounded by at least one other filter.
- * https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislators_cards&gov=ga&session_id=91&chamber=S&sort=score&order=desc
+ * https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislators_cards&gov=ga&session_id=91&chamber=S&sort=score&order=desc
  */
 function fi_api_args_legislators_cards(array $args): array {
 	$gov = fi_api_upper($args['gov'] ?? '');

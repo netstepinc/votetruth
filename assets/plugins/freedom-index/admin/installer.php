@@ -36,10 +36,11 @@ function fi_plugin_activate(): void {
 	} else {
 		/*
 		 * Existing installs may have large FI tables.
-		 * Do not run schema upgrades during activation because dbDelta/ALTER
-		 * can exceed proxy/server timeouts.
+		 * Do not run schema upgrades during activation — dbDelta/ALTER can exceed timeouts.
+		 * Clear the stored version so fi_schema_admin_init_maybe_ensure() runs on the next
+		 * admin page load instead of skipping due to a version match.
 		 */
-		update_option('fi_schema_version', $target, false);
+		delete_option('fi_schema_version');
 		set_transient('fi_schema_deferred_notice', 1, DAY_IN_SECONDS);
 	}
 

@@ -12,8 +12,8 @@
 	Report headers displayed above vote lists
 	Session-level caching support (already implemented in core)
 
-https://votestellthetruth.us/legislator/1414/?TEST=payload
-https://votestellthetruth.us/legislator/1414/?TEST=vote_groups
+https://votetruth.us/legislator/1414/?TEST=payload
+https://votetruth.us/legislator/1414/?TEST=vote_groups
 */
 
 $legislator_id = (int)fi_public_get_legislator_id();

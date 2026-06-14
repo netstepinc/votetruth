@@ -1,6 +1,6 @@
 <?php if(!defined('ABSPATH')) exit;
 /* us_house_rollcall_xml fetcher
-Procedural code to parse and display xml feed data array.
+code to parse and display xml feed data array.
 */
 global $wpdb;
 $data = fi_api_gov_fetch_data($url);

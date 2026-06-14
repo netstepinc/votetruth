@@ -225,7 +225,7 @@ function fi_admin_ajax_register_local_image(string $dest_abs, string $filename, 
 }
 
 /**
- * Update legislator image ID using the procedural legislator save helper.
+ * Update legislator image ID using the legislator save helper.
  *
  * @param int $legislator_id Legislator ID.
  * @param int $attachment_id Attachment ID.
@@ -692,20 +692,20 @@ function fi_admin_ajax_get_vote_preview(): void {
 	$meta = function_exists('fi_vote_decode_meta') ? fi_vote_decode_meta($vote) : [];
 
 	$formatted_date = '';
-	if (!empty($vote->date_voted)) {
-		$date_obj = DateTime::createFromFormat('Y-m-d', (string) $vote->date_voted) ?: DateTime::createFromFormat('Y-m-d H:i:s', (string) $vote->date_voted);
-		$formatted_date = $date_obj ? $date_obj->format('m/d/Y') : (string) $vote->date_voted;
+	if (!empty($vote['date_voted'])) {
+		$date_obj = DateTime::createFromFormat('Y-m-d', (string) $vote['date_voted']) ?: DateTime::createFromFormat('Y-m-d H:i:s', (string) $vote['date_voted']);
+		$formatted_date = $date_obj ? $date_obj->format('m/d/Y') : (string) $vote['date_voted'];
 	}
 
 	ob_start();
 	?>
 	<div class="fi-vote-preview-content">
-		<h5 class="mb-3"><?php echo esc_html($vote->title ?? 'Untitled Vote'); ?></h5>
+		<h5 class="mb-3"><?php echo esc_html($vote['title'] ?? 'Untitled Vote'); ?></h5>
 
 		<div class="mb-3">
 			<div class="row g-2">
-				<?php if (!empty($vote->bill_number)): ?>
-					<div class="col-12"><strong>Bill:</strong> <?php echo esc_html($vote->bill_number); ?></div>
+				<?php if (!empty($vote['bill_number'])): ?>
+					<div class="col-12"><strong>Bill:</strong> <?php echo esc_html($vote['bill_number']); ?></div>
 				<?php endif; ?>
 
 				<?php if ($formatted_date): ?>
@@ -714,8 +714,8 @@ function fi_admin_ajax_get_vote_preview(): void {
 
 				<div class="col-12">
 					<strong>Constitutional Position:</strong>
-					<span class="badge bg-<?php echo ($vote->constitutional === 'Y') ? 'success' : 'danger'; ?>">
-						<?php echo esc_html(($vote->constitutional === 'Y') ? 'Yea' : 'Nay'); ?>
+					<span class="badge bg-<?php echo ($vote['constitutional'] === 'Y') ? 'success' : 'danger'; ?>">
+						<?php echo esc_html(($vote['constitutional'] === 'Y') ? 'Yea' : 'Nay'); ?>
 					</span>
 				</div>
 
@@ -753,8 +753,8 @@ function fi_admin_ajax_get_vote_preview(): void {
 			<div class="small">
 				<?php
 				$rollcall_description = '';
-				if (!empty($vote->rollcall_data)) {
-					$rollcall_data = json_decode((string) $vote->rollcall_data, true);
+				if (!empty($vote['rollcall_data'])) {
+					$rollcall_data = json_decode((string) $vote['rollcall_data'], true);
 					if (is_array($rollcall_data) && !empty($rollcall_data['description'])) {
 						$rollcall_description = (string) $rollcall_data['description'];
 					}
@@ -833,7 +833,7 @@ function fi_admin_ajax_fetch_single_api_source(int $legislator_id, object $legis
 
 	switch ($source) {
 		case 'votesmart':
-			if (empty($legislator->votesmart_id)) {
+			if (empty($legislator['votesmart_id'])) {
 				$api_data['votesmart'] = ['_fi_error' => true, 'error' => 'Missing VoteSmart ID for this legislator.'];
 				break;
 			}
@@ -844,14 +844,14 @@ function fi_admin_ajax_fetch_single_api_source(int $legislator_id, object $legis
 				break;
 			}
 
-			$api_data['votesmart'] = function_exists('fi_api_fetch_votesmart') ? fi_api_fetch_votesmart($legislator->votesmart_id) : ['_fi_error' => true, 'error' => 'VoteSmart fetch helper unavailable.'];
+			$api_data['votesmart'] = function_exists('fi_api_fetch_votesmart') ? fi_api_fetch_votesmart($legislator['votesmart_id']) : ['_fi_error' => true, 'error' => 'VoteSmart fetch helper unavailable.'];
 			break;
 
 		case 'govtrack':
-			if (!empty($legislator->govtrack_id) && function_exists('fi_api_fetch_govtrack')) {
-				$api_data['govtrack'] = fi_api_fetch_govtrack($legislator->govtrack_id);
-			} elseif (!empty($legislator->bioguide_id) && function_exists('fi_api_fetch_govtrack_by_bioguide')) {
-				$api_data['govtrack'] = fi_api_fetch_govtrack_by_bioguide($legislator->bioguide_id);
+			if (!empty($legislator['govtrack_id']) && function_exists('fi_api_fetch_govtrack')) {
+				$api_data['govtrack'] = fi_api_fetch_govtrack($legislator['govtrack_id']);
+			} elseif (!empty($legislator['bioguide_id']) && function_exists('fi_api_fetch_govtrack_by_bioguide')) {
+				$api_data['govtrack'] = fi_api_fetch_govtrack_by_bioguide($legislator['bioguide_id']);
 			} else {
 				$api_data['govtrack'] = ['_fi_error' => true, 'error' => 'Missing GovTrack ID / Bioguide ID for this legislator.'];
 			}
@@ -878,7 +878,7 @@ function fi_admin_ajax_fetch_single_api_source(int $legislator_id, object $legis
  * @return array Person data or error array.
  */
 function fi_admin_ajax_fetch_legiscan_local_person(object $legislator): array {
-	$legiscan_id = (int) ($legislator->legiscan_id ?? 0);
+	$legiscan_id = (int) ($legislator['legiscan_id'] ?? 0);
 	$cache_rel = trim(sanitize_text_field((string) wp_unslash($_POST['cache_rel'] ?? '')));
 
 	if ($cache_rel !== '') {
@@ -887,8 +887,8 @@ function fi_admin_ajax_fetch_legiscan_local_person(object $legislator): array {
 	}
 
 	$session_folder = '';
-	$session_gov = strtoupper((string) ($legislator->gov ?? ''));
-	$sessions = is_array($legislator->sessions ?? null) ? $legislator->sessions : [];
+	$session_gov = strtoupper((string) ($legislator['gov'] ?? ''));
+	$sessions = is_array($legislator['sessions'] ?? null) ? $legislator['sessions'] : [];
 
 	if (!empty($sessions)) {
 		$latest_session = reset($sessions);
@@ -1114,6 +1114,22 @@ function fi_admin_ajax_handle_sub_action(string $sub_action): void {
 			]);
 			break;
 
+		case 'purge_cached_sessions':
+			fi_admin_ajax_purge_cached_sessions();
+			break;
+
+		case 'sync_cached_sessions_batch':
+			fi_admin_ajax_sync_cached_sessions_batch();
+			break;
+
+		case 'sync_legislators_by_ids':
+			fi_admin_ajax_sync_legislators_by_ids();
+			break;
+
+		case 'sync_cached_sessions':
+			fi_admin_ajax_sync_cached_sessions();
+			break;
+
 		case 'compile_legiscan_data':
 			fi_admin_ajax_compile_legiscan_data();
 			break;
@@ -1223,12 +1239,12 @@ function fi_admin_ajax_get_votes_by_session(): void {
 	$votes = function_exists('fi_votes_get_by_session') ? fi_votes_get_by_session($session_id, ['status' => null, 'cache' => false]) : [];
 	$formatted = array_map(static function($vote) {
 		return [
-			'id'             => (int) $vote->id,
-			'title'          => $vote->title,
-			'bill_number'    => $vote->bill_number ?? '',
-			'chamber'        => $vote->chamber,
-			'date_voted'     => $vote->date_voted ?? $vote->date ?? '',
-			'constitutional' => $vote->constitutional,
+			'id'             => (int) $vote['id'],
+			'title'          => $vote['title'],
+			'bill_number'    => $vote['bill_number'] ?? '',
+			'chamber'        => $vote['chamber'],
+			'date_voted'     => $vote['date_voted'] ?? $vote['date'] ?? '',
+			'constitutional' => $vote['constitutional'],
 		];
 	}, is_array($votes) ? $votes : []);
 
@@ -1285,4 +1301,188 @@ function fi_admin_ajax_compile_legiscan_data(): void {
 	}
 
 	wp_send_json_error('Invalid action');
+}
+/**
+ * Bulk-sync cached session fields on fi_legislators.
+ * AJAX handler for action=sync_cached_sessions.
+ *
+ * POST params:
+ *   gov  (optional) – limit to one gov code, e.g. 'US' or 'WI'
+ *
+ * @return void
+ */
+function fi_admin_ajax_sync_cached_sessions(): void {
+if (!current_user_can('manage_options')) {
+wp_send_json_error('Unauthorized');
+}
+
+$gov = !empty($_POST['gov']) ? strtoupper(sanitize_key((string) $_POST['gov'])) : null;
+
+$count = fi_legislators_sync_cached_sessions($gov);
+
+wp_send_json_success([
+'updated' => $count,
+'gov'     => $gov ?? 'all',
+'message' => "Synced cached session data for {$count} legislators" . ($gov ? " in gov {$gov}" : '') . '.',
+]);
+}
+
+/**
+ * Purge cached session fields from fi_legislators (step 1 of full rebuild).
+ * POST params: gov (optional)
+ */
+function fi_admin_ajax_purge_cached_sessions(): void {
+if (!current_user_can('manage_options')) {
+wp_send_json_error('Unauthorized');
+}
+
+$count = fi_legislators_purge_cached_sessions(null);
+$total = fi_legislators_count_uncached();
+
+wp_send_json_success([
+'purged'    => $count,
+'remaining' => $total,
+'message'   => "Purged {$count} rows. {$total} legislators ready to rebuild.",
+]);
+}
+
+/**
+ * Process one batch of the rebuild (step 2, called repeatedly from JS).
+ * POST params:
+ *   gov        (optional) – constrain to one gov
+ *   batch_size (optional) – default 25
+ *
+ * Returns remaining count so JS knows when to stop.
+ */
+function fi_admin_ajax_sync_cached_sessions_batch(): void {
+if (!current_user_can('manage_options')) {
+wp_send_json_error('Unauthorized');
+}
+
+$batch_size = min(absint($_POST['batch_size'] ?? 25), 100);
+
+$rows_written = fi_legislators_sync_missing_cached_sessions($batch_size, true);
+$updated = count($rows_written);
+$remaining = fi_legislators_count_uncached();
+
+wp_send_json_success([
+'updated'   => $updated,
+'remaining' => $remaining,
+'done'      => $remaining === 0,
+'rows'      => $rows_written,
+]);
+}
+
+
+/**
+ * Process explicit legislator IDs passed from JS (one-pass cache builder).
+ * POST params: ids[] — array of legislator IDs to process.
+ */
+function fi_admin_ajax_sync_legislators_by_ids(): void {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( 'Unauthorized' );
+	}
+
+	global $wpdb;
+
+	$raw_ids = isset( $_POST['ids'] ) && is_array( $_POST['ids'] ) ? $_POST['ids'] : [];
+	$ids     = array_values( array_unique( array_map( 'intval', $raw_ids ) ) );
+	if ( empty( $ids ) ) {
+		wp_send_json_error( 'No IDs provided' );
+	}
+
+	$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT
+				ls.legislator_id,
+				ls.session_id,
+				ls.gov,
+				ls.state,
+				ls.chamber,
+				ls.district,
+				ls.party,
+				l.display_name
+			FROM {$wpdb->prefix}fi_legislator_sessions ls
+			INNER JOIN {$wpdb->prefix}fi_sessions s
+				ON s.id = ls.session_id AND s.parent_id IS NULL
+			INNER JOIN {$wpdb->prefix}fi_legislators l
+				ON l.id = ls.legislator_id
+			INNER JOIN (
+				SELECT ls2.legislator_id,
+					MAX( CONCAT(
+						LPAD( UNIX_TIMESTAMP( COALESCE( s2.date_start, '9999-12-31' ) ), 12, '0' ),
+						LPAD( s2.id, 12, '0' )
+					) ) AS best_key
+				FROM {$wpdb->prefix}fi_legislator_sessions ls2
+				INNER JOIN {$wpdb->prefix}fi_sessions s2
+					ON s2.id = ls2.session_id AND s2.parent_id IS NULL
+				WHERE ls2.legislator_id IN ($placeholders)
+				GROUP BY ls2.legislator_id
+			) ranked
+				ON ranked.legislator_id = ls.legislator_id
+				AND CONCAT(
+					LPAD( UNIX_TIMESTAMP( COALESCE( s.date_start, '9999-12-31' ) ), 12, '0' ),
+					LPAD( s.id, 12, '0' )
+				) = ranked.best_key
+			WHERE ls.legislator_id IN ($placeholders)",
+			...$ids,
+			...$ids
+		),
+		ARRAY_A
+	);
+
+	$by_id = [];
+	foreach ( $rows as $row ) {
+		$by_id[ (int) $row['legislator_id'] ] = $row;
+	}
+
+	$results = [];
+	foreach ( $ids as $lid ) {
+		if ( isset( $by_id[ $lid ] ) ) {
+			$row    = $by_id[ $lid ];
+			$cached = implode( ' | ', array_filter( [
+				$row['gov'], $row['state'], $row['chamber'],
+				$row['district'], $row['party'], 'session:' . $row['session_id'],
+			] ) );
+			$ok = $wpdb->update(
+				$wpdb->prefix . 'fi_legislators',
+				[
+					'session_id' => (int) $row['session_id'],
+					'gov'        => $row['gov'],
+					'state'      => $row['state'],
+					'chamber'    => $row['chamber'],
+					'district'   => $row['district'],
+					'party'      => $row['party'],
+				],
+				[ 'id' => $lid ],
+				[ '%d', '%s', '%s', '%s', '%s', '%s' ],
+				[ '%d' ]
+			);
+			$results[] = [
+				'id'      => $lid,
+				'status'  => $ok !== false ? 'ok' : 'error',
+				'cached'  => $ok !== false ? $cached : '',
+				'skipped' => false,
+			];
+		} else {
+			$wpdb->update(
+				$wpdb->prefix . 'fi_legislators',
+				[ 'session_id' => 0 ],
+				[ 'id' => $lid ],
+				[ '%d' ],
+				[ '%d' ]
+			);
+			$results[] = [
+				'id'      => $lid,
+				'status'  => 'skip',
+				'cached'  => '',
+				'skipped' => true,
+				'reason'  => 'no session assignments',
+			];
+		}
+	}
+
+	wp_send_json_success( [ 'results' => $results ] );
 }

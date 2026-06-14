@@ -82,7 +82,7 @@ $session_id_legiscan = $dataset_data['session_id'] ?? null;
 $session_id = null;
 if ($session_id_legiscan) {
 	$session = fi_session_get_by_legiscan_id((int) $session_id_legiscan, $current_gov);
-	$session_id = $session ? $session->id : null;
+	$session_id = $session ? $session['id'] : null;
 }
 
 // Build people lookup array as we process files (check by legiscan_id, then external IDs)

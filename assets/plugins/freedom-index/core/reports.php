@@ -241,15 +241,13 @@ function fi_report_payload_encode($payload): string {
 }
 
 /**
- * Get reports with optional filtering.
+ * Query reports with optional filtering (DB-only, no cache).
  *
  * Default: published-only.
  * Admin UIs must explicitly pass ['status' => null] to see all statuses.
  */
-function fi_reports_get(array $args = []): array|int {
+function fi_reports_query(array $args = []): array|int {
 	global $wpdb;
-
-	static $cache_get = [];
 
 	$status_key_provided = array_key_exists('status', $args);
 
@@ -271,19 +269,6 @@ function fi_reports_get(array $args = []): array|int {
 
 	if (!$status_key_provided) {
 		$args['status'] = 'publish';
-	}
-
-	$cache_key = md5(serialize($args));
-	if (isset($cache_get[$cache_key])) {
-		return $cache_get[$cache_key];
-	}
-
-	$cacheKey = function_exists('fi_cache_key') ? fi_cache_key('reports/get', $args) : '';
-	$results = $cacheKey && function_exists('fi_cache') ? fi_cache($cacheKey) : false;
-
-	if ($results !== false && $results !== null) {
-		$cache_get[$cache_key] = $results;
-		return $results;
 	}
 
 	$where_conditions = [];
@@ -371,19 +356,37 @@ function fi_reports_get(array $args = []): array|int {
 		$sql = $wpdb->prepare($sql, ...$where_values);
 	}
 
-	$results = $wpdb->get_results($sql);
+	return $wpdb->get_results($sql, ARRAY_A);
+}
+
+
+
+/**
+ * Get reports with optional filtering (cached for front-end).
+ *
+ * @param array $args Optional query arguments.
+ * @return array|int Array of report objects or count if count=true.
+ */
+function fi_reports_get(array $args = []): array|int {
+	$cacheKey = function_exists('fi_cache_key') ? fi_cache_key('reports/get', $args) : '';
+
+	if ($cacheKey && function_exists('fi_cache')) {
+		$results = fi_cache($cacheKey);
+		if ($results !== false && $results !== null) {
+			return $results;
+		}
+	}
+
+	$results = fi_reports_query($args);
 
 	if ($cacheKey && function_exists('fi_cache')) {
 		fi_cache($cacheKey, $results);
 	}
 
-	$cache_get[$cache_key] = $results;
-
 	return $results;
 }
-
 /** Get a single report by ID. */
-function fi_report_get(int $report_id): ?object {
+function fi_report_get(int $report_id): ?array {
 	$report_id = absint($report_id);
 	if ($report_id <= 0) {
 		return null;
@@ -506,7 +509,7 @@ function fi_reports_get_by_session(int $session_id, array $filters = []): array 
 }
 
 /** Get the most recent published report for a government/jurisdiction. */
-function fi_report_latest(string $gov): ?object {
+function fi_report_latest(string $gov): ?array {
 	$gov = strtoupper(sanitize_key($gov));
 	$is_manager = defined('FI_CAP_MANAGE') ? current_user_can(FI_CAP_MANAGE) : current_user_can('manage_options');
 
@@ -523,20 +526,20 @@ function fi_report_latest(string $gov): ?object {
 		return null;
 	}
 
-	$format = !empty($report->format) ? (string) $report->format : 'scorecard';
+	$format = !empty($report['format']) ? (string) $report['format'] : 'scorecard';
 	$format_arg = $format === 'freedomindex' ? 'fia' : 'scb';
 
 	if (function_exists('fi_url_report')) {
-		$url = fi_url_report((int) $report->id, strtolower($gov));
+		$url = fi_url_report((int) $report['id'], strtolower($gov));
 	} elseif (function_exists('fi_report_url')) {
-		$url = fi_report_url(strtolower($gov), (int) $report->id);
+		$url = fi_report_url(strtolower($gov), (int) $report['id']);
 	} else {
-		$url = home_url('/' . strtolower($gov) . '/report/' . (int) $report->id . '/');
+		$url = home_url('/' . strtolower($gov) . '/report/' . (int) $report['id'] . '/');
 	}
 
-	$report->format     = $format;
-	$report->format_arg = $format_arg;
-	$report->url        = $url;
+	$report['format']     = $format;
+	$report['format_arg'] = $format_arg;
+	$report['url']        = $url;
 
 	return $report;
 }
@@ -579,19 +582,19 @@ function fi_reports_stats(?string $gov = null, ?int $session_id = null, bool $by
 		$sql = $wpdb->prepare($sql, ...$values);
 	}
 
-	return (array) $wpdb->get_row($sql);
+	return $wpdb->get_row($sql, ARRAY_A) ?: [];
 }
 
 /** Decode selected vote IDs from report payload. */
-function fi_report_decode_selected_votes(object $report): array {
-	$payload = fi_report_payload_normalize($report->payload_json ?? null);
+function fi_report_decode_selected_votes(array $report): array {
+	$payload = fi_report_payload_normalize($report['payload_json'] ?? null);
 	$combined = array_merge($payload['votes_h'] ?? [], $payload['votes_s'] ?? []);
 
 	if (!empty($combined)) {
 		return array_values(array_unique(array_map('absint', $combined)));
 	}
 
-	$raw = $report->selected_votes ?? '[]';
+	$raw = $report['selected_votes'] ?? '[]';
 	if (is_string($raw)) {
 		$decoded = json_decode($raw, true);
 	} elseif (is_array($raw)) {
@@ -604,7 +607,7 @@ function fi_report_decode_selected_votes(object $report): array {
 }
 
 /** Count selected votes for a report. */
-function fi_report_count_selected_votes(object $report): int {
+function fi_report_count_selected_votes(array $report): int {
 	return count(fi_report_decode_selected_votes($report));
 }
 
@@ -676,7 +679,7 @@ function fi_report_validate_data(array $data): array {
 }
 
 /** Get latest scorecard by gov and session. */
-function fi_report_latest_scorecard(string $gov, int $session_id): ?object {
+function fi_report_latest_scorecard(string $gov, int $session_id): ?array {
 	$results = fi_reports_get([
 		'gov'        => strtoupper(sanitize_key($gov)),
 		'session_id' => absint($session_id),
@@ -691,7 +694,7 @@ function fi_report_latest_scorecard(string $gov, int $session_id): ?object {
 }
 
 /** Get the latest Freedom Index report. */
-function fi_report_latest_freedom_index(): ?object {
+function fi_report_latest_freedom_index(): ?array {
 	$results = fi_reports_get([
 		'format'   => 'freedomindex',
 		'status'   => 'publish',
@@ -745,14 +748,15 @@ function fi_report_get_by_vote_id(int $vote_id, string $chamber): array {
 		);
 	}
 
-	$reports = $wpdb->get_results($sql);
+	$reports = $wpdb->get_results($sql, ARRAY_A);
 	if (empty($reports)) {
 		return [];
 	}
 
-	foreach ($reports as $report) {
-		$report->payload_json = fi_report_payload_normalize($report->payload_json);
+	foreach ($reports as &$report) {
+		$report['payload_json'] = fi_report_payload_normalize($report['payload_json']);
 	}
+	unset($report);
 
 	return $reports;
 }
@@ -768,7 +772,7 @@ function fi_reports_sort_by_format($gov, array $reports): array {
 	$other = [];
 
 	foreach ($reports as $report) {
-		$format = isset($report->format) ? strtolower(trim((string) $report->format)) : '';
+		$format = isset($report['format']) ? strtolower(trim((string) $report['format'])) : '';
 
 		if ($format === 'scorecard') {
 			$sc[] = $report;
@@ -830,7 +834,7 @@ function fi_report_get_all_meta($record): array {
 		$raw_meta = $record['meta'] ?? null;
 	} elseif (is_numeric($record)) {
 		$report = fi_report_get((int) $record);
-		$raw_meta = $report->meta ?? null;
+		$raw_meta = $report['meta'] ?? null;
 	} else {
 		$raw_meta = null;
 	}

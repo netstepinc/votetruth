@@ -21,7 +21,7 @@ $form_action = $is_edit
 $page_title = $is_edit ? 'Edit Session' : 'Add Session';
 
 
-$session_id = $session->id ?? 0;
+$session_id = $session['id'] ?? 0;
 $is_edit = !empty($session_id);
 $extra_meta = $extra_meta ?? [];
 
@@ -49,7 +49,7 @@ if ($is_edit) {
 	// Get child sessions (only for this gov and this parent)
 	$child_sessions = $wpdb->get_results($wpdb->prepare(
 		"SELECT * FROM {$wpdb->prefix}fi_sessions WHERE gov = %s AND parent_id = %d ORDER BY date_start DESC",
-		$session->gov ?? $gov,
+		$session['gov'] ?? $gov,
 		$session_id
 	));
 	
@@ -140,7 +140,7 @@ if ($is_edit) {
 							<div class="col-md-3">
 								<?php fi_form_field_government('gov', [
 									'label' => 'Government',
-									'value' => $session->gov ?? '',
+									'value' => $session['gov'] ?? '',
 									'required' => true,
 									'attributes' => ['readonly' => 'readonly']
 								]); ?>
@@ -148,7 +148,7 @@ if ($is_edit) {
 							<div class="col-md-3">
 								<?php fi_form_field('name', [
 									'label' => 'Session Name',
-									'value' => $session->name ?? '',
+									'value' => $session['name'] ?? '',
 									'required' => true,
 									'placeholder' => 'e.g., 118th Congress'
 								]); ?>
@@ -158,7 +158,7 @@ if ($is_edit) {
 									'label' => 'Parent Session',
 									'type' => 'select',
 									'options' => $parent_options,
-									'value' => $session->parent_id ?? '',
+									'value' => $session['parent_id'] ?? '',
 									'help' => 'Optional. Link this session as a child of another session.'
 								]); ?>
 							</div>
@@ -166,7 +166,7 @@ if ($is_edit) {
 							<?php fi_form_field('status', [
 								'label' => 'Status',
 								'type' => 'radio-group',
-								'value' => $session->status ?? 'draft',
+								'value' => $session['status'] ?? 'draft',
 								'options' => [
 									'draft' => 'Draft',
 									'publish' => 'Published'
@@ -190,21 +190,21 @@ if ($is_edit) {
 								<?php fi_form_field('date_start', [
 									'label' => 'Start Date',
 									'type' => 'date',
-									'value' => $session->date_start ?? ''
+									'value' => $session['date_start'] ?? ''
 								]); ?>
 							</div>
 							<div class="col-md-3">
 								<?php fi_form_field('date_end', [
 									'label' => 'End Date',
 									'type' => 'date',
-									'value' => $session->date_end ?? ''
+									'value' => $session['date_end'] ?? ''
 								]); ?>
 							</div>
 							<div class="col-md-3">
 								<?php fi_form_field('legiscan_id', [
 									'label' => 'LegiScan Session ID',
 									'type' => 'number',
-									'value' => $session->legiscan_id ?? '',
+									'value' => $session['legiscan_id'] ?? '',
 									'help' => 'Optional. Numeric session_id used to map LegiScan datasets to this FI session.'
 								]); ?>
 							</div>
@@ -233,10 +233,10 @@ if ($is_edit) {
 											<ul class="list-unstyled mb-0">
 												<?php foreach ($connected_votes as $vote): ?>
 													<li class="mb-2">
-														<a href="<?php echo esc_url(fi_admin_url('fi-votes', ['action' => 'edit', 'vote_id' => $vote->id])); ?>">
+														<a href="<?php echo esc_url(fi_admin_url('fi-votes', ['action' => 'edit', 'vote_id' => $vote['id']])); ?>">
 															<?php 
-															$chamber_label = $vote->chamber === 'S' ? 'Senate' : 'House';
-															echo esc_html($chamber_label . ': ' . $vote->bill_number . ' - ' . $vote->title); 
+															$chamber_label = $vote['chamber'] === 'S' ? 'Senate' : 'House';
+															echo esc_html($chamber_label . ': ' . $vote['bill_number'] . ' - ' . $vote['title']); 
 															?>
 														</a>
 													</li>
@@ -260,8 +260,8 @@ if ($is_edit) {
 											<ul class="list-unstyled mb-0">
 												<?php foreach ($connected_reports as $report): ?>
 													<li class="mb-2">
-														<a href="<?php echo esc_url(fi_admin_url('fi-reports', ['action' => 'edit', 'report_id' => $report->id])); ?>">
-															<?php echo esc_html($report->title); ?>
+														<a href="<?php echo esc_url(fi_admin_url('fi-reports', ['action' => 'edit', 'report_id' => $report['id']])); ?>">
+															<?php echo esc_html($report['title']); ?>
 														</a>
 													</li>
 												<?php endforeach; ?>
@@ -328,11 +328,11 @@ if ($is_edit) {
 							<a href="<?php echo esc_url(fi_admin_url('fi-reports', ['session_id' => $session_id])); ?>" class="btn btn-secondary">
 								View Reports
 							</a>
-							<?php if (!empty($session->legiscan_id) && !empty($session->gov)): ?>
+							<?php if (!empty($session['legiscan_id']) && !empty($session['gov'])): ?>
 								<?php
 								// Summary: LegiScan's most stable public entrypoint is the datasets page for the gov.
 								// We include the session_id in the label so staff can quickly confirm they're looking at the right dataset.
-								$ls_gov = strtoupper((string) $session->gov);
+								$ls_gov = strtoupper((string) $session['gov']);
 								$legiscan_url = 'https://legiscan.com/' . rawurlencode($ls_gov) . '/datasets';
 								?>
 								<a href="<?php echo esc_url($legiscan_url); ?>" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
@@ -433,7 +433,7 @@ if ($is_edit) {
 					<?php
 					$ls_data = fi_legiscan_get_datasets($gov);
 					foreach ($ls_data as $ls_session) {
-						if($session->legiscan_id == $ls_session['session_id']){
+						if($session['legiscan_id'] == $ls_session['session_id']){
 							$class = 'bg-success-subtle';
 						}else{
 							$class = '';

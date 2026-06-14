@@ -36,12 +36,10 @@ function fi_admin_reports_handle_save(array $scope): void {
 	}
 	
 	// Build payload_json using ReportsPayload class (similar to LegislatorsMeta)
+	$existing_report = $report_id ? fi_report_get($report_id) : null;
 	$existing_payload = null;
-	if ($report_id) {
-		$existing_report = fi_report_get($report_id);
-		if ($existing_report && !empty($existing_report->payload_json)) {
-			$existing_payload = json_decode($existing_report->payload_json, true);
-		}
+	if ($existing_report && !empty($existing_report['payload_json'])) {
+		$existing_payload = json_decode($existing_report['payload_json'], true);
 	}
 	
 	$submitted_data = [
@@ -69,7 +67,7 @@ function fi_admin_reports_handle_save(array $scope): void {
 		'title' => sanitize_text_field($_POST['report_title']),
 		'title_menu' => sanitize_text_field($_POST['title_menu']),
 		'session_id' => absint($_POST['session_id']),
-		'gov' => $scope['gov'],
+		'gov' => $existing_report['gov'] ?? $scope['gov'],
 		'payload_json' => json_encode($payload),
 		'format' => $format,
 		'status' => sanitize_text_field($_POST['status'] ?? 'draft'),
@@ -100,7 +98,6 @@ array(19) { ["fi_report_nonce"]=> string(10) "ab52a57a15" ["_wp_http_referer"]=>
 		'action'    => 'edit',
 		'report_id' => (int) $saved_id,
 		'updated'   => '1',
-		'_fi_ts'    => time(),
 	]);
 
 	wp_safe_redirect($redirect_url);
@@ -110,8 +107,8 @@ array(19) { ["fi_report_nonce"]=> string(10) "ab52a57a15" ["_wp_http_referer"]=>
 /**
  * Default report blueprint
  */
-function fi_admin_reports_get_defaults(array $scope): object {
-	return (object) [
+function fi_admin_reports_get_defaults(array $scope): array {
+	return [
 		'id' => null,
 		'gov' => $scope['gov'] ?? 'US',
 		'session_id' => $scope['session_id'] ?? null,
@@ -130,14 +127,14 @@ function fi_admin_reports_get_defaults(array $scope): object {
 /**
  * Decode selected vote IDs
  */
-function fi_admin_reports_decode_selected_votes(object $report): array {
+function fi_admin_reports_decode_selected_votes(array $report): array {
 	return fi_report_decode_selected_votes($report);
 }
 
 /**
  * Count selected votes for a report
  */
-function fi_admin_reports_count_selected_votes(object $report): int {
+function fi_admin_reports_count_selected_votes(array $report): int {
 	return fi_report_count_selected_votes($report);
 }
 

@@ -23,8 +23,8 @@ if ($current_session_id) {
                 </div>
                 <div class="list-group list-group-flush">
                     <?php foreach ($sessions as $session): 
-                        $session_id = (int) ($session->session_id ?? 0);
-                        $session_score = $session->score ?? null;
+                        $session_id = (int) ($session['session_id'] ?? 0);
+                        $session_score = $session['score'] ?? null;
                         $is_active = $session_id === $current_session_id;
                         $session_url = $base_url . "session/{$session_id}/";
                     ?>
@@ -34,7 +34,7 @@ if ($current_session_id) {
                            hx-target="#fi-votes-container-wrapper"
                            hx-push-url="true"
                            hx-indicator="#fi-votes-loading">
-                            <span><?php echo esc_html($session->session_name ?? ''); ?></span>
+                            <span><?php echo esc_html($session['session_name'] ?? ''); ?></span>
                             <?php if ($session_score !== null): ?>
                                 <span class="badge <?php echo $is_active ? 'bg-white text-dark' : fi_score_class($session_score, 'bg'); ?>">
                                     <?php echo (int) $session_score; ?>%
@@ -64,7 +64,7 @@ if ($current_session_id) {
                         </a>
                         
                         <?php foreach ($reports as $report): 
-                            $report_id = (int) $report->id;
+                            $report_id = (int) $report['id'];
                             $report_url = $votes_base_url . "report/{$report_id}/";
                             $is_active = $report_id === $current_report_id;
                         ?>
@@ -75,7 +75,7 @@ if ($current_session_id) {
                                hx-push-url="true"
                                hx-indicator="#fi-votes-loading">
                                 <span class="text-truncate me-2" style="max-width: 150px;">
-                                    <?php echo esc_html($report->title ?? 'Report'); ?>
+                                    <?php echo esc_html($report['title'] ?? 'Report'); ?>
                                 </span>
                                 <?php if ($is_active): ?>
                                     <span class="badge bg-white text-dark">Active</span>

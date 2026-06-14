@@ -53,7 +53,7 @@ $has_footer_menu = has_nav_menu( 'footer' );
 		</p>
 
 		<p class="fi-footer-copy text-white">
-			&copy; <?php echo esc_html( date( 'Y' ) ); ?> VotesTellTheTruth.us &nbsp;·&nbsp;Know the Score. Hold them Accountable.
+			&copy; <?php echo esc_html( date( 'Y' ) ); ?> VoteTruth.us &nbsp;·&nbsp;Know the Score. Hold them Accountable.
 		</p>
 	</div>
 </footer>

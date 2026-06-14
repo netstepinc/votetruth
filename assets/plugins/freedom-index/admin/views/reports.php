@@ -40,7 +40,7 @@ if (isset($_GET['session_id'])) {
 
 $session_lookup = [];
 foreach ($sessions as $session) {
-	$session_lookup[(int) $session->id] = $session;
+	$session_lookup[(int) $session['id']] = $session;
 }
 
 $reports = [];
@@ -83,25 +83,26 @@ if ($gov) {
 		ORDER BY r.date_publish DESC, r.id DESC
 	";
 
-	$reports = $wpdb->get_results($wpdb->prepare($sql, $values));
+	$reports = $wpdb->get_results($wpdb->prepare($sql, $values), ARRAY_A);
 
 	//RMFORMAT
 	// Parse payload_json to get vote counts for each report
-	foreach ($reports as $report) {
-		$report->session_name = $report->session_name
-			?? ($session_lookup[(int) ($report->session_id ?? 0)]->name ?? '—');
+	foreach ($reports as &$report) {
+		$report['session_name'] = $report['session_name']
+			?? ($session_lookup[(int)($report['session_id'] ?? 0)]['name'] ?? '—');
 		
 		// Decode payload_json to get vote counts
-		$payload = fi_report_decode_payload($report->payload_json ?? null);
+		$payload = fi_report_decode_payload($report['payload_json'] ?? null);
 		$votes_s = $payload['votes_s'] ?? [];
 		$votes_h = $payload['votes_h'] ?? [];
 
 		// Count votes separately for Senate and House
-		$report->senate_count = is_array($votes_s) ? count(array_filter($votes_s)) : 0;
-		$report->house_count = is_array($votes_h) ? count(array_filter($votes_h)) : 0;
-		$report->haspdf = isset($payload['report_pdf_url']) && !empty($payload['report_pdf_url']) ? '<i class="bi bi-file-pdf"></i>' : '';
+		$report['senate_count'] = is_array($votes_s) ? count(array_filter($votes_s)) : 0;
+		$report['house_count'] = is_array($votes_h) ? count(array_filter($votes_h)) : 0;
+		$report['haspdf'] = isset($payload['report_pdf_url']) && !empty($payload['report_pdf_url']) ? '<i class="bi bi-file-pdf"></i>' : '';
 	}
 
+	unset($report);
 	$stats = fi_admin_reports_get_stats($gov);
 }
 
@@ -159,8 +160,8 @@ $scope = $scope ?? [];
 					<select id="fi-report-session-filter" name="session_id" class="form-select">
 						<option value="">All Sessions</option>
 						<?php foreach ($sessions as $session): ?>
-							<option value="<?php echo esc_attr($session->id); ?>" <?php selected($filters['session_id'], $session->id); ?>>
-								<?php echo ($session->parent_id ? '— ' : '') . esc_html($session->name); ?>
+							<option value="<?php echo esc_attr($session['id']); ?>" <?php selected($filters['session_id'], $session['id']); ?>>
+								<?php echo ($session['parent_id'] ? '— ' : '') . esc_html($session['name']); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>
@@ -211,7 +212,7 @@ $scope = $scope ?? [];
 					<tbody>
 						<?php foreach ($reports as $report): ?>
 							<?php
-							$status_class = match($report->status ?? 'draft') {
+							$status_class = match($report['status'] ?? 'draft') {
 								'publish' => 'bg-success',
 								'draft' => 'bg-secondary',
 								'pending' => 'bg-warning',
@@ -219,41 +220,41 @@ $scope = $scope ?? [];
 								default => 'bg-secondary'
 							};
 
-							$title = '<strong>' . esc_html($report->title) . '</strong>';
+							$title = '<strong>' . esc_html($report['title']) . '</strong>';
 
 							//Move reports to parent session if they are assigned to a child session
-							if($report->session_parent_id){
+							if($report['session_parent_id']){
 								global $wpdb;
-								$wpdb->update($wpdb->prefix . 'fi_reports', ['session_id' => $report->session_parent_id], ['id' => $report->id]);
-								wp_cache_delete($report->id, 'fi_reports');
+								$wpdb->update($wpdb->prefix . 'fi_reports', ['session_id' => $report['session_parent_id']], ['id' => $report['id']]);
+								wp_cache_delete($report['id'], 'fi_reports');
 								$title .= '<div class="alert alert-danger fw-bold p-1 text-center">Moved to Parent Session<br><span style="font-size:14px;">REFRESH PAGE</span></div>';
 							}
 
-							if($report->title_menu){
-								$title .= '<div class="ps-2">Menu: <span class="text-danger fw-bold">' . esc_html($report->title_menu) . '</span></div>';
+							if($report['title_menu']){
+								$title .= '<div class="ps-2">Menu: <span class="text-danger fw-bold">' . esc_html($report['title_menu']) . '</span></div>';
 							}
 							?>
 							<tr>
 								<td>
 									<div class="d-flex flex-wrap gap-2">
-										<a href="<?php echo esc_url(fi_admin_url('fi-reports', ['action' => 'edit', 'report_id' => $report->id])); ?>" class="btn btn-sm btn-primary">Edit</a>
-										<a href="<?php echo esc_url(fi_report_url($scope['gov'], $report->id)); ?>" class="btn btn-sm btn-secondary" target="_blank" rel="noopener">View</a>
+										<a href="<?php echo esc_url(fi_admin_url('fi-reports', ['action' => 'edit', 'report_id' => $report['id']])); ?>" class="btn btn-sm btn-primary">Edit</a>
+										<a href="<?php echo esc_url(fi_report_url($scope['gov'], $report['id'])); ?>" class="btn btn-sm btn-secondary" target="_blank" rel="noopener">View</a>
 									</div>
 								</td>
 								<td><?= $title; ?></td>
 								<td>
-									<code><?php echo esc_html($report->id); ?></code>
+									<code><?php echo esc_html($report['id']); ?></code>
 								</td>
-								<td><?php echo esc_html($report->session_name ?? '—'); ?></td>
-								<td><?php echo esc_html($report->senate_count ?? 0); ?></td>
-								<td><?php echo esc_html($report->house_count ?? 0); ?></td>
+								<td><?php echo esc_html($report['session_name'] ?? '—'); ?></td>
+								<td><?php echo esc_html($report['senate_count'] ?? 0); ?></td>
+								<td><?php echo esc_html($report['house_count'] ?? 0); ?></td>
 								<td>
 									<span class="badge <?php echo esc_attr($status_class); ?>">
-										<?php echo esc_html(ucfirst($report->status ?? 'draft')); ?>
+										<?php echo esc_html(ucfirst($report['status'] ?? 'draft')); ?>
 									</span>
 								</td>
-								<td><?php echo esc_html($report->date_publish ? mysql2date('M j, Y', $report->date_publish) : '—'); ?></td>
-								<td><?php echo ucwords(esc_html($report->format ?? '')); ?><?php echo $report->haspdf;?></td>
+								<td><?php echo esc_html($report['date_publish'] ? mysql2date('M j, Y', $report['date_publish']) : '—'); ?></td>
+								<td><?php echo ucwords(esc_html($report['format'] ?? '')); ?><?php echo $report['haspdf'];?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

@@ -18,7 +18,7 @@ Preserved existing global helper names:
 	fi_scope_get_session()
 	fi_scope_reset()
 	fi_scope_content_check()
-Added procedural helpers:
+Added helpers:
 	fi_scope_cache()
 	fi_scope_normalize_gov()
 	fi_scope_get_default()
@@ -314,9 +314,9 @@ function fi_scope_get_session_id(): ?int {
 /**
  * Legacy placeholder: scope no longer stores session object.
  *
- * @return object|null
+ * @return null
  */
-function fi_scope_get_session(): ?object {
+function fi_scope_get_session(): null {
 	return null;
 }
 
@@ -497,10 +497,10 @@ function fi_scope_get_redirect_url(bool $from_request = true): string {
 	}
 
 	if ($redirect === '') {
-		$redirect = fi_scope_get_current_admin_url_clean(['gov', 'scope_updated', 'scope_set', '_', '_fi_ts']);
+		$redirect = fi_scope_get_current_admin_url_clean(['gov', 'scope_updated', 'scope_set', '_']);
 	}
 
-	return add_query_arg('_fi_ts', time(), remove_query_arg(['gov', 'scope_updated', 'scope_set', '_'], $redirect));
+	return remove_query_arg(['gov', 'scope_updated', 'scope_set', '_'], $redirect);
 }
 
 /**
@@ -525,23 +525,8 @@ function fi_scope_content_check(string $scope_gov, string $content_gov, string $
 	echo '</div></div>';
 }
 
-/**
- * Send no-cache headers for FI admin screens.
- *
- * @return void
- */
-function fi_scope_send_admin_no_cache_headers(): void {
-	$page = sanitize_key((string) ($_GET['page'] ?? ''));
-	if ($page !== '' && str_starts_with($page, 'fi-')) {
-		header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-		header('Pragma: no-cache');
-		header('Expires: Wed, 11 Jan 1984 05:00:00 GMT');
-	}
-}
-
 add_action('admin_init', 'fi_scope_handle_form_submission', 0);
 add_action('admin_post_fi_switch_scope', 'fi_scope_handle_switch_action');
-add_action('admin_init', 'fi_scope_send_admin_no_cache_headers', -10);
 
 /* -------------------------------------------------------------------------
  * Compatibility aliases.

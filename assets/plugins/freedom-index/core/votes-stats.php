@@ -24,7 +24,7 @@ function fi_votes_stats(?string $gov = null, ?int $session_id = null): array {
 	$where_values = [];
 	
 	if ($gov) {
-		$where_conditions[] = 's.gov = %s';
+		$where_conditions[] = 'v.gov = %s';
 		$where_values[] = $gov;
 	}
 	
@@ -38,22 +38,28 @@ function fi_votes_stats(?string $gov = null, ?int $session_id = null): array {
 		$where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
 	}
 	
-	// Total count
-	$sql = "SELECT COUNT(*) FROM {$wpdb->prefix}fi_votes v LEFT JOIN {$wpdb->prefix}fi_sessions s ON v.session_id = s.id {$where_clause}";
-	$total = $wpdb->get_var($wpdb->prepare($sql, $where_values));
-	
-	// By status
-	$sql = "SELECT v.status, COUNT(*) as count FROM {$wpdb->prefix}fi_votes v LEFT JOIN {$wpdb->prefix}fi_sessions s ON v.session_id = s.id {$where_clause} GROUP BY v.status";
-	$by_status = $wpdb->get_results($wpdb->prepare($sql, $where_values));
-	
-	// With rollcall
-	$sql = "SELECT COUNT(*) FROM {$wpdb->prefix}fi_votes v LEFT JOIN {$wpdb->prefix}fi_sessions s ON v.session_id = s.id {$where_clause} AND rollcall_data IS NOT NULL AND rollcall_data != ''";
-	$with_rollcall = $wpdb->get_var($wpdb->prepare($sql, $where_values));
-	
+	$sql = "
+		SELECT
+			COUNT(*) as total,
+			SUM(v.constitutional = 'Y') as good_votes,
+			SUM(v.constitutional = 'N') as bad_votes,
+			SUM(v.constitutional NOT IN ('Y','N') OR v.constitutional IS NULL) as unknown_votes,
+			SUM(v.rollcall_data IS NOT NULL AND v.rollcall_data != '') as with_rollcall
+		FROM {$wpdb->prefix}fi_votes v
+		LEFT JOIN {$wpdb->prefix}fi_sessions s ON v.session_id = s.id
+		{$where_clause}
+	";
+
+	$row = !empty($where_values)
+		? $wpdb->get_row($wpdb->prepare($sql, $where_values), ARRAY_A)
+		: $wpdb->get_row($sql, ARRAY_A);
+
 	return [
-		'total' => (int) $total,
-		'by_status' => $by_status,
-		'with_rollcall' => (int) $with_rollcall,
+		'total'         => (int) ($row['total'] ?? 0),
+		'good_votes'    => (int) ($row['good_votes'] ?? 0),
+		'bad_votes'     => (int) ($row['bad_votes'] ?? 0),
+		'unknown_votes' => (int) ($row['unknown_votes'] ?? 0),
+		'with_rollcall' => (int) ($row['with_rollcall'] ?? 0),
 	];
 }
 

@@ -408,7 +408,7 @@ function fi_admin_legiscan_resolve_session_from_fetch(string $fetch, string $gov
 		return null;
 	}
 	$session = fi_session_get_by_legiscan_id($session_id_legiscan, $gov);
-	$session_id = $session ? (int) ($session->id ?? 0) : 0;
+	$session_id = $session ? (int) ($session['id'] ?? 0) : 0;
 	if ($session_id <= 0) {
 		return null;
 	}

@@ -19,7 +19,7 @@ Key adjustments:
 	Removed the FIAdmin\Schema class/namespace wrapper.
 Preserved the public schema entry point:
 	fi_schema_ensure()
-Added procedural schema helpers:
+Added schema helpers:
 	fi_schema_column_exists()
 	fi_schema_index_exists()
 	fi_schema_ensure_gov_scoped_slug_indexes()
@@ -31,8 +31,8 @@ Added procedural schema helpers:
 	fi_schema_should_run_admin_check()
 	fi_schema_admin_init_maybe_ensure()
 Important defects fixed:
-	Removed this broken index from fi_legislators:
-	KEY gov_idx (gov) because fi_legislators has no gov column.
+	gov_idx and gov_chamber indexes re-added to fi_legislators:
+	gov column now exists as a cached session field (added 2026-06).
 Fixed fi_legacy_redirects by adding:
 	entity_type VARCHAR(50) NULL,
 	entity_id BIGINT UNSIGNED NULL
@@ -64,7 +64,9 @@ function fi_schema_ensure(): void {
 	$sql = [];
 
 	// Legislators: career-spanning person records.
-	// NOTE: no gov column exists here; gov is session-scoped in fi_legislator_sessions.
+	// Cached session fields (session_id, gov, state, chamber, district, party) mirror the most
+	// recently-served fi_legislator_sessions row for fast lookups. Always NULL-able for existing rows.
+	// Written by the import process. Never points to a child session.
 	$sql[] = "CREATE TABLE {$wpdb->prefix}fi_legislators (
 		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 		legacy_id VARCHAR(32) NULL,
@@ -81,6 +83,12 @@ function fi_schema_ensure(): void {
 		openstates_id VARCHAR(100) NULL,
 		image_id BIGINT UNSIGNED NULL,
 		image_url VARCHAR(255) NULL,
+		session_id BIGINT UNSIGNED NULL,
+		gov VARCHAR(2) NULL,
+		state VARCHAR(2) NULL,
+		chamber ENUM('S','H') NULL,
+		district VARCHAR(32) NULL,
+		party VARCHAR(64) NULL,
 		score TINYINT UNSIGNED NULL,
 		score_data JSON NULL,
 		score_date DATETIME NULL,
@@ -100,7 +108,10 @@ function fi_schema_ensure(): void {
 		KEY display_name_idx (display_name(64)),
 		KEY legacy_image_url_idx (legacy_image_url(32)),
 		KEY image_id_idx (image_id),
-		KEY score_idx (score)
+		KEY score_idx (score),
+		KEY session_id_idx (session_id),
+		KEY gov_idx (gov),
+		KEY gov_chamber (gov, chamber)
 	) $charset;";
 
 	// Sessions: government-bounded time buckets.

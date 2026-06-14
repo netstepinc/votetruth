@@ -26,9 +26,9 @@ Admin Legislator image check and pre-generate.
 		$legquery = "SELECT id,display_name,image_id FROM ".TBFI_LEGISLATORS." WHERE image_id > 0 and image_url IS NULL LIMIT 1000;";
 		$legislators = $wpdb->get_results($legquery);
 		foreach($legislators as $legislator){
-			$image_url = jis_get_attachment_image_src($legislator->image_id, [200,250],true);
+			$image_url = jis_get_attachment_image_src($legislator['image_id'], [200,250],true);
 			$img_saved = '-';
-			$update_query = "UPDATE ".TBFI_LEGISLATORS." SET image_url = '".$image_url['src']."' WHERE id = ".$legislator->id.";";
+			$update_query = "UPDATE ".TBFI_LEGISLATORS." SET image_url = '".$image_url['src']."' WHERE id = ".$legislator['id'].";";
 			$result = $wpdb->query($update_query);
 			if($result){
 				$img_saved = 'Saved';
@@ -36,9 +36,9 @@ Admin Legislator image check and pre-generate.
 				$img_saved = 'Failed';
 			}
 			echo '<tr>';
-			echo '<td>'.$legislator->id.'</td>';
-			echo '<td>'.$legislator->display_name.'</td>';
-			echo '<td>'.$legislator->image_id.'</td>';
+			echo '<td>'.$legislator['id'].'</td>';
+			echo '<td>'.$legislator['display_name'].'</td>';
+			echo '<td>'.$legislator['image_id'].'</td>';
 			echo '<td><a href="'.$image_url['src'].'" target="_blank">'.$image_url['src'].'</a></td>';
 			echo '<td>'.$img_saved.'</td>';
 			echo '</tr>';

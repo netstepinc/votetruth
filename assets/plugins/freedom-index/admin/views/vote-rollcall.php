@@ -12,9 +12,9 @@ if (!$vote) {
 	wp_die('Vote not found');
 }
 
-$gov_code = strtoupper($vote->gov ?? 'US');
+$gov_code = strtoupper($vote['gov'] ?? 'US');
 $chamber_options = fi_chamber_options($gov_code);
-$vote_chamber_code = strtoupper($vote->chamber ?? '');
+$vote_chamber_code = strtoupper($vote['chamber'] ?? '');
 $vote_chamber_label = $vote_chamber_code ? ($chamber_options[$vote_chamber_code]['chamber'] ?? $vote_chamber_code) : '';
 /*
 print_r($chamber_options);exit;
@@ -32,14 +32,14 @@ if (
 	&& check_admin_referer('fi_rollcall_manual_' . $vote_id)
 ) {
 	$fi_manual_action = sanitize_text_field($_POST['fi_manual_action']);
-	$session_id = (int) ($vote->session_id ?? 0);
-	$chamber    = strtoupper($vote->chamber ?? '');
+	$session_id = (int) ($vote['session_id'] ?? 0);
+	$chamber    = strtoupper($vote['chamber'] ?? '');
 
 	if ($fi_manual_action === 'create_empty_rollcall') {
 		if (!$session_id || !$chamber) {
 			$fi_manual_notice = ['type' => 'error', 'message' => 'Vote is missing session or chamber data.'];
 		} else {
-			$legislators = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => -1]);
+			$legislators = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => LEGISLATORS_MAX_LIMIT]);
 			if (empty($legislators)) {
 				$fi_manual_notice = [
 					'type'    => 'error',
@@ -51,7 +51,7 @@ if (
 				global $wpdb;
 				$created = 0;
 				foreach ($legislators as $leg) {
-					$leg_id = (int) ($leg->id ?? 0);
+					$leg_id = (int) ($leg['id'] ?? 0);
 					if (!$leg_id || in_array($leg_id, $existing_leg_ids, true)) {
 						continue;
 					}
@@ -79,11 +79,11 @@ if (
 			$fi_manual_notice = ['type' => 'error', 'message' => 'Vote is missing session or chamber data.'];
 		} else {
 			// Build lastname → ID map from DB
-			$legislators  = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => -1]);
+			$legislators  = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => LEGISLATORS_MAX_LIMIT]);
 			$lastname_map = [];
 			foreach ($legislators as $leg) {
-				$leg_id    = (int) ($leg->id ?? 0);
-				$last_name = strtolower(trim($leg->last_name ?? ''));
+				$leg_id    = (int) ($leg['id'] ?? 0);
+				$last_name = strtolower(trim($leg['last_name'] ?? ''));
 				if (!$leg_id || !$last_name) {
 					continue;
 				}
@@ -221,12 +221,12 @@ echo '<textarea style="width:100%; height:300px;">'; print_r($roll_calls); echo 
 )
 */
 
-$legislators = fi_legislators_get_by_session((int) $vote->session_id, [
-	'limit' => -1,
+$legislators = fi_legislators_get_by_session((int) $vote['session_id'], [
+	'limit' => LEGISLATORS_MAX_LIMIT,
 ]);
 $legislator_lookup = [];
 foreach ($legislators as $legislator) {
-	$legislator_lookup[(int) ($legislator->id ?? 0)] = $legislator;
+	$legislator_lookup[(int) ($legislator['id'] ?? 0)] = $legislator;
 }
 
 $cast_options = [
@@ -244,8 +244,8 @@ $chamber_filters = [];
 foreach ($roll_calls as $roll_call) {
 	$legislator_id = (int) ($roll_call->legislator_id ?? 0);
 	$legislator = $legislator_lookup[$legislator_id] ?? null;
-	$chamber_code = strtoupper($legislator->chamber ?? $vote_chamber_code ?? '');
-	$party_code = strtoupper($legislator->party ?? '');
+	$chamber_code = strtoupper($legislator['chamber'] ?? $vote_chamber_code ?? '');
+	$party_code = strtoupper($legislator['party'] ?? '');
 
 	if ($chamber_code && !isset($chamber_filters[$chamber_code])) {
 		$chamber_label = $chamber_options[$chamber_code] ?? $chamber_code;
@@ -266,10 +266,10 @@ foreach ($roll_calls as $roll_call) {
 		'rollcall_id' => (int) ($roll_call->id ?? 0),
 		'display_name' => $roll_call->display_name
 			?? trim(($roll_call->first_name ?? '') . ' ' . ($roll_call->last_name ?? ''))
-			?? ($legislator->display_name ?? ''),
-		'slug' => $legislator->slug ?? '',
-		'district' => ($legislator->district_info->name_short ?? $legislator->district_info->name ?? $legislator->district ?? ''),
-		'state' => $legislator->state ?? '',
+			?? ($legislator['display_name'] ?? ''),
+		'slug' => $legislator['slug'] ?? '',
+		'district' => ($legislator['district_info']['name_short'] ?? $legislator['district_info']['name'] ?? $legislator['district'] ?? ''),
+		'state' => $legislator['state'] ?? '',
 		'chamber' => $chamber_code,
 		'party' => $party_code,
 		'cast' => $roll_call->cast ?? '',
@@ -295,16 +295,16 @@ $chamber_filters  = $chamber_filters ?? [];
 $cast_options      = $cast_options ?? [];
 $rollcall_summary  = $rollcall_summary ?? [];
 $gov_code          = $gov_code ?? '';
-$session_name      = $vote->session_name ?? '';
+$session_name      = $vote['session_name'] ?? '';
 $legiscan_meta     = $legiscan_meta ?? [];
-$vote_id           = (int) ($vote->id ?? 0);
+$vote_id           = (int) ($vote['id'] ?? 0);
 $chamber_options  = $chamber_options ?? [];
-$const = $vote->constitutional ?? 'U';
+$const = $vote['constitutional'] ?? 'U';
 $constitutional = $const === 'Y' ? 'Constitutional (Y)' : ($const === 'N' ? 'Unconstitutional (N)' : 'Unknown (U)');
 ?>
 
 <div class="wrap fi-rollcall-admin" data-vote-id="<?php echo esc_attr($vote_id); ?>" data-gov="<?php echo esc_attr($gov_code); ?>">
-	<h1 class="wp-heading-inline">Roll Call · <?php echo esc_html($vote->title ?? ''); ?></h1>
+	<h1 class="wp-heading-inline">Roll Call · <?php echo esc_html($vote['title'] ?? ''); ?></h1>
 	<div class="d-flex flex-wrap gap-2 mb-3">
 		<a href="<?php echo esc_url(fi_admin_edit_vote_url($vote_id)); ?>" class="btn btn-secondary">Back to Vote</a>
 		<a href="<?php echo esc_url(fi_admin_url('fi-votes')); ?>" class="btn btn-outline-secondary">All Votes</a>
@@ -475,8 +475,8 @@ $constitutional = $const === 'Y' ? 'Constitutional (Y)' : ($const === 'N' ? 'Unc
 					<ul class="list-unstyled mb-3">
 						<li><strong>Session:</strong> <?php echo esc_html($session_name ?: '—'); ?></li>
 						<li><strong>Chamber:</strong> <?php 
-							$chamber = strtoupper($vote->chamber ?? '');
-							$gov = $vote->gov ?? $gov_code ?? 'US';
+							$chamber = strtoupper($vote['chamber'] ?? '');
+							$gov = $vote['gov'] ?? $gov_code ?? 'US';
 							if ($chamber) {
 								echo esc_html(fi_chamber_label($gov, $chamber));
 							} else {
@@ -484,8 +484,8 @@ $constitutional = $const === 'Y' ? 'Constitutional (Y)' : ($const === 'N' ? 'Unc
 							}
 						?></li>
 						<li><strong>Constitutional:</strong> <?php echo esc_html($constitutional); ?></li>
-						<li><strong>Roll-call #:</strong> <?php echo esc_html($vote->rollcall_number ?? '—'); ?></li>
-						<li><strong>Date:</strong> <?php echo esc_html($vote->date_voted ?? '—'); ?></li>
+						<li><strong>Roll-call #:</strong> <?php echo esc_html($vote['rollcall_number'] ?? '—'); ?></li>
+						<li><strong>Date:</strong> <?php echo esc_html($vote['date_voted'] ?? '—'); ?></li>
 					</ul>
 					<?php if (!empty($legiscan_meta)): ?>
 						<p class="fw-semibold mb-2">LegiScan Metadata</p>

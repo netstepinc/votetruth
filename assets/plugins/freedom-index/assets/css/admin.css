@@ -7,8 +7,14 @@
 .freedom-index_page_fi-tags #wpcontent,
 .freedom-index_page_fi-districts #wpcontent,
 .freedom-index_page_fi-logs #wpcontent,
-.freedom-index_page_fi-legislators #wpcontent{
+.freedom-index_page_fi-legislators #wpcontent,
+.freedom-index_page_fi-settings #wpcontent {
     background-color: rgba(var(--bs-light-rgb), 1) !important;
+}
+
+/* Prevent the absolute-positioned WP footer from overlapping page content */
+.freedom-index_page_fi-settings #wpbody-content {
+    padding-bottom: 60px;
 }
 
 
@@ -1001,4 +1007,4 @@
 #display_name {width: 100%;}
 
 /* TINYMCE */
-.wp-editor-wrap{margin-top:-30px; !important; }
+.wp-editor-wrap{margin-top:-30px !important; }

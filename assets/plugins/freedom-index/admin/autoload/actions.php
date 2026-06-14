@@ -303,6 +303,6 @@ function fi_admin_actions_handle_recalculate_scores(): void {
 	$session_id = absint($_GET['session_id'] ?? 0);
 	$calculated = fi_score_calculate_all($gov ?: null, $session_id ?: null);
 	add_settings_error('fi_scoring', 'scores_calculated', "Calculated {$calculated} scores.", 'updated');
-	wp_redirect(add_query_arg('_fi_ts', time(), remove_query_arg(['action', 'gov', 'session_id', '_fi_ts'])));
+	wp_safe_redirect(remove_query_arg(['action', 'gov', 'session_id']));
 	exit;
 }

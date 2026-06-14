@@ -77,13 +77,13 @@ $column_class = ( isset($args['class_col']) && $args['class_col'] != '' ) ? $arg
     [name] => John Cornyn
     [party] => Republican
     [chamber] => Senate
-    [photo_url] => https://votestellthetruth.us/assets/sites/5/img/3084/995-C001056-80x100.jpg
+    [photo_url] => https://votetruth.us/assets/sites/5/img/3084/995-C001056-80x100.jpg
     [score] => 63
     [score_label] => Freedom Score
     [legislator] => Array
         (
             [id] => 995
-            [url] => https://votestellthetruth.us/legislator/995/
+            [url] => https://votetruth.us/legislator/995/
         )
 
 )
@@ -145,7 +145,7 @@ $column_class = ( isset($args['class_col']) && $args['class_col'] != '' ) ? $arg
         )
 
     [id] => 995
-    [url] => https://votestellthetruth.us/legislator/995/
+    [url] => https://votetruth.us/legislator/995/
     [first_name] => John
     [last_name] => Cornyn
     [freedom_score] => 63

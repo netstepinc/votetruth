@@ -15,7 +15,7 @@ if ($is_edit && !$vote) {
 $sessions = fi_sessions_get_by_gov($scope['gov'] ?? 'US');
 $session_options = [];
 foreach ($sessions as $session) {
-	$session_options[$session->id] = $session->name;
+	$session_options[$session['id']] = $session['name'];
 }
 
 $chamber_options = fi_chamber_options($scope['gov'] ?? 'US');
@@ -27,7 +27,7 @@ $meta_fields = fi_admin_votes_get_meta_fields();
 $selected_tags = [];
 $tag_objects = $is_edit ? fi_vote_tags_get_tags_by_vote($vote_id) : [];
 foreach ($tag_objects as $tag) {
-	$selected_tags[] = (int) $tag->id;
+	$selected_tags[] = (int) ($tag['id'] ?? 0);
 }
 
 $vote_meta = fi_admin_votes_decode_meta($vote);
@@ -44,13 +44,13 @@ $form_action = $is_edit
 	: fi_admin_url('fi-votes', ['action' => 'add']);
 $page_title = $is_edit ? 'Edit Vote' : 'Add Vote';
 
-$vote_id = $vote->id ?? 0;
-$session_name = $vote->session_name ?? '';
+$vote_id = $vote['id'] ?? 0;
+$session_name = $vote['session_name'] ?? '';
 $is_edit = !empty($vote_id);
 $assigned_tags = $tag_objects ?? [];
 $scope = $scope ?? [];
 
-$gov = $vote->gov ?? ($scope['gov'] ?? 'US');
+$gov = $vote['gov'] ?? ($scope['gov'] ?? 'US');
 $gov_name = fi_gov_name($gov);
 
 ?>
@@ -103,7 +103,7 @@ $gov_name = fi_gov_name($gov);
 	<form method="post" action="<?php echo esc_url($form_action); ?>" id="fi-vote-form">
 		<?php wp_nonce_field('fi_save_vote', 'fi_vote_nonce'); ?>
 		<?php fi_form_field('vote_id', ['type' => 'hidden', 'value' => $vote_id]); ?>
-		<?php fi_form_field('slug', ['type' => 'hidden', 'value' => $vote->slug]); ?>
+		<?php fi_form_field('slug', ['type' => 'hidden', 'value' => $vote['slug']]); ?>
 
 		<?php if ($is_edit && $vote_id && function_exists('fi_admin_votes_meta_is_json_string') && fi_admin_votes_meta_is_json_string((int) $vote_id)): ?>
 			<div class="notice notice-warning">
@@ -125,7 +125,7 @@ $gov_name = fi_gov_name($gov);
 							<div class="col-md-5">
 								<?php fi_form_field('title', [
 									'label' => 'Vote Title',
-									'value' => $vote->title ?? '',
+									'value' => $vote['title'] ?? '',
 									'required' => true
 								]); ?>
 							</div>
@@ -134,14 +134,14 @@ $gov_name = fi_gov_name($gov);
 									'label' => 'Session',
 									'type' => 'select',
 									'options' => $session_options,
-									'value' => $vote->session_id ?? '',
+									'value' => $vote['session_id'] ?? '',
 									'required' => true
 								]); ?>
 							</div>
 							<div class="col-md-3">
 								<?php fi_form_field_chamber('chamber', $gov, [
 									'label' => 'Chamber',
-									'value' => $vote->chamber ?? '',
+									'value' => $vote['chamber'] ?? '',
 									'required' => true,
 								]); ?>
 							</div>
@@ -149,9 +149,9 @@ $gov_name = fi_gov_name($gov);
 								<?php 
 								// Format date for HTML5 date input (requires Y-m-d format)
 								$date_value = '';
-								if (!empty($vote->date_voted)) {
+								if (!empty($vote['date_voted'])) {
 									// Extract date portion from DATETIME (first 10 characters: YYYY-MM-DD)
-									$date_value = substr($vote->date_voted, 0, 10);
+									$date_value = substr($vote['date_voted'], 0, 10);
 								}
 								fi_form_field('date_voted', [
 									'label' => 'Date Voted',
@@ -162,19 +162,19 @@ $gov_name = fi_gov_name($gov);
 							<div class="col-md-3">
 								<?php fi_form_field('bill_number', [
 									'label' => 'Bill Number',
-									'value' => $vote->bill_number ?? ''
+									'value' => $vote['bill_number'] ?? ''
 								]); ?>
 							</div>
 							<div class="col-md-3">
 								<?php fi_form_field('rollcall_number', [
 									'label' => 'Roll-call Number',
-									'value' => $vote->rollcall_number ?? ''
+									'value' => $vote['rollcall_number'] ?? ''
 								]); ?>
 							</div>
 							<div class="col-md-3">
 								<?php fi_form_field_status('status', [
 									'label' => 'Status',
-									'value' => $vote->status ?? 'publish'
+									'value' => $vote['status'] ?? 'publish'
 								]); ?>
 							</div>
 
@@ -212,7 +212,7 @@ $gov_name = fi_gov_name($gov);
 							<div class="col-md-6">
 								<?php fi_form_field_constitutional('constitutional', [
 									'label' => 'Constitutional Position',
-									'value' => $vote->constitutional ?? 'U',
+									'value' => $vote['constitutional'] ?? 'U',
 									'required' => false
 								]); ?>
 							</div>
@@ -290,7 +290,7 @@ $gov_name = fi_gov_name($gov);
 							<ul class="list-unstyled mb-0">
 								<li><strong>Session:</strong> <?php echo esc_html((string) ($session_name ?: '—')); ?></li>
 								<li><strong>Status:</strong> <?php 
-									$status_value = $vote->status ?? 'publish';
+									$status_value = $vote['status'] ?? 'publish';
 									$status_display = $status_options[$status_value] ?? ucfirst($status_value);
 									// Ensure status_display is a string
 									$status_display = is_array($status_display) ? (string) $status_value : (string) ($status_display ?? $status_value);
@@ -298,7 +298,7 @@ $gov_name = fi_gov_name($gov);
 								?></li>
 								<li><strong>Government:</strong> <?php echo $gov_name; ?></li>
 								<li><strong>Chamber:</strong> <?php 
-									$chamber = $vote->chamber ?? '';
+									$chamber = $vote['chamber'] ?? '';
 									if ($chamber) {
 										$chamber_label = fi_chamber_label($gov, $chamber);
 										echo esc_html((string) ($chamber_label ?? $chamber));
@@ -312,7 +312,7 @@ $gov_name = fi_gov_name($gov);
 						<div class="col-lg-6">
 							<ul class="list-unstyled mb-0">
 								<li><strong>Constitutional:</strong> <?php 
-									$const = $vote->constitutional ?? 'U';
+									$const = $vote['constitutional'] ?? 'U';
 									echo esc_html($const === 'Y' ? 'Yes' : ($const === 'N' ? 'No' : 'Unknown'));
 								?></li>
 								<li><strong>Date:</strong> 
@@ -323,13 +323,13 @@ $gov_name = fi_gov_name($gov);
 								</li>
 								<li><strong>Date Created:</strong> 
 									<?php 
-										$date_created = $vote->date_created ?? null;
+										$date_created = $vote['date_created'] ?? null;
 										echo esc_html($date_created ? date('n/j/Y', strtotime($date_created)) : '—'); 
 									?>
 								</li>
 								<li><strong>Date Updated:</strong> 
 									<?php 
-										$date_updated = $vote->date_updated ?? null;
+										$date_updated = $vote['date_updated'] ?? null;
 										echo esc_html($date_updated ? date('n/j/Y', strtotime($date_updated)) : '—'); 
 									?>
 								</li>
@@ -404,7 +404,7 @@ $gov_name = fi_gov_name($gov);
 							<?php fi_form_field('legiscan_bid', [
 								'label' => 'Legiscan Bill ID',
 								'type' => 'number',
-								'value' => $vote->legiscan_bid ?? '',
+								'value' => $vote['legiscan_bid'] ?? '',
 								'help' => 'Legiscan bill ID for cross-reference'
 							]); ?>
 						</div>
@@ -412,7 +412,7 @@ $gov_name = fi_gov_name($gov);
 							<?php fi_form_field('legiscan_rcid', [
 								'label' => 'Legiscan Rollcall ID',
 								'type' => 'number',
-								'value' => $vote->legiscan_rcid ?? '',
+								'value' => $vote['legiscan_rcid'] ?? '',
 								'help' => 'Legiscan rollcall ID for cross-reference'
 							]); ?>
 						</div>
@@ -518,8 +518,8 @@ VOTE_ID=351
 URL_ROLLCALL=http://www.senate.gov/legislative/LIS/roll_call_lists/roll_call_vote_cfm.cfm?congress=108&session=2&vote=00088
 -->
 */
-if($gov == 'US' && $vote->session_id && $vote_meta['url_rollcall']){
-	fi_api_gov_data($vote->session_id,$vote_id,$vote_meta['url_rollcall']);
+if($gov == 'US' && $vote['session_id'] && $vote_meta['url_rollcall']){
+	fi_api_gov_data($vote['session_id'],$vote_id,$vote_meta['url_rollcall']);
 }
 ?>
 

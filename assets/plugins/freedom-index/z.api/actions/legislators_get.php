@@ -1,7 +1,7 @@
 <?php if ( ! defined( 'ABSPATH' ) ) { exit; }
 /*
  * Action: legislators_get
- * Procedural Medoo query layer for FI API.
+ * Medoo query layer for FI API.
  *
  * Inputs (via $args from fi_api.php):
  * - gov (required for list)

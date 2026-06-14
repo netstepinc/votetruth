@@ -12,16 +12,16 @@ if (!isset($legislator) || !$legislator) {
 }
 
 // Extract data from flattened legislator object
-$display_name = $legislator->display_name ?? '';
-$party_name = $legislator->party_name ?? '';
-$state_name = $legislator->state_name ?? '';
-$district = $legislator->district ?? '';
-$chamber_label = $legislator->chamber_label ?? '';
-$chamber_title = $legislator->chamber_title ?? '';
-$lifetime_score = $legislator->lifetime_score ?? null;
-$session_score = $legislator->session_score ?? null;
-$session_name = $legislator->session_name ?? '';
-$image_id = $legislator->image_id ?? 0;
+$display_name = $legislator['display_name'] ?? '';
+$party_name = $legislator['party_name'] ?? '';
+$state_name = $legislator['state_name'] ?? '';
+$district = $legislator['district'] ?? '';
+$chamber_label = $legislator['chamber_label'] ?? '';
+$chamber_title = $legislator['chamber_title'] ?? '';
+$lifetime_score = $legislator['lifetime_score'] ?? null;
+$session_score = $legislator['session_score'] ?? null;
+$session_name = $legislator['session_name'] ?? '';
+$image_id = $legislator['image_id'] ?? 0;
 
 // Build page title
 $page_title = sprintf(
@@ -44,7 +44,7 @@ $image_html = fi_legislator_image(
 );
 
 // Base URL for sharing
-$base_url = home_url('/legislator/' . $legislator->id . '/');
+$base_url = home_url('/legislator/' . $legislator['id'] . '/');
 ?>
 
 <!-- Legislator Header -->

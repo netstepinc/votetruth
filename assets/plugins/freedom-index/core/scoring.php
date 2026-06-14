@@ -105,7 +105,7 @@ function fi_score_calculate_all(?string $gov = null, ?int $session_id = null): i
 	}
 
 	foreach ($sessions as $session) {
-		$sid = (int) $session->id;
+		$sid = (int) $session['id'];
 		if ($sid > 0) {
 			$calculated += fi_score_calculate_session($sid);
 		}
@@ -139,7 +139,7 @@ function fi_score_calculate_session(int $session_id): int {
 		return 0;
 	}
 
-	fi_score_log("  → Session found: Gov={$session->gov}", __FILE__, __LINE__);
+	fi_score_log("  → Session found: Gov={$session['gov']}", __FILE__, __LINE__);
 
 	$legislators = fi_score_get_legislators_for_session($session_id);
 	if (empty($legislators)) {
@@ -176,7 +176,7 @@ function fi_score_calculate_session(int $session_id): int {
 
 		$unique_votes = [];
 		foreach ($votes as $vote) {
-			$unique_votes[(int) $vote->id] = $vote;
+			$unique_votes[(int) $vote['id']] = $vote;
 		}
 		$votes = array_values($unique_votes);
 
@@ -428,7 +428,7 @@ function fi_score_calculate_from_votes(array $votes, array $rollcalls): array {
 
 	foreach ($votes as $vote) {
 		$votes_total++;
-		$vote_id = (int) $vote->id;
+		$vote_id = (int) $vote['id'];
 
 		if (!isset($rollcalls[$vote_id])) {
 			$votes_not++;
@@ -444,7 +444,7 @@ function fi_score_calculate_from_votes(array $votes, array $rollcalls): array {
 
 		$votes_scored++;
 
-		if ($cast === strtoupper((string) $vote->constitutional)) {
+		if ($cast === strtoupper((string) $vote['constitutional'])) {
 			$votes_good++;
 		} else {
 			$votes_bad++;
@@ -582,10 +582,10 @@ function fi_score_calculate_batch(array $votes): ?int {
 
 	foreach ($votes as $vote) {
 		$constitutional = is_object($vote)
-			? ($vote->good ?? $vote->constitutional ?? '')
+			? ($vote['good'] ?? $vote['constitutional'] ?? '')
 			: ($vote['good'] ?? $vote['constitutional'] ?? '');
 		$cast = is_object($vote)
-			? ($vote->cast ?? 'X')
+			? ($vote['cast'] ?? 'X')
 			: ($vote['cast'] ?? 'X');
 
 		$constitutional = strtoupper((string) $constitutional);
@@ -687,13 +687,13 @@ function fi_score_calculate_average(array $legislators, ?string $filter_by = nul
 
 	foreach ($legislators as $legislator) {
 		if ($filter_by && $filter_value) {
-			$legislator_value = $legislator->{$filter_by} ?? null;
+			$legislator_value = $legislator[$filter_by] ?? null;
 			if ($legislator_value !== $filter_value) {
 				continue;
 			}
 		}
 
-		$score = (float) ($legislator->score ?? 0);
+		$score = (float) ($legislator['score'] ?? 0);
 		if ($score > 0) {
 			$sum += $score;
 			$count++;
@@ -998,9 +998,9 @@ function fi_score_ajax_calculate_gov_scores(): void {
 	fi_score_log('Processing batch: ' . count($batch) . ' sessions', __FILE__, __LINE__);
 
 	foreach ($batch as $session) {
-		$last_session_id = (int) ($session->id ?? 0);
+		$last_session_id = (int) ($session['id'] ?? 0);
 		if ($last_session_id > 0) {
-			fi_score_log('Processing session ID: ' . $last_session_id . ', Name: ' . ($session->name ?? 'N/A'), __FILE__, __LINE__);
+			fi_score_log('Processing session ID: ' . $last_session_id . ', Name: ' . ($session['name'] ?? 'N/A'), __FILE__, __LINE__);
 			$session_calculated = fi_score_calculate_session($last_session_id);
 			$calculated += $session_calculated;
 			$processed_sessions++;

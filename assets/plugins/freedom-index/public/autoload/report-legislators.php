@@ -37,11 +37,11 @@ fi_log('session_id: '.$session_id . ' chamber: '.$chamber . ' gov: '.$gov . ' vo
     // Rollcall: vote_id => legislator_id => cast
     $rollcall_data = [];
     foreach ($votes as $vote) {
-        if (!isset($vote->id)) continue;
-        $rollcalls = fi_rollcalls_get_by_vote($vote->id);
+        if (!isset($vote['id'])) continue;
+        $rollcalls = fi_rollcalls_get_by_vote($vote['id']);
         foreach ($rollcalls as $rc) {
             if (!isset($rc->legislator_id)) continue;
-            $rollcall_data[$vote->id][$rc->legislator_id] = fi_rollcall_cast_normalize((string) ($rc->cast ?? ''));
+            $rollcall_data[$vote['id']][$rc->legislator_id] = fi_rollcall_cast_normalize((string) ($rc->cast ?? ''));
         }
     }
 
@@ -49,16 +49,16 @@ fi_log('session_id: '.$session_id . ' chamber: '.$chamber . ' gov: '.$gov . ' vo
         $leg_votes = [];
         $votes_for_scoring = [];
         foreach ($votes as $vote) {
-            if (!isset($vote->id)) continue;
-            $cast = fi_rollcall_cast_normalize((string) ($rollcall_data[$vote->id][$leg->id] ?? ''));
+            if (!isset($vote['id'])) continue;
+            $cast = fi_rollcall_cast_normalize((string) ($rollcall_data[$vote['id']][$leg->id] ?? ''));
             $vote_format = fi_vote_format([
                 'cast' => $cast,
-                'constitutional' => $vote->constitutional ?? '',
+                'constitutional' => $vote['constitutional'] ?? '',
                 'format' => 'full'
             ]);
             $votes_for_scoring[] = [
-                'id' => $vote->id,
-                'good' => $vote->constitutional ?? '',
+                'id' => $vote['id'],
+                'good' => $vote['constitutional'] ?? '',
                 'cast' => $cast
             ];
             $leg_votes[] = [

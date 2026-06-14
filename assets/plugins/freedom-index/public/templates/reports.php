@@ -70,7 +70,7 @@ fi_get_public_template('partials/template-header', $header_args);
 	<?php else: ?>
 		<?php foreach ($reports as $report): 
 			// Decode payload to get report content and votes
-			$payload = fi_report_decode_payload($report->payload_json ?? null);
+			$payload = fi_report_decode_payload($report['payload_json'] ?? null);
 			$description = $payload['content'] ?? '';
 			$pdf_url = $payload['report_pdf_url'] ?? '';
 
@@ -86,15 +86,15 @@ fi_get_public_template('partials/template-header', $header_args);
 					'votes' => $votes_h,
 				],
 			];
-			$report->title = fi_report_title_reformat($gov, $report->title);
+			$report['title'] = fi_report_title_reformat($gov, $report['title']);
 		?>
 			<!-- Report Title + Description -->
 			<div class="col-12 mb-5">
 				<div class="card h-100 shadow rounded-4">
 					<div class="card-header rounded-top-4 bg-white">
 						<h3 class="card-title fs-3 mb-0 d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
-							<a href="<?php echo esc_url(fi_url_report($report->id, strtolower($gov))); ?>" class="text-decoration-none">
-								<?php echo esc_html($report->title); ?>
+							<a href="<?php echo esc_url(fi_url_report($report['id'], strtolower($gov))); ?>" class="text-decoration-none">
+								<?php echo esc_html($report['title']); ?>
 							</a>
 <?php
 if (!empty($pdf_url)) {
@@ -117,14 +117,14 @@ if (!empty($pdf_url)) {
 									<?php foreach ($chamber['votes'] as $vote_id): 
 										$vote = fi_vote_get($vote_id);
 										if ($vote):
-											$meta = json_decode($vote->meta,true) ?? [];
+											$meta = json_decode($vote['meta'],true) ?? [];
 											$descriptions = fi_vote_get_description($meta);
 											$description = $descriptions['short'] ?? '';
-											$vote_url = fi_url_vote($vote->gov, $vote->id);
+											$vote_url = fi_url_vote($vote['gov'], $vote['id']);
 										?>
 										<li class="list-group-item px-0 py-1 border-bottom">
 											<a href="<?php echo esc_url($vote_url); ?>" class="text-decoration-none fw-semibold">
-												<?php echo esc_html($vote->title); ?>
+												<?php echo esc_html($vote['title']); ?>
 											</a>
 											<div class="small text-muted pmb-0">
 												<?php echo wp_kses_post(wpautop($description)); ?>

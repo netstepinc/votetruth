@@ -285,7 +285,7 @@ function fi_rewrite_handle_legislator(int $legislator_id): void {
 		return;
 	}
 	
-	fi_rewrite_log('handle_legislator: Found legislator: ' . $legislator->display_name);
+	fi_rewrite_log('handle_legislator: Found legislator: ' . $legislator['display_name']);
 	
 	// Make available to template
 	global $fi_legislator;

@@ -14,7 +14,7 @@
  * Refactored and tuned the REST API file.
 Key adjustments:
 	Removed the FIAdmin\RestAPI class/namespace wrapper.
-Added procedural route registration:
+Added route registration:
 	fi_rest_api_init()
 	fi_rest_register_routes()
 Converted endpoint callbacks:
@@ -424,7 +424,7 @@ function fi_rest_get_report(WP_REST_Request $request) {
 		return new WP_Error('not_found', 'Report not found.', ['status' => 404]);
 	}
 
-	$payload_raw = $report->payload_json ?? [];
+	$payload_raw = $report['payload_json'] ?? [];
 	$payload = function_exists('fi_report_payload_normalize')
 		? fi_report_payload_normalize($payload_raw)
 		: (is_string($payload_raw) ? json_decode($payload_raw, true) : (array) $payload_raw);
@@ -612,7 +612,7 @@ function fi_rest_allowed_origins(): array {
 		'https://thefreedomindex.org',
 		'https://thenewamerican.com',
 		'https://freedomindex.app',
-		'https://votestellthetruth.us',
+		'https://votetruth.us',
 	];
 
 	if (function_exists('fi_settings_get')) {

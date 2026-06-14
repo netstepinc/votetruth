@@ -99,12 +99,12 @@ function fi_sessions_log(string $message, string $file = '', int $line = 0, stri
 /**
  * Add the Congress suffix to US session names when missing.
  *
- * @param object|null $session Session object.
- * @return object|null
+ * @param array|null $session Session array.
+ * @return array|null
  */
-function fi_session_format_name(?object $session): ?object {
-	if ($session && !empty($session->name) && strtoupper($session->gov ?? '') === 'US' && strpos($session->name, 'Congress') === false) {
-		$session->name .= ' Congress';
+function fi_session_format_name(?array $session): ?array {
+	if ($session && !empty($session['name']) && strtoupper($session['gov'] ?? '') === 'US' && strpos($session['name'], 'Congress') === false) {
+		$session['name'] .= ' Congress';
 	}
 
 	return $session;
@@ -113,13 +113,14 @@ function fi_session_format_name(?object $session): ?object {
 /**
  * Add formatted names to a session result array.
  *
- * @param array $sessions Session objects.
+ * @param array $sessions Session arrays.
  * @return array
  */
 function fi_sessions_format_names(array $sessions): array {
-	foreach ($sessions as $session) {
-		fi_session_format_name($session);
+	foreach ($sessions as &$session) {
+		$session = fi_session_format_name($session) ?? $session;
 	}
+	unset($session);
 
 	return $sessions;
 }
@@ -145,12 +146,12 @@ function fi_session_db_formats(array $db_data): array {
 }
 
 /**
- * Get sessions with optional filtering.
+ * Query sessions with optional filtering (DB-only, no cache).
  *
  * @param array $args Optional query arguments.
  * @return array|int Array of session objects or count if count is true.
  */
-function fi_sessions_get(array $args = []): array|int {
+function fi_sessions_query(array $args = []): array|int {
 	global $wpdb;
 
 	$defaults = [
@@ -171,21 +172,6 @@ function fi_sessions_get(array $args = []): array|int {
 
 	if (!is_admin() && $args['status'] === null) {
 		$args['status'] = 'publish';
-	}
-
-	$cache_key = md5(serialize($args));
-	$cached = fi_sessions_request_cache('get', $cache_key);
-	if ($cached !== null) {
-		return $cached;
-	}
-
-	$cacheKey = fi_cache_key('sessions/get', $args);
-	fi_sessions_log('Sessions::get:Cache key: ' . $cacheKey, __FILE__, __LINE__);
-
-	$results = fi_cache($cacheKey);
-	if ($results) {
-		fi_sessions_request_cache('get', $cache_key, $results, true);
-		return $results;
 	}
 
 	$where_conditions = [];
@@ -260,10 +246,7 @@ function fi_sessions_get(array $args = []): array|int {
 			$sql = $wpdb->prepare($sql, $where_values);
 		}
 
-		$results = (int) $wpdb->get_var($sql);
-		fi_sessions_request_cache('get', $cache_key, $results, true);
-		fi_cache($cacheKey, $results);
-		return $results;
+		return (int) $wpdb->get_var($sql);
 	}
 
 	$sql = "
@@ -279,21 +262,36 @@ function fi_sessions_get(array $args = []): array|int {
 
 	fi_sessions_log('Sessions::get:SQL: ' . str_replace("\n", ' ', $sql), __FILE__, __LINE__);
 
-	$results = fi_sessions_format_names($wpdb->get_results($sql));
-
-	fi_cache($cacheKey, $results);
-	fi_sessions_request_cache('get', $cache_key, $results, true);
-
-	return $results;
+	return fi_sessions_format_names($wpdb->get_results($sql, ARRAY_A));
 }
 
+
+
+/**
+ * Get sessions with optional filtering (cached for front-end).
+ *
+ * @param array $args Optional query arguments.
+ * @return array|int Array of session objects or count if count is true.
+ */
+function fi_sessions_get(array $args = []): array|int {
+	$cacheKey = fi_cache_key('sessions/get', $args);
+
+	$results = fi_cache($cacheKey);
+	if ($results) {
+		return $results;
+	}
+
+	$results = fi_sessions_query($args);
+	fi_cache($cacheKey, $results);
+	return $results;
+}
 /**
  * Get a single session by ID.
  *
  * @param int $session_id Session ID.
- * @return object|null
+ * @return array|null
  */
-function fi_session_get(int $session_id): ?object {
+function fi_session_get(int $session_id): ?array {
 	$results = fi_sessions_get([
 		'id'       => $session_id,
 		'per_page' => 1,
@@ -311,21 +309,18 @@ function fi_session_get(int $session_id): ?object {
  */
 function fi_sessions_get_by_gov(string $gov, array $filters = []): array {
 	$gov = strtoupper($gov);
-	$cache_key = $gov . '|' . md5(serialize($filters));
-	$cached = fi_sessions_request_cache('by_gov', $cache_key);
+	$args = array_merge($filters, ['gov' => $gov]);
+	$cacheKey = fi_cache_key('sessions/by_gov', $args);
 
-	if ($cached !== null) {
-		return $cached;
+	$results = fi_cache($cacheKey);
+	if ($results) {
+		return is_array($results) ? $results : [];
 	}
 
-	$args = array_merge($filters, ['gov' => $gov]);
-	fi_sessions_log('Sessions::get_by_gov:Args: ' . wp_json_encode($args), __FILE__, __LINE__);
-
-	$result = fi_sessions_get($args);
+	$result = fi_sessions_query($args);
 	$result = is_array($result) ? $result : [];
 
-	fi_sessions_request_cache('by_gov', $cache_key, $result, true);
-
+	fi_cache($cacheKey, $result);
 	return $result;
 }
 
@@ -337,7 +332,7 @@ function fi_sessions_get_by_gov(string $gov, array $filters = []): array {
  * @param string $gov Government code.
  * @return object|null
  */
-function fi_session_get_current(string $gov): ?object {
+function fi_session_get_current(string $gov): ?array {
 	$gov = strtoupper($gov);
 
 	$results = fi_sessions_get([
@@ -357,7 +352,7 @@ function fi_session_get_current(string $gov): ?object {
 		]);
 
 		foreach ($sessions as $s) {
-			if ($s->parent_id === null || (int) $s->parent_id === 0) {
+			if (($s['parent_id'] ?? null) === null || (int) ($s['parent_id'] ?? 0) === 0) {
 				$session = $s;
 				break;
 			}
@@ -379,7 +374,7 @@ function fi_session_get_current(string $gov): ?object {
  */
 function fi_session_get_current_id(string $gov): ?int {
 	$session = fi_session_get_current($gov);
-	return $session ? (int) $session->id : null;
+	return $session ? (int) ($session['id'] ?? 0) : null;
 }
 
 /**
@@ -387,9 +382,9 @@ function fi_session_get_current_id(string $gov): ?int {
  *
  * @param int $legiscan_id Legiscan session ID.
  * @param string|null $gov Optional government code.
- * @return object|null
+ * @return array|null
  */
-function fi_session_get_by_legiscan_id(int $legiscan_id, ?string $gov = null): ?object {
+function fi_session_get_by_legiscan_id(int $legiscan_id, ?string $gov = null): ?array {
 	global $wpdb;
 
 	$where_conditions = ['legiscan_id = %d'];
@@ -403,11 +398,11 @@ function fi_session_get_by_legiscan_id(int $legiscan_id, ?string $gov = null): ?
 	$where_clause = implode(' AND ', $where_conditions);
 	$sql = "SELECT * FROM {$wpdb->prefix}fi_sessions WHERE {$where_clause} LIMIT 1";
 
-	$session = $wpdb->get_row($wpdb->prepare($sql, $where_values));
+	$session = $wpdb->get_row($wpdb->prepare($sql, $where_values), ARRAY_A);
 
-	if ($session && !empty($session->meta)) {
-		$decoded = json_decode($session->meta, true);
-		$session->meta = is_array($decoded) ? $decoded : [];
+	if ($session && !empty($session['meta'])) {
+		$decoded = json_decode($session['meta'], true);
+		$session['meta'] = is_array($decoded) ? $decoded : [];
 	}
 
 	return fi_session_format_name($session ?: null);
@@ -801,18 +796,18 @@ function fi_sessions_get_children(int $parent_id): array {
 		WHERE parent_id = %d
 		ORDER BY date_start ASC, name ASC",
 		$parent_id
-	));
+	), ARRAY_A);
 
-	return fi_sessions_format_names($results);
+	return fi_sessions_format_names($results ?: []);
 }
 
 /**
  * Get parent session of a child session.
  *
  * @param int $child_id Child session ID.
- * @return object|null
+ * @return array|null
  */
-function fi_session_get_parent(int $child_id): ?object {
+function fi_session_get_parent(int $child_id): ?array {
 	global $wpdb;
 
 	$session = $wpdb->get_row($wpdb->prepare(
@@ -820,7 +815,7 @@ function fi_session_get_parent(int $child_id): ?object {
 		INNER JOIN {$wpdb->prefix}fi_sessions c ON c.parent_id = p.id
 		WHERE c.id = %d",
 		$child_id
-	));
+	), ARRAY_A);
 
 	return fi_session_format_name($session ?: null);
 }
@@ -839,14 +834,14 @@ function fi_sessions_get_hierarchy(int $session_id): array {
 
 	$hierarchy = [$session];
 
-	if ($session->parent_id === null || (int) $session->parent_id === 0) {
+	if (($session['parent_id'] ?? null) === null || (int) ($session['parent_id'] ?? 0) === 0) {
 		$children = fi_sessions_get_children($session_id);
 		$hierarchy = array_merge($hierarchy, $children);
 	} else {
 		$parent = fi_session_get_parent($session_id);
 		if ($parent) {
 			$hierarchy = [$parent];
-			$siblings = fi_sessions_get_children((int) $parent->id);
+			$siblings = fi_sessions_get_children((int) ($parent['id'] ?? 0));
 			$hierarchy = array_merge($hierarchy, $siblings);
 		}
 	}
@@ -864,7 +859,7 @@ function fi_sessions_get_hierarchy_ids(int $session_id): array {
 	$hierarchy = fi_sessions_get_hierarchy($session_id);
 
 	return array_map(static function($session) {
-		return (int) $session->id;
+		return (int) ($session['id'] ?? 0);
 	}, $hierarchy);
 }
 
@@ -915,18 +910,18 @@ function fi_session_get_all_meta($session): array {
 		$session = $wpdb->get_row($wpdb->prepare(
 			"SELECT meta FROM {$wpdb->prefix}fi_sessions WHERE id = %d LIMIT 1",
 			absint($session)
-		));
+		), ARRAY_A);
 	}
 
-	if (empty($session) || !isset($session->meta) || $session->meta === null || $session->meta === '') {
+	if (empty($session) || !isset($session['meta']) || $session['meta'] === null || $session['meta'] === '') {
 		return [];
 	}
 
-	if (is_array($session->meta)) {
-		return $session->meta;
+	if (is_array($session['meta'])) {
+		return $session['meta'];
 	}
 
-	$decoded = json_decode((string) $session->meta, true);
+	$decoded = json_decode((string) $session['meta'], true);
 	return is_array($decoded) ? $decoded : [];
 }
 

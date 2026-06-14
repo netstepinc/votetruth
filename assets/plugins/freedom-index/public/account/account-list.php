@@ -72,7 +72,7 @@ $instructions = '<h4>How does this work?</h4>
 						$party_list = fi_parties();
 						$party_counts = [];
 						foreach ($list as $legislator) {
-							$party = is_object($legislator) ? ($legislator->party ?? 'Unknown') : ($legislator['party'] ?? 'Unknown');
+							$party = is_object($legislator) ? ($legislator['party'] ?? 'Unknown') : ($legislator['party'] ?? 'Unknown');
 							if (!isset($party_list[$party])) {
 								$party_list[$party] = 0;
 							}

@@ -24,10 +24,10 @@ if ($is_edit && !$legislator) {
 
 //echo "\n<!-- LEGISLATOR DATA \n"; print_r($legislator); echo "\n-->\n";
 
-//Parse legislator object into variables.
+//Parse legislator array into variables.
 $meta_groups   = fi_admin_legislators_get_meta_field_groups();
 $extra_meta    = fi_admin_legislators_get_extra_meta($legislator, $meta_groups);
-$sessions      = is_array($legislator->sessions ?? null) ? $legislator->sessions : [];
+$sessions      = is_array($legislator['sessions'] ?? null) ? $legislator['sessions'] : [];
 $addresses = fi_legislator_addresses($legislator);
 $websites = fi_legislator_websites($legislator);
 
@@ -41,18 +41,18 @@ $edit_ls_id = $is_edit ? absint($_GET['edit_ls_id'] ?? 0) : 0;
 $edit_legislator_session_row = null;
 if ($edit_ls_id > 0 && $legislator_id && function_exists('fi_legislator_session_get')) {
 	$row = fi_legislator_session_get($edit_ls_id);
-	if ($row && isset($row->legislator_id) && (int) $row->legislator_id === $legislator_id) {
+	if ($row && isset($row['legislator_id']) && (int) $row['legislator_id'] === $legislator_id) {
 		$edit_legislator_session_row = $row;
 	}
 }
 
 // Get normalized meta for form fields
 $normalized_meta = fi_legislator_meta_normalize(
-	is_array($legislator->meta ?? null) ? $legislator->meta : []
+	is_array($legislator['meta'] ?? null) ? $legislator['meta'] : []
 );
 
 $form_action   = $is_edit
-	? fi_admin_edit_legislator_url($legislator->id ?? 0, ['return_url' => $return_url])
+	? fi_admin_edit_legislator_url($legislator['id'] ?? 0, ['return_url' => $return_url])
 	: fi_admin_url('fi-legislators', ['action' => 'add']);
 $page_title    = $is_edit ? 'Edit Legislator' : 'Add Legislator';
 
@@ -66,12 +66,12 @@ $api_sources = [
 ];
 // Only show additional API check panels when the required identifier AND API key (if required) exists.
 $votesmart_key = fi_get_api_key('votesmart_key', 'API_KEY_VOTESMART');
-if (!empty($legislator->votesmart_id ?? '') && !empty($votesmart_key)) {
+if (!empty($legislator['votesmart_id'] ?? '') && !empty($votesmart_key)) {
 	$api_sources['votesmart'] = 'VoteSmart';
 }
 if (
-	(!empty($legislator->gov ?? '') && strtoupper((string) $legislator->gov) === 'US')
-	&& (!empty($legislator->govtrack_id ?? '') || !empty($legislator->bioguide_id ?? ''))
+	(!empty($legislator['gov'] ?? '') && strtoupper((string) $legislator['gov']) === 'US')
+	&& (!empty($legislator['govtrack_id'] ?? '') || !empty($legislator['bioguide_id'] ?? ''))
 ) {
 	$api_sources['govtrack'] = 'GovTrack';
 }
@@ -83,17 +83,17 @@ $legiscan_file_message = '';
 $legiscan_session_display = '';
 $legiscan_folder_slug = '';
 
-$legiscan_id = (int) ($legislator->legiscan_id ?? 0);
+$legiscan_id = (int) ($legislator['legiscan_id'] ?? 0);
 $latest_session = !empty($sessions) ? reset($sessions) : null;
 
-if (is_object($latest_session) && !empty($legiscan_id)) {
+if (is_array($latest_session) && !empty($legiscan_id)) {
 	$legiscan_session_display =
-		(string) ($latest_session->name ?? '')
-		?: (string) ($latest_session->session_name ?? '')
+		(string) ($latest_session['name'] ?? '')
+		?: (string) ($latest_session['session_name'] ?? '')
 		?: $legiscan_session_slug;
 
 	//get legiscan session folder slug
-	$legiscan_session_id = ($latest_session->legiscan_id ?? '');
+	$legiscan_session_id = ($latest_session['legiscan_id'] ?? '');
 	if($legiscan_session_id) {
 		$legiscan_datasets = fi_legiscan_get_datasets($gov);
 		if(isset($legiscan_datasets[$legiscan_session_id]) && isset($legiscan_datasets[$legiscan_session_id]['directory'])) {
@@ -183,17 +183,17 @@ foreach ($state_options_for_template as $value => $label) {
 							<div class="col-12 col-md-6">
 <?php
 //Populate image_url if the image_id is set. Refresh it every time the form is loaded in case the id was changed.
-if($legislator->image_id > 0){
-	$image_url = jis_get_attachment_image_src($legislator->image_id, [200,250],'face'); //[0.5,0]
+if($legislator['image_id'] > 0){
+	$image_url = jis_get_attachment_image_src($legislator['image_id'], [200,250],'face'); //[0.5,0]
 	if($image_url['src'] != ''){
-		$legislator->image_url = $image_url['src'];
+		$legislator['image_url'] = $image_url['src'];
 	}
 }
-echo "<!-- ".$legislator->image_id." -->\n";
-fi_form_field('image_url', ['type' => 'hidden', 'value' => $legislator->image_url]); echo "\n";
+echo "<!-- ".$legislator['image_id']." -->\n";
+fi_form_field('image_url', ['type' => 'hidden', 'value' => $legislator['image_url']]); echo "\n";
 
 //Media Picker and custom image uploader and URL fetcher.
-$image_picker_html = fi_admin_helpers_render_image_media_picker($legislator->image_id ?? 0);
+$image_picker_html = fi_admin_helpers_render_image_media_picker($legislator['image_id'] ?? 0);
 fi_form_field('image_id', [
 	'type' => 'html',
 	'label' => 'Profile Image',
@@ -207,7 +207,7 @@ fi_form_field('image_id', [
 									<div class="col-12">
 										<?php fi_form_field('display_name', [
 											'label' => 'Display Name',
-											'value' => $legislator->display_name ?? '',
+											'value' => $legislator['display_name'] ?? '',
 											'no_wrapper' => true,
 											'required' => true
 										]); ?>
@@ -227,7 +227,7 @@ fi_form_field('image_id', [
 									<div class="col-12">
 										<?php fi_form_field('first_name', [
 											'label' => 'First Name',
-											'value' => $legislator->first_name ?? '',
+											'value' => $legislator['first_name'] ?? '',
 											'no_wrapper' => true,
 											'required' => true
 										]); ?>
@@ -236,13 +236,13 @@ fi_form_field('image_id', [
 										<?php fi_form_field('middle_name', [
 											'label' => 'Middle Name',
 											'no_wrapper' => true,
-											'value' => $legislator->middle_name ?? ''
+											'value' => $legislator['middle_name'] ?? ''
 										]); ?>
 									</div>
 									<div class="col-12">
 										<?php fi_form_field('last_name', [
 											'label' => 'Last Name',
-											'value' => $legislator->last_name ?? '',
+											'value' => $legislator['last_name'] ?? '',
 											'no_wrapper' => true,
 											'required' => true
 										]); ?>
@@ -589,13 +589,13 @@ fi_form_field('image_id', [
 					<?php if ($is_edit && $legislator_id): ?>
 						<?php
 						// Build defaults from V2-style meta if present.
-						$role_raw = (string) (($legislator->meta['legislator_role'] ?? '') ?: '');
+						$role_raw = (string) (($legislator['meta']['legislator_role'] ?? '') ?: '');
 						$role_raw = strtolower(trim($role_raw));
 						//CHAMBERFLAG
 						$default_chamber = $role_raw === 'sen' ? 'S' : ($role_raw === 'rep' ? 'R' : 'R');
 						// Summary: when editing an existing assignment, use that row's gov for dropdown options.
 						// This avoids mismatched district lists when a legislator has mixed US+state history.
-						$session_form_gov = strtoupper((string) ($edit_legislator_session_row->gov ?? $gov));
+						$session_form_gov = strtoupper((string) ($edit_legislator_session_row['gov'] ?? $gov));
 						// Use the same cached filter options as the public legislator filter bar.
 						// Summary: one transient read; if stale, staff will see missing options and can refresh by visiting Admin > Sessions.
 						$filter_options = function_exists('fi_filter_get_options') ? fi_filter_get_options($session_form_gov, false) : ['sessions' => [], 'parties' => [], 'chambers' => []];
@@ -609,23 +609,23 @@ fi_form_field('image_id', [
 							// Summary: editing uses selected row (by fi_legislator_sessions.id); otherwise fall back to role-based defaults for add mode.
 							$row = $edit_legislator_session_row;
 							$edit_vals = [
-								'session_id' => $row ? (int) ($row->session_id ?? 0) : 0,
-								'state' => $row ? strtoupper((string) ($row->state ?? '')) : '',
-								'chamber' => $row ? strtoupper((string) ($row->chamber ?? '')) : '',
-								'party' => $row ? strtoupper((string) ($row->party ?? '')) : '',
+								'session_id' => $row ? (int) ($row['session_id'] ?? 0) : 0,
+								'state' => $row ? strtoupper((string) ($row['state'] ?? '')) : '',
+								'chamber' => $row ? strtoupper((string) ($row['chamber'] ?? '')) : '',
+								'party' => $row ? strtoupper((string) ($row['party'] ?? '')) : '',
 								'district_id' => 0,
 							];
-							$district_raw = $row ? (string) ($row->district ?? '') : '';
+							$district_raw = $row ? (string) ($row['district'] ?? '') : '';
 							if ($district_raw !== '' && is_numeric($district_raw)) {
 								$edit_vals['district_id'] = (int) $district_raw;
 							}
 							$selected_chamber = $edit_vals['chamber'] !== '' ? $edit_vals['chamber'] : $default_chamber;
-							$form_ls_id = $row ? (int) ($row->id ?? 0) : 0;
+							$form_ls_id = $row ? (int) ($row['id'] ?? 0) : 0;
 							?>
 							<?php if ($edit_legislator_session_row): ?>
 								<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
 									<div class="small text-muted">
-										Editing session assignment #<?php echo esc_html((string) $form_ls_id); ?> (session_id <?php echo esc_html((string) ($edit_legislator_session_row->session_id ?? '')); ?>)
+										Editing session assignment #<?php echo esc_html((string) $form_ls_id); ?> (session_id <?php echo esc_html((string) ($edit_legislator_session_row['session_id'] ?? '')); ?>)
 									</div>
 									<a
 										class="btn btn-sm btn-outline-secondary"
@@ -641,8 +641,8 @@ fi_form_field('image_id', [
 										<option value="">Select session...</option>
 										<?php foreach ((array) $gov_sessions as $s): ?>
 											<?php
-											$sid = (int) ($s->id ?? ($s['id'] ?? 0));
-											$sname = (string) ($s->name ?? ($s['name'] ?? ''));
+											$sid = (int) ($s['id'] ?? ($s['id'] ?? 0));
+											$sname = (string) ($s['name'] ?? ($s['name'] ?? ''));
 											?>
 											<option value="<?php echo esc_attr((string) $sid); ?>" <?php selected($edit_vals['session_id'], $sid); ?>>
 												<?php echo esc_html($sname); ?>
@@ -672,7 +672,7 @@ fi_form_field('image_id', [
 										<?php
 										$chamber_choices = [];
 										foreach ((array) $gov_chambers as $c) {
-											$c = strtoupper((string) ($c->abbreviation ?? ($c['abbreviation'] ?? $c)));
+											$c = strtoupper((string) ($c['abbreviation'] ?? $c));
 											if (in_array($c, ['H','S'], true)) {
 												$chamber_choices[] = $c;
 											}
@@ -694,8 +694,8 @@ fi_form_field('image_id', [
 										<option value="">—</option>
 										<?php foreach ((array) $gov_parties as $p): ?>
 											<?php
-											$abbr = strtoupper((string) ($p->abbreviation ?? ($p['abbreviation'] ?? '')));
-											$name = (string) ($p->name ?? ($p['name'] ?? ''));
+											$abbr = strtoupper((string) ($p['abbreviation'] ?? ($p['abbreviation'] ?? '')));
+											$name = (string) ($p['name'] ?? ($p['name'] ?? ''));
 											if ($abbr === '') { continue; }
 											?>
 											<option value="<?php echo esc_attr($abbr); ?>" <?php selected($edit_vals['party'], $abbr); ?>>
@@ -709,8 +709,8 @@ fi_form_field('image_id', [
 									<select name="district_id" class="form-select" form="fi-session-assignment-post">
 										<option value="">—</option>
 										<?php foreach ((array) $gov_districts as $d): ?>
-											<option value="<?php echo esc_attr((string) ($d->id ?? 0)); ?>" <?php selected($edit_vals['district_id'], (int) ($d->id ?? 0)); ?>>
-												<?php echo esc_html(($d->name_short ?? $d->name ?? $d->slug ?? 'District')); ?>
+											<option value="<?php echo esc_attr((string) ($d['id'] ?? 0)); ?>" <?php selected($edit_vals['district_id'], (int) ($d['id'] ?? 0)); ?>>
+												<?php echo esc_html(($d['name_short'] ?? $d['name'] ?? $d['slug'] ?? 'District')); ?>
 											</option>
 										<?php endforeach; ?>
 									</select>
@@ -745,34 +745,34 @@ fi_form_field('image_id', [
 								</thead>
 								<tbody>
 									<?php foreach ($session_assignments as $session):
-										$row_ls_id = (int) ($session->id ?? 0);
-										$row_session_id = (int) ($session->session_id ?? 0);
-										$sstatus = (string) ($session->status ?? '');
+										$row_ls_id = (int) ($session['id'] ?? 0);
+										$row_session_id = (int) ($session['session_id'] ?? 0);
+										$sstatus = (string) ($session['status'] ?? '');
 										$rowclass = $sstatus === 'draft' ? 'text-muted' : '';
-										$chamber_disp = strtoupper((string) ($session->chamber ?? ''));
+										$chamber_disp = strtoupper((string) ($session['chamber'] ?? ''));
 										if ($chamber_disp === 'H') { $chamber_disp = 'House'; } elseif ($chamber_disp === 'S') { $chamber_disp = 'Senate'; } elseif ($chamber_disp === '') { $chamber_disp = '—'; }
 										//$chamber_disp = substr($chamber_disp, 0, 3);
 									?>
 										<tr>
-											<td class="<?php echo esc_attr($rowclass); ?>"><?php echo esc_html($session->gov ?? ''); ?></td>
-											<td class="<?php echo esc_attr($rowclass); ?>"><?php echo esc_html(strtoupper((string) ($session->state ?? '')) ?: '—'); ?></td>
-											<td class="<?php echo esc_attr($rowclass); ?>"><strong><?php echo (isset($session->parent_id) && (int) $session->parent_id > 0 ? '— ' : '') . esc_html($session->session_name ?? 'Session'); ?></strong></td>
+											<td class="<?php echo esc_attr($rowclass); ?>"><?php echo esc_html($session['gov'] ?? ''); ?></td>
+											<td class="<?php echo esc_attr($rowclass); ?>"><?php echo esc_html(strtoupper((string) ($session['state'] ?? '')) ?: '—'); ?></td>
+											<td class="<?php echo esc_attr($rowclass); ?>"><strong><?php echo (isset($session['parent_id']) && (int) $session['parent_id'] > 0 ? '— ' : '') . esc_html($session['session_name'] ?? 'Session'); ?></strong></td>
 											<td class="<?php echo esc_attr($rowclass); ?>"><?php echo esc_html($chamber_disp); ?></td>
 											<td class="<?php echo esc_attr($rowclass); ?>">
 												<?php
-												$district_display = $session->district ?? '';
+												$district_display = $session['district'] ?? '';
 												if ($district_display !== '' && is_numeric($district_display) && function_exists('fi_district_get')) {
 													$d = fi_district_get((int) $district_display);
-													$district_display = $d->name_short ?? $d->name ?? $district_display;
+													$district_display = $d['name_short'] ?? $d['name'] ?? $district_display;
 												}
 												echo esc_html($district_display ?: '—');
 												?>
 											</td>
-											<td><span class="badge <?php echo esc_attr(fi_party_bg_class($session->party)); ?>"><?php echo esc_html(strtoupper($session->party ?? '—')); ?></span></td>
+											<td><span class="badge <?php echo esc_attr(fi_party_bg_class($session['party'])); ?>"><?php echo esc_html(strtoupper($session['party'] ?? '—')); ?></span></td>
 											<td class="text-end">
-												<?php if (isset($session->score) && $session->score !== '' && $session->score !== null): ?>
-													<span class="badge bg-primary"><?php echo esc_html($session->score); ?>%</span>
-												<?php elseif (isset($session->parent_id) && (int) $session->parent_id > 0): ?>
+												<?php if (isset($session['score']) && $session['score'] !== '' && $session['score'] !== null): ?>
+													<span class="badge bg-primary"><?php echo esc_html($session['score']); ?>%</span>
+												<?php elseif (isset($session['parent_id']) && (int) $session['parent_id'] > 0): ?>
 													<span class="text-muted">N/A</span>
 												<?php else: ?>
 													<span class="text-muted">—</span>
@@ -807,7 +807,7 @@ fi_form_field('image_id', [
 				<div class="card-body">
 					<div class="row g-3">
 						<?php 
-						$raw_meta = is_array($legislator->meta ?? null) ? $legislator->meta : [];
+						$raw_meta = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
 						foreach ($meta_groups['Biographical Data'] as $meta_key => $config):
 							$field_value = $raw_meta[$meta_key] ?? '';
 							if ($field_value === '' && $meta_key === 'birth_date') {
@@ -832,7 +832,7 @@ fi_form_field('image_id', [
 			<?php endif; ?>
 
 			<!-- External Sources -->
-			<?php $search_name = urlencode(trim(($legislator->first_name ?? '') . ' ' . ($legislator->last_name ?? ''))); ?>
+			<?php $search_name = urlencode(trim(($legislator['first_name'] ?? '') . ' ' . ($legislator['last_name'] ?? ''))); ?>
 			<div class="card shadow-sm mb-4">
 				<div class="card-header bg-white border-0 pb-0">
 					<h2 class="h4 mb-0">External Sources</h2>
@@ -842,7 +842,7 @@ fi_form_field('image_id', [
 					<div class="row g-3">
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php
-							$bioguide_id = $legislator->bioguide_id ?? '';
+							$bioguide_id = $legislator['bioguide_id'] ?? '';
 							$bioguide_url = $bioguide_id ? URL_BIOGUIDE . esc_attr($bioguide_id) : URL_BIOGUIDE_SEARCH . $search_name;
 							fi_form_field('bioguide_id', [
 								'label_html' => '<a href="' . $bioguide_url . '" target="_blank" rel="noopener">Bioguide ID</a>',
@@ -852,7 +852,7 @@ fi_form_field('image_id', [
 						</div>
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php
-							$lis_id = $legislator->lis_id ?? '';
+							$lis_id = $legislator['lis_id'] ?? '';
 							fi_form_field('lis_id', [
 								'label' => 'LIS ID (US Sen)', //Legislative Information System ID
 								'type' => 'text',
@@ -862,7 +862,7 @@ fi_form_field('image_id', [
 						</div>
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php
-							$govtrack_id = $legislator->govtrack_id ?? '';
+							$govtrack_id = $legislator['govtrack_id'] ?? '';
 							$govtrack_url = $govtrack_id ? URL_GOVTRACK . esc_attr($govtrack_id) : URL_GOVTRACK_SEARCH . $search_name;
 							fi_form_field('govtrack_id', [
 								'label_html' => '<a href="' . $govtrack_url . '" target="_blank" rel="noopener">GovTrack ID</a>',
@@ -872,7 +872,7 @@ fi_form_field('image_id', [
 						</div>
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php 
-							$votesmart_id = $legislator->votesmart_id ?? '';
+							$votesmart_id = $legislator['votesmart_id'] ?? '';
 							$votesmart_args = [
 								'type'  => 'number',
 								'value' => $votesmart_id,
@@ -888,14 +888,14 @@ fi_form_field('image_id', [
 						</div>
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php
-							$legiscan_id = $legislator->legiscan_id ?? '';
+							$legiscan_id = $legislator['legiscan_id'] ?? '';
 							$legiscan_args = [
 								'type' => 'number',
 								'value' => $legiscan_id,
 								'no_wrapper' => true,
 							];
 							if($legiscan_id){
-								$legiscan_slug = strtolower(str_replace(' ', '-', $legislator->first_name . ' ' . $legislator->last_name));
+								$legiscan_slug = strtolower(str_replace(' ', '-', $legislator['first_name'] . ' ' . $legislator['last_name']));
 								$legiscan_url = str_replace('/people//id/','/people/' . $legiscan_slug . '/id/',URL_LEGISCAN_BIO) . $legiscan_id;
 								$legiscan_args['label_html'] = '<a href="' . $legiscan_url . '" target="_blank" rel="noopener">LegiScan People ID</a>';
 							}else{
@@ -906,7 +906,7 @@ fi_form_field('image_id', [
 
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php
-							$ballotpedia_id = $legislator->ballotpedia_id ?? '';
+							$ballotpedia_id = $legislator['ballotpedia_id'] ?? '';
 							$ballotpedia_url = $ballotpedia_id ? URL_BALLOTPEDIA . esc_attr($ballotpedia_id) : URL_BALLOTPEDIA_SEARCH . $search_name;
 							fi_form_field('ballotpedia_id', [
 								'type' => 'text',
@@ -918,7 +918,7 @@ fi_form_field('image_id', [
 
 						<div class="col-6 col-md-4 col-lg-3">
 							<?php
-							$opensecrets_id = $legislator->meta['opensecrets_id'] ?? '';
+							$opensecrets_id = $legislator['meta']['opensecrets_id'] ?? '';
 							if($opensecrets_id){
 								$opensecrets_url = URL_OPENSECRETS . esc_attr($opensecrets_id);
 							}else{
@@ -934,11 +934,11 @@ fi_form_field('image_id', [
 
 						<div class="col-md-6">
 							<?php
-							$raw_meta = is_array($legislator->meta ?? null) ? $legislator->meta : [];
+							$raw_meta = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
 							$url_wikipedia = (string) ($raw_meta['url_wikipedia'] ?? '');
 							$derived = '';
 							if(!$url_wikipedia){
-								$url_wikipedia = 'https://en.wikipedia.org/wiki/' . $legislator->first_name . '_' . $legislator->last_name;
+								$url_wikipedia = 'https://en.wikipedia.org/wiki/' . $legislator['first_name'] . '_' . $legislator['last_name'];
 								$derived = '<span class="text-muted ms-1">(?)</span>';
 							}
 							fi_form_field('meta[url_wikipedia]', [
@@ -954,7 +954,7 @@ fi_form_field('image_id', [
 							<?php
 							$url_wikidata = (string) ($raw_meta['url_wikidata'] ?? '');
 							// If not present, link search on Wikidata by name as header, but use derived as input value.
-							$search_url = 'https://www.wikidata.org/w/index.php?search=' . urlencode(trim($legislator->first_name . ' ' . $legislator->last_name)) . '&language=en';
+							$search_url = 'https://www.wikidata.org/w/index.php?search=' . urlencode(trim($legislator['first_name'] . ' ' . $legislator['last_name'])) . '&language=en';
 							$label_url = $url_wikidata ? $url_wikidata : $search_url;
 							fi_form_field('meta[url_wikidata]', [
 								'label_html' => '<a href="' . esc_url($label_url) . '" target="_blank" rel="noopener">Wikidata Profile</a>',
@@ -966,7 +966,7 @@ fi_form_field('image_id', [
 
 						<div class="col-md-6">
 							<?php
-							$raw_meta = is_array($legislator->meta ?? null) ? $legislator->meta : [];
+							$raw_meta = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
 							$url_openstates = (string) ($raw_meta['url_openstates'] ?? '');
 							fi_form_field('meta[url_openstates]', [
 								'type' => 'url',
@@ -1076,7 +1076,7 @@ $rc_history = $wpdb->get_results($rc_history_query);
 ?>
 			<div class="card shadow-sm mb-4 bg-white">
 				<div class="card-header border-0">
-					<h2 class="h5 mb-0">All Votes Cast by <?php echo esc_html($legislator->display_name); ?></h2>
+					<h2 class="h5 mb-0">All Votes Cast by <?php echo esc_html($legislator['display_name']); ?></h2>
 				</div>
 				<div class="card-body p-0">
 					<?php if (empty($rc_history)): ?>

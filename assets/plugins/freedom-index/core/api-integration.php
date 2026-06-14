@@ -17,31 +17,31 @@ if (!defined('ABSPATH')) exit;
  * @return array API data keyed by source.
  */
 function fi_api_fetch_all(int $legislator_id): array {
-	$legislator = function_exists('fi_legislator_get') ? fi_legislator_get($legislator_id) : null;
+	$legislator = fi_legislator_get($legislator_id, false);
 	if (!$legislator) {
 		return [];
 	}
 
 	$results = [];
 
-	if (!empty($legislator->votesmart_id)) {
-		$results['votesmart'] = fi_api_fetch_votesmart((string) $legislator->votesmart_id);
-	} elseif (!empty($legislator->bioguide_id) || !empty($legislator->display_name)) {
+	if (!empty($legislator['votesmart_id'])) {
+		$results['votesmart'] = fi_api_fetch_votesmart((string) $legislator['votesmart_id']);
+	} elseif (!empty($legislator['bioguide_id']) || !empty($legislator['display_name'])) {
 		$results['votesmart'] = fi_api_search_votesmart($legislator);
 	}
 
-	if (!empty($legislator->gov) && $legislator->gov === 'US') {
-		if (!empty($legislator->bioguide_id)) {
-			$results['govtrack'] = fi_api_fetch_govtrack_by_bioguide((string) $legislator->bioguide_id);
-		} elseif (!empty($legislator->govtrack_id)) {
-			$results['govtrack'] = fi_api_fetch_govtrack((string) $legislator->govtrack_id);
-		} elseif (!empty($legislator->display_name)) {
+	if (!empty($legislator['gov']) && $legislator['gov'] === 'US') {
+		if (!empty($legislator['bioguide_id'])) {
+			$results['govtrack'] = fi_api_fetch_govtrack_by_bioguide((string) $legislator['bioguide_id']);
+		} elseif (!empty($legislator['govtrack_id'])) {
+			$results['govtrack'] = fi_api_fetch_govtrack((string) $legislator['govtrack_id']);
+		} elseif (!empty($legislator['display_name'])) {
 			$results['govtrack'] = fi_api_search_govtrack($legislator);
 		}
 	}
 
-	if (!empty($legislator->legiscan_id)) {
-		$results['legiscan'] = fi_api_fetch_legiscan((string) $legislator->legiscan_id);
+	if (!empty($legislator['legiscan_id'])) {
+		$results['legiscan'] = fi_api_fetch_legiscan((string) $legislator['legiscan_id']);
 	}
 
 	return $results;
@@ -56,7 +56,7 @@ function fi_api_fetch_all(int $legislator_id): array {
  * @return array Diff results keyed by our field.
  */
 function fi_api_compare(int $legislator_id, string $source, array $api_data): array {
-	$legislator = function_exists('fi_legislator_get') ? fi_legislator_get($legislator_id) : null;
+	$legislator = fi_legislator_get($legislator_id, false);
 	if (!$legislator) {
 		return [];
 	}
@@ -106,7 +106,7 @@ function fi_api_compare(int $legislator_id, string $source, array $api_data): ar
  * @return array Updates keyed by our field.
  */
 function fi_api_build_updates_for_legislator(int $legislator_id, string $source, array $api_data, bool $only_missing = true): array {
-	$legislator = function_exists('fi_legislator_get') ? fi_legislator_get($legislator_id) : null;
+	$legislator = fi_legislator_get($legislator_id, false);
 	if (!$legislator) {
 		return [];
 	}
@@ -149,17 +149,13 @@ function fi_api_build_updates_for_legislator(int $legislator_id, string $source,
 }
 
 /**
- * Get normalized legislator meta array from object.
+ * Get normalized legislator meta array.
  *
- * @param object $legislator Legislator object.
+ * @param array $legislator Legislator array.
  * @return array
  */
-function fi_api_legislator_meta_array(object $legislator): array {
-	if (function_exists('fi_legislator_meta_from_object')) {
-		return fi_legislator_meta_from_object($legislator);
-	}
-
-	$meta = $legislator->meta ?? [];
+function fi_api_legislator_meta_array(array $legislator): array {
+	$meta = $legislator['meta'] ?? [];
 	if (is_string($meta) && $meta !== '') {
 		$decoded = json_decode($meta, true);
 		return is_array($decoded) ? $decoded : [];
@@ -286,21 +282,21 @@ function fi_api_get_nested_value(array $data, string $path) {
 }
 
 /**
- * Get local value from legislator object or normalized meta.
+ * Get local value from legislator array or normalized meta.
  *
- * @param object $legislator Legislator object.
- * @param string $field Our field key.
- * @param array $meta Normalized meta.
+ * @param array  $legislator Legislator array.
+ * @param string $field      Our field key.
+ * @param array  $meta       Normalized meta.
  * @return mixed|null
  */
-function fi_api_get_our_value(object $legislator, string $field, array $meta) {
+function fi_api_get_our_value(array $legislator, string $field, array $meta) {
 	if ($field === 'websites.biography') {
 		$websites = $meta['website'] ?? [];
 		return is_array($websites) ? $websites : [];
 	}
 
 	if ($field === 'addresses.capitol') {
-		$addr = function_exists('fi_legislator_meta_get_capitol_address') ? fi_legislator_meta_get_capitol_address($legislator) : null;
+		$addr = fi_legislator_meta_get_capitol_address($legislator);
 		if (!is_array($addr)) {
 			return null;
 		}
@@ -314,13 +310,10 @@ function fi_api_get_our_value(object $legislator, string $field, array $meta) {
 	}
 
 	if ($field === 'session_image_url') {
-		$sessions = $legislator->sessions ?? null;
-		if (is_array($sessions) && !empty($sessions)) {
-			$latest = reset($sessions);
-			if (is_object($latest) && !empty($latest->image_id) && function_exists('wp_get_attachment_url')) {
-				$url = wp_get_attachment_url((int) $latest->image_id);
-				return $url ?: null;
-			}
+		$image_id = (int) ($legislator['image_id'] ?? 0);
+		if ($image_id > 0) {
+			$url = wp_get_attachment_url($image_id);
+			return $url ?: null;
 		}
 		return null;
 	}
@@ -353,7 +346,7 @@ function fi_api_get_our_value(object $legislator, string $field, array $meta) {
 		return $meta[$meta_key] ?? null;
 	}
 
-	return $legislator->{$field} ?? null;
+	return $legislator[$field] ?? null;
 }
 
 /**
@@ -524,12 +517,10 @@ function fi_api_fetch_votesmart(string $votesmart_id): ?array {
 /**
  * Search VoteSmart by legislator info.
  *
- * Placeholder retained from original implementation.
- *
- * @param object $legislator Legislator object.
+ * @param array $legislator Legislator array.
  * @return array|null
  */
-function fi_api_search_votesmart(object $legislator): ?array {
+function fi_api_search_votesmart(array $legislator): ?array {
 	return null;
 }
 
@@ -585,11 +576,11 @@ function fi_api_fetch_govtrack(string $govtrack_id): ?array {
 /**
  * Search GovTrack by legislator display name.
  *
- * @param object $legislator Legislator object.
+ * @param array $legislator Legislator array.
  * @return array|null First match or null.
  */
-function fi_api_search_govtrack(object $legislator): ?array {
-	$name = $legislator->display_name ?? trim(($legislator->first_name ?? '') . ' ' . ($legislator->last_name ?? ''));
+function fi_api_search_govtrack(array $legislator): ?array {
+	$name = $legislator['display_name'] ?? trim(($legislator['first_name'] ?? '') . ' ' . ($legislator['last_name'] ?? ''));
 	if ($name === '') {
 		return null;
 	}

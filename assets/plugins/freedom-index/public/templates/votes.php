@@ -229,18 +229,18 @@ $all_votes = empty($tag_slug) && empty($chamber);
 					
 					// Format date
 					$formatted_date = '';
-					if (!empty($vote->date_voted)) {
-						$date = !empty($vote->date_voted) ? strtotime($vote->date_voted) : false;
+					if (!empty($vote['date_voted'])) {
+						$date = !empty($vote['date_voted']) ? strtotime($vote['date_voted']) : false;
 						if ($date) {
 							$formatted_date = date('m/d/Y', $date); // mm/dd/yyyy
 						} else {
-							$formatted_date = $vote->date_voted;
+							$formatted_date = $vote['date_voted'];
 						}
 					}
 					
 					// Get vote format (constitutional only, no cast)
 					$vote_format = fi_vote_format([
-						'constitutional' => $vote->constitutional ?? '',
+						'constitutional' => $vote['constitutional'] ?? '',
 						'format' => 'full'
 					]);
 					
@@ -248,25 +248,25 @@ $all_votes = empty($tag_slug) && empty($chamber);
 					$cost = !empty($vote_meta['cost']) ? fi_vote_cost_format($vote_meta['cost']) : ['html' => ''];
 
 					// Build URLs
-					$url_vote = fi_url_vote($vote->gov, $vote->id);
+					$url_vote = fi_url_vote($vote['gov'], $vote['id']);
 					$bill_url = $vote_meta['url_bill'] ?? '';
 					
 					// Build search text (vote-specific fields only)
-					$search_text = strtolower(($vote->title ?? '') . ' ' . ($vote->bill_number ?? '') . ' ' . strip_tags($text));
+					$search_text = strtolower(($vote['title'] ?? '') . ' ' . ($vote['bill_number'] ?? '') . ' ' . strip_tags($text));
 					
 					// Prepare vote card data (ONLY keys supported by vote-card.php)
 					$vote_data = [
-						'id' => $vote->id,
-						'title' => $vote->title,
+						'id' => $vote['id'],
+						'title' => $vote['title'],
 						'text' => $text,
 						'text_more' => $text_more,
 						'tags' => $vote_tags,
 						'date_formatted' => $formatted_date,
-						'constitutional' => $vote->constitutional,
+						'constitutional' => $vote['constitutional'],
 						'vote_format' => $vote_format,
-						'chamber' => $vote->chamber,
-						'chamber_label' => $chambers[$vote->chamber]['chamber'] ?? '',
-						'bill_number' => $vote->bill_number,
+						'chamber' => $vote['chamber'],
+						'chamber_label' => $chambers[$vote['chamber']]['chamber'] ?? '',
+						'bill_number' => $vote['bill_number'],
 						'bill_url' => $bill_url,
 						'cost_html' => $cost['html'],
 						'url_vote' => $url_vote,

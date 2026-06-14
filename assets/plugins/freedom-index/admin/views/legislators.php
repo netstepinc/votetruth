@@ -20,7 +20,7 @@ $filter_inputs = [
 $sessions_for_filter = $gov !== '' ? fi_sessions_get_by_gov($gov) : [];
 $session_ids_for_filter = [];
 foreach ($sessions_for_filter as $s) {
-	$session_ids_for_filter[(int) ($s->id ?? 0)] = true;
+	$session_ids_for_filter[(int) ($s['id'] ?? 0)] = true;
 }
 
 $resolved = function_exists('fi_admin_session_filter_resolve')
@@ -62,7 +62,7 @@ if ($session_id > 0) {
 	// Filter by gov - show ALL legislators with any session assignment in this gov (even if their latest session differs)
 	$query_filters['gov'] = $gov;
 	$query_filters['gov_mode'] = 'any';
-	$legislators = fi_legislators($query_filters);
+	$legislators = fi_legislators_query($query_filters);
 }
 
 // Total count in scope (no search/chamber/party) for "Showing X of Y" summary.
@@ -206,8 +206,8 @@ else:
 				<select id="fi-filter-session" class="form-select" name="session_id">
 					<option value="">All Sessions</option>
 					<?php foreach ($sessions_for_filter as $s): ?>
-						<option value="<?php echo esc_attr((string) ($s->id ?? '')); ?>" <?php selected((int) ($s->id ?? 0), (int) $session_id); ?>>
-							<?php echo ($s->parent_id != null ? '↳ ' : ''). esc_html((string) ($s->name ?? '')); ?>
+						<option value="<?php echo esc_attr((string) ($s['id'] ?? '')); ?>" <?php selected((int) ($s['id'] ?? 0), (int) $session_id); ?>>
+							<?php echo ($s['parent_id'] != null ? '↳ ' : ''). esc_html((string) ($s['name'] ?? '')); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -295,27 +295,27 @@ else:
 			<tbody>
 				<?php foreach ($legislators as $legislator): ?>
 					<?php
-					$party_abbr = strtoupper($legislator->party ?? '');
+					$party_abbr = strtoupper($legislator['party'] ?? '');
 					$party_label = $party_options[$party_abbr] ?? $party_abbr ?: '—';
 					$party_class = fi_party_bg_class($party_abbr);
-					$chamber_code = strtoupper($legislator->chamber ?? '');
-					$gov = $legislator->gov ?? ($scope['gov'] ?? 'US');
+					$chamber_code = strtoupper($legislator['chamber'] ?? '');
+					$gov = $legislator['gov'] ?? ($scope['gov'] ?? 'US');
 					$chamber_label = $chamber_code ? fi_chamber_label($gov, $chamber_code) : '—';
-					$state_code = strtoupper((string) ($legislator->state ?? ''));
-					$district_name = $legislator->district_info->name ?? $legislator->district ?? '—';
-					$score = isset($legislator->score) ? sprintf('%s%%%s', esc_html($legislator->score), isset($legislator->grade) && $legislator->grade ? ' (' . esc_html($legislator->grade) . ')' : '') : '—';
-					$updated = !empty($legislator->date_updated) ? mysql2date('M j, Y', $legislator->date_updated) : '—';
+					$state_code = strtoupper((string) ($legislator['state'] ?? ''));
+					$district_name = $legislator['district_info']['name'] ?? $legislator['district'] ?? '—';
+					$score = isset($legislator['score']) ? sprintf('%s%%%s', esc_html($legislator['score']), isset($legislator['grade']) && $legislator['grade'] ? ' (' . esc_html($legislator['grade']) . ')' : '') : '—';
+					$updated = !empty($legislator['date_updated']) ? mysql2date('M j, Y', $legislator['date_updated']) : '—';
 					?>
 					<tr>
 						<td>
 							<div class="d-flex flex-wrap gap-2">
-								<a href="<?php echo esc_url(fi_admin_edit_legislator_url((int) $legislator->id, ['return_url' => $return_url])); ?>" class="btn btn-sm btn-primary">Edit</a>
-								<a href="<?php echo esc_url(fi_admin_legislator_sessions_url($legislator->id)); ?>" class="btn btn-sm btn-secondary">Sessions</a>
-								<a href="<?php echo esc_url(fi_get_legislator_url($legislator->id)); ?>" class="btn btn-sm btn-secondary" target="_blank">View</a>
+								<a href="<?php echo esc_url(fi_admin_edit_legislator_url((int) $legislator['id'], ['return_url' => $return_url])); ?>" class="btn btn-sm btn-primary">Edit</a>
+								<a href="<?php echo esc_url(fi_admin_legislator_sessions_url($legislator['id'])); ?>" class="btn btn-sm btn-secondary">Sessions</a>
+								<a href="<?php echo esc_url(fi_get_legislator_url($legislator['id'])); ?>" class="btn btn-sm btn-secondary" target="_blank">View</a>
 							</div>
 						</td>
-						<td><strong><?php echo esc_html($legislator->display_name ?? ''); ?></strong></td>
-						<td><small class="text-muted">ID: <?php echo esc_html($legislator->id ?? ''); ?></small></td>
+						<td><strong><?php echo esc_html($legislator['display_name'] ?? ''); ?></strong></td>
+						<td><small class="text-muted">ID: <?php echo esc_html($legislator['id'] ?? ''); ?></small></td>
 						<td><span class="badge <?= esc_attr($party_class); ?>"><?php echo esc_html($party_label); ?></span></td>
 						<td><?php echo esc_html($chamber_label); ?></td>
 						<?php if ($is_us_gov): ?>

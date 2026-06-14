@@ -36,13 +36,13 @@ $parent_sessions = [];
 $child_sessions = [];
 
 foreach ($sessions as $session) {
-	$session_id = (int) $session->id;
+	$session_id = (int) $session['id'];
 	$session_stats[$session_id] = fi_admin_sessions_get_stats($session_id);
 
-	if (empty($session->parent_id)) {
+	if (empty($session['parent_id'])) {
 		$parent_sessions[] = $session;
 	} else {
-		$parent_id = (int) $session->parent_id;
+		$parent_id = (int) $session['parent_id'];
 		if (!isset($child_sessions[$parent_id])) {
 			$child_sessions[$parent_id] = [];
 		}
@@ -64,7 +64,7 @@ foreach ($parent_sessions as $parent) {
 		'is_parent' => true,
 		'level' => 0
 	];
-	$parent_id = (int) $parent->id;
+	$parent_id = (int) $parent['id'];
 	$children = $child_sessions[$parent_id] ?? [];
 	foreach ($children as $child) {
 		$all_sessions[] = [
@@ -139,25 +139,25 @@ foreach ($parent_sessions as $parent) {
 				<?php foreach ($all_sessions as $item): ?>
 					<?php
 					$session = $item['session'];
-					$session_id = (int) $session->id;
+					$session_id = (int) $session['id'];
 					$stats = $session_stats[$session_id] ?? ['legislators' => 0, 'votes' => 0, 'reports' => 0];
-					$is_current = !empty($session->is_current);
+					$is_current = !empty($session['is_current']);
 					$is_parent = $item['is_parent'];
 					$level = $item['level'];
 					
 					// Format dates
 					$date_range = '—';
-					if ($session->date_start && $session->date_end) {
-						$date_range = date('M Y', strtotime($session->date_start)) . ' - ' . date('M Y', strtotime($session->date_end));
-					} elseif ($session->date_start) {
-						$date_range = date('M Y', strtotime($session->date_start)) . ' - Present';
+					if ($session['date_start'] && $session['date_end']) {
+						$date_range = date('M Y', strtotime($session['date_start'])) . ' - ' . date('M Y', strtotime($session['date_end']));
+					} elseif ($session['date_start']) {
+						$date_range = date('M Y', strtotime($session['date_start'])) . ' - Present';
 					}
 					
 					// Session type
 					$type_label = $is_parent ? 'Parent' : 'Child';
 					
 					// Status badge
-					$status = $session->status ?? 'draft';
+					$status = $session['status'] ?? 'draft';
 					$status_badge_class = $status === 'publish' ? 'bg-success' : 'bg-warning text-dark';
 					$status_label = ucfirst($status);
 					?>
@@ -177,21 +177,21 @@ foreach ($parent_sessions as $parent) {
 							<?php if ($level > 0): ?>
 								<span class="text-muted me-1">└─</span>
 							<?php endif; ?>
-							<strong><?php echo esc_html($session->name); ?></strong>
+							<strong><?php echo esc_html($session['name']); ?></strong>
 						</td>
-						<td><code><?php echo esc_html($session->id); ?></code></td>
+						<td><code><?php echo esc_html($session['id']); ?></code></td>
 						<td><span class="badge bg-secondary"><?php echo esc_html($type_label); ?></span></td>
 						<td><span class="badge <?php echo esc_attr($status_badge_class); ?>"><?php echo esc_html($status_label); ?></span></td>
 						<td><?php echo esc_html($date_range); ?></td>
 						<td><?php echo esc_html($stats['legislators']); ?></td>
 						<td><?php echo esc_html($stats['votes']); ?></td>
 						<td><?php echo esc_html($stats['reports']); ?></td>
-						<td><?php echo esc_html($session->legiscan_id ?? '-'); ?></td>
+						<td><?php echo esc_html($session['legiscan_id'] ?? '-'); ?></td>
 					</tr>
 					<?php if ($is_parent && $stats['legislators'] === 0): ?>
 						<?php
 						// Check if any child sessions have legislators
-						$parent_id_check = (int) $session->id;
+						$parent_id_check = (int) $session['id'];
 						$children_check = $child_sessions[$parent_id_check] ?? [];
 						$child_legislator_count = 0;
 						foreach ($children_check as $child_check) {
@@ -224,8 +224,8 @@ foreach ($parent_sessions as $parent) {
 global $wpdb;
 $parent_sessions = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}fi_sessions WHERE gov='{$gov}' and parent_id IS NULL");
 foreach($parent_sessions as $session){
-	echo '<div>' . $session->id . ' - ' . $session->name . '</div>';
-	$update = "UPDATE {$wpdb->prefix}fi_legislator_sessions SET gov='{$gov}' WHERE session_id={$session->id}";
+	echo '<div>' . $session['id'] . ' - ' . $session['name'] . '</div>';
+	$update = "UPDATE {$wpdb->prefix}fi_legislator_sessions SET gov='{$gov}' WHERE session_id={$session['id']}";
 	echo '<div>' . $update . '</div>';
 	//echo '<div>' . $wpdb->query($update) . '</div>';
 }
@@ -287,10 +287,10 @@ foreach($parent_sessions as $session){
 					<tbody>
 						<?php foreach ($legislators as $legislator): ?>
 							<tr>
-								<td><a href="<?php echo fi_admin_url('fi-legislators', ['action' => 'edit', 'legislator_id' => $legislator->id]); ?>" target="_blank" rel="noopener" class="fw-bold"><?php echo esc_html($legislator->id); ?></a></td>
-								<td><?php echo esc_html($legislator->display_name); ?></td>
-								<td><?php echo esc_html($legislator->session_chamber); ?></td>
-								<td><?php echo esc_html($legislator->session_name); ?></td>
+								<td><a href="<?php echo fi_admin_url('fi-legislators', ['action' => 'edit', 'legislator_id' => $legislator['id']]); ?>" target="_blank" rel="noopener" class="fw-bold"><?php echo esc_html($legislator['id']); ?></a></td>
+								<td><?php echo esc_html($legislator['display_name']); ?></td>
+								<td><?php echo esc_html($legislator['session_chamber']); ?></td>
+								<td><?php echo esc_html($legislator['session_name']); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

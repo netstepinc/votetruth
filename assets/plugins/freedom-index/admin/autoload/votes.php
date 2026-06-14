@@ -74,9 +74,11 @@ function fi_admin_votes_handle_save(array $scope): void {
 
 	$slug = sanitize_text_field($_POST['slug'] ?? '');
 
+	$existing_vote = $vote_id ? fi_vote_get($vote_id) : null;
+
 	$data = [
 		'session_id' => $session_id,
-		'gov' => $scope['gov'] ?? null,
+		'gov' => $existing_vote['gov'] ?? $scope['gov'] ?? null,
 		'chamber' => strtoupper(sanitize_text_field($_POST['chamber'] ?? '')),
 		'title' => $title,
 		'slug' => $slug,
@@ -98,10 +100,8 @@ function fi_admin_votes_handle_save(array $scope): void {
 	$data['meta'] = fi_admin_votes_build_meta_payload($vote_id, $meta_fields, $meta_input);
 	
 	// Auto-populate Legiscan meta fields if blank but legiscan IDs exist
-	// Get existing vote to check for legiscan IDs if not in POST data
-	$existing_vote = $vote_id ? fi_vote_get($vote_id) : null;
-	$legiscan_bid = $data['legiscan_bid'] ?? ($existing_vote->legiscan_bid ?? null);
-	$legiscan_rcid = $data['legiscan_rcid'] ?? ($existing_vote->legiscan_rcid ?? null);
+	$legiscan_bid = $data['legiscan_bid'] ?? ($existing_vote['legiscan_bid'] ?? null);
+	$legiscan_rcid = $data['legiscan_rcid'] ?? ($existing_vote['legiscan_rcid'] ?? null);
 	
 	$legiscan_meta_keys = ['bill_title', 'bill_description', 'url_bill', 'url_rollcall'];
 	$has_blank_legiscan_meta = false;
@@ -114,11 +114,11 @@ function fi_admin_votes_handle_save(array $scope): void {
 	
 	if ($has_blank_legiscan_meta && !empty($legiscan_bid) && !empty($legiscan_rcid)) {
 		// Get bill_number from bill_number or use legiscan_bid as fallback
-		$bill_number = $data['bill_number'] ?: ($existing_vote->bill_number ?? (string) $legiscan_bid);
+		$bill_number = $data['bill_number'] ?: ($existing_vote['bill_number'] ?? (string) $legiscan_bid);
 		
 		// Try to fetch Legiscan data
 		$legiscan_args = [
-			'gov' => $data['gov'] ?? ($existing_vote->gov ?? 'US'),
+			'gov' => $data['gov'] ?? ($existing_vote['gov'] ?? 'US'),
 			'LS_bill_id' => $bill_number,
 			'LS_roll_call_id' => $legiscan_rcid,
 		];
@@ -209,18 +209,7 @@ function fi_admin_votes_handle_save(array $scope): void {
 		$tag_ids = array_filter($tag_ids);
 		fi_vote_tags_set_tags($saved_id, $tag_ids);
 
-		$redirect = fi_admin_edit_vote_url($saved_id, ['updated' => 1, '_fi_ts' => time()]);
-		if (!$redirect || empty($redirect)) {
-			//fi_log('Vote save: Redirect URL is empty or invalid. saved_id=' . $saved_id, __FILE__, __LINE__);
-			add_settings_error('fi_votes', 'save_error', 'Vote saved but redirect URL could not be generated.', 'error');
-			// Redirect to list page as fallback
-			$redirect = fi_admin_url('fi-votes');
-		}
-
-		// Ensure no output before redirect
-		if (ob_get_level()) {
-			ob_end_clean();
-		}
+		$redirect = fi_admin_edit_vote_url($saved_id, ['updated' => 1]);
 
 		wp_safe_redirect($redirect);
 		exit;
@@ -568,15 +557,15 @@ function fi_admin_votes_apply_collection_filters(array $votes, array $filters): 
 	$constitutional = $filters['constitutional'] ?? '';
 
 	return array_values(array_filter($votes, static function ($vote) use ($search, $constitutional) {
-		if ($constitutional && strtoupper($vote->constitutional ?? '') !== $constitutional) {
+		if ($constitutional && strtoupper($vote['constitutional'] ?? '') !== $constitutional) {
 			return false;
 		}
 
 		if ($search) {
 			$haystack = strtolower(
-				($vote->title ?? '') . ' ' .
-				($vote->bill_number ?? '') . ' ' .
-				($vote->slug ?? '')
+				($vote['title'] ?? '') . ' ' .
+				($vote['bill_number'] ?? '') . ' ' .
+				($vote['slug'] ?? '')
 			);
 
 			if (!str_contains($haystack, $search)) {

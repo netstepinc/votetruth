@@ -28,8 +28,8 @@ function fi_log( string $message, string $file = '', int $line = 0, string $leve
 	$level     = strtoupper( sanitize_key( $level ) );
 
 	if ( $file !== '' ) {
-		$file = str_replace( ABSPATH . 'wp-content/plugins/freedom-index/', '', $file );
-		$file = str_replace( ABSPATH, '', $file );
+		$file = str_replace( WP_CONTENT_DIR . '/plugins/freedom-index/', '', $file );
+		$file = str_replace( WP_CONTENT_DIR, '', $file );
 	}
 
 	$entry = "[{$timestamp}] [{$level}] {$file}:{$line} {$message}" . PHP_EOL;

@@ -11,9 +11,9 @@ All AI agents must read `.devin/rules.md` before beginning work on this project.
 - **Naming:** `fi_{noun}_{verb}()`
 - **Always verify** function exists before calling
 
-**Location:** `/var/www/html/votestellthetruth/`
+**Location:** `/var/www/html/votetruth/`
 **Plugin:** `assets/plugins/freedom-index/`
-**Theme:** `assets/themes/truth/`
+**Theme:** `assets/themes/votetruth/`
 
 ---
 

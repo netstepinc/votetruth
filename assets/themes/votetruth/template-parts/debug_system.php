@@ -11,8 +11,8 @@ echo 'DB_PREFIX=' . $wpdb->prefix . "\n";
 $results = $wpdb->get_results("SELECT option_name, option_value FROM {$wpdb->prefix}options WHERE option_name IN ('upload_path', 'upload_url_path', 'siteurl', 'home')");
 echo print_r($results, true);echo "\n\n";
 /* MANUAL phpMyAdmin Dumping data for table `vtttus_options`
-INSERT INTO `vtttus_options` VALUES(2, 'siteurl', 'http://localhost/votestellthetruth', 'on');
-INSERT INTO `vtttus_options` VALUES(3, 'home', 'http://localhost/votestellthetruth', 'on');
+INSERT INTO `vtttus_options` VALUES(2, 'siteurl', 'http://localhost/votetruth', 'on');
+INSERT INTO `vtttus_options` VALUES(3, 'home', 'http://localhost/votetruth', 'on');
 INSERT INTO `vtttus_options` VALUES(49, 'upload_path', '', 'on');
 INSERT INTO `vtttus_options` VALUES(56, 'upload_url_path', '', 'on');
 */

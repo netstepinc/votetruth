@@ -18,15 +18,13 @@ Fixed the stats query composition: the original built a second WHERE after WHERE
 if (!defined('ABSPATH')) exit;
 
 /**
- * Get legislator sessions with optional filtering.
+ * Query legislator sessions with optional filtering (DB-only, no cache).
  *
  * @param array $args Optional query arguments.
  * @return array|int Array of legislator session objects or count if count is true.
  */
-function fi_legislator_sessions_get(array $args = []): array|int {
+function fi_legislator_sessions_query(array $args = []): array|int {
 	global $wpdb;
-
-	static $cache_get = [];
 
 	$defaults = [
 		'id'            => null,
@@ -46,18 +44,6 @@ function fi_legislator_sessions_get(array $args = []): array|int {
 	];
 
 	$args = wp_parse_args($args, $defaults);
-
-	$cache_key = md5(serialize($args));
-	if (isset($cache_get[$cache_key])) {
-		return $cache_get[$cache_key];
-	}
-
-	$cacheKey = fi_cache_key('legislators/sessions', $args);
-	$results = fi_cache($cacheKey);
-	if ($results) {
-		$cache_get[$cache_key] = $results;
-		return $results;
-	}
 
 	$where_conditions = [];
 	$where_values = [];
@@ -138,10 +124,7 @@ function fi_legislator_sessions_get(array $args = []): array|int {
 			$sql = $wpdb->prepare($sql, $where_values);
 		}
 
-		$results = (int) $wpdb->get_var($sql);
-		fi_cache($cacheKey, $results);
-		$cache_get[$cache_key] = $results;
-		return $results;
+		return (int) $wpdb->get_var($sql);
 	}
 
 	$sql = "
@@ -166,19 +149,36 @@ function fi_legislator_sessions_get(array $args = []): array|int {
 		$sql = $wpdb->prepare($sql, $where_values);
 	}
 
-	$results = $wpdb->get_results($sql);
-	fi_cache($cacheKey, $results);
-	$cache_get[$cache_key] = $results;
-	return $results;
+	return $wpdb->get_results($sql, ARRAY_A);
 }
 
+
+
+/**
+ * Get legislator sessions with optional filtering (cached for front-end).
+ *
+ * @param array $args Optional query arguments.
+ * @return array|int Array of legislator session objects or count if count is true.
+ */
+function fi_legislator_sessions_get(array $args = []): array|int {
+	$cacheKey = fi_cache_key('legislators/sessions', $args);
+
+	$results = fi_cache($cacheKey);
+	if ($results) {
+		return $results;
+	}
+
+	$results = fi_legislator_sessions_query($args);
+	fi_cache($cacheKey, $results);
+	return $results;
+}
 /**
  * Get a single legislator session by ID.
  *
  * @param int $session_id Legislator session row ID.
- * @return object|null
+ * @return array|null
  */
-function fi_legislator_session_get(int $session_id): ?object {
+function fi_legislator_session_get(int $session_id): ?array {
 	$results = fi_legislator_sessions_get([
 		'id'       => $session_id,
 		'per_page' => 1,
@@ -291,6 +291,10 @@ function fi_legislator_session_save(array $data, ?int $session_id = null): int|f
 			['%d']
 		);
 
+		if ($result !== false) {
+			fi_legislator_sync_cached_session($fields['legislator_id']);
+		}
+
 		return $result !== false ? $session_id : false;
 	}
 
@@ -299,6 +303,10 @@ function fi_legislator_session_save(array $data, ?int $session_id = null): int|f
 		$fields,
 		$formats
 	);
+
+	if ($result !== false) {
+		fi_legislator_sync_cached_session($fields['legislator_id']);
+	}
 
 	return $result !== false ? (int) $wpdb->insert_id : false;
 }
@@ -323,11 +331,20 @@ function fi_legislator_session_update(int $session_id, array $data): bool {
 function fi_legislator_session_delete(int $session_id): bool {
 	global $wpdb;
 
+	$legislator_id = (int) $wpdb->get_var($wpdb->prepare(
+		"SELECT legislator_id FROM {$wpdb->prefix}fi_legislator_sessions WHERE id = %d",
+		$session_id
+	));
+
 	$result = $wpdb->delete(
 		"{$wpdb->prefix}fi_legislator_sessions",
 		['id' => $session_id],
 		['%d']
 	);
+
+	if ($result !== false && $legislator_id > 0) {
+		fi_legislator_sync_cached_session($legislator_id);
+	}
 
 	return $result !== false;
 }
@@ -402,7 +419,7 @@ function fi_legislator_sessions_get_scores_by_session(int $session_id): array {
 		ORDER BY ls.score DESC, l.last_name
 	";
 
-	return $wpdb->get_results($wpdb->prepare($sql, $session_ids));
+	return $wpdb->get_results($wpdb->prepare($sql, $session_ids), ARRAY_A);
 }
 
 /**
@@ -453,7 +470,7 @@ function fi_legislator_sessions_stats(?string $gov = null, ?int $session_id = nu
 		$sql = $wpdb->prepare($sql, $where_values);
 	}
 
-	$result = $wpdb->get_row($sql);
+	$result = $wpdb->get_row($sql, ARRAY_A);
 
 	if (!$result) {
 		return [
@@ -469,21 +486,21 @@ function fi_legislator_sessions_stats(?string $gov = null, ?int $session_id = nu
 	}
 
 	return [
-		'total_sessions'   => (int) $result->total_sessions,
-		'avg_score'        => round((float) $result->avg_score, 2),
-		'min_score'        => round((float) $result->min_score, 2),
-		'max_score'        => round((float) $result->max_score, 2),
-		'total_votes'      => (int) $result->total_votes,
-		'total_good_votes' => (int) $result->total_good_votes,
-		'total_bad_votes'  => (int) $result->total_bad_votes,
-		'total_not_votes'  => (int) $result->total_not_votes,
+		'total_sessions'   => (int) ($result['total_sessions'] ?? 0),
+		'avg_score'        => round((float) ($result['avg_score'] ?? 0), 2),
+		'min_score'        => round((float) ($result['min_score'] ?? 0), 2),
+		'max_score'        => round((float) ($result['max_score'] ?? 0), 2),
+		'total_votes'      => (int) ($result['total_votes'] ?? 0),
+		'total_good_votes' => (int) ($result['total_good_votes'] ?? 0),
+		'total_bad_votes'  => (int) ($result['total_bad_votes'] ?? 0),
+		'total_not_votes'  => (int) ($result['total_not_votes'] ?? 0),
 	];
 }
 
 /**
  * Get decoded legislator session meta array from a record or record ID.
  *
- * @param object|int $record Legislator session object or ID.
+ * @param array|int $record Legislator session array or ID.
  * @return array
  */
 function fi_legislator_session_get_all_meta($record): array {
@@ -494,19 +511,20 @@ function fi_legislator_session_get_all_meta($record): array {
 			$wpdb->prepare(
 				"SELECT meta FROM {$wpdb->prefix}fi_legislator_sessions WHERE id = %d LIMIT 1",
 				absint($record)
-			)
+			),
+			ARRAY_A
 		);
 	}
 
-	if (empty($record) || !isset($record->meta) || $record->meta === null || $record->meta === '') {
+	if (empty($record) || !isset($record['meta']) || $record['meta'] === null || $record['meta'] === '') {
 		return [];
 	}
 
-	if (is_array($record->meta)) {
-		return $record->meta;
+	if (is_array($record['meta'])) {
+		return $record['meta'];
 	}
 
-	$decoded = json_decode((string) $record->meta, true);
+	$decoded = json_decode((string) $record['meta'], true);
 	return is_array($decoded) ? $decoded : [];
 }
 

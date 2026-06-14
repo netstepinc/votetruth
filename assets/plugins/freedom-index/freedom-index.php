@@ -23,7 +23,7 @@ if (!defined('FI_DEV')) {
 // Enable display_errors for development only if constant FI_DEV_MODE is defined and true
 //@ini_set('display_errors', '1'); @ini_set('display_startup_errors', '1'); error_reporting(E_ERROR);
 
-define('FI_VERSION', '5.0.0');
+define('FI_VERSION', '5.1.0');
 define('FI_MIN_PHP', '8.0');
 define('FI_DIR', plugin_dir_path(__FILE__));
 define('FI_URL', plugin_dir_url(__FILE__));

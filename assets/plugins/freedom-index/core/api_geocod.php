@@ -136,28 +136,29 @@ function fi_geocod_build_official_record( $legislator, $chamber, $division ) {
  * @return array
  */
 function fi_geocod_fetch_officials( $address_encoded ) {
+	fi_log( 'GEOCOD FETCH START: address_encoded=' . $address_encoded, __FILE__, __LINE__ );
+
 	if ( empty( $address_encoded ) ) {
+		fi_log( 'GEOCOD FETCH ERROR: Empty address_encoded', __FILE__, __LINE__ );
 		return array();
 	}
 
-	$cache_key = 'findmy/' . $address_encoded;
+	$cache_key = fi_cache_key('findmy/' . $address_encoded);
 	$officials = fi_cache( $cache_key );
+	fi_log( 'GEOCOD CACHE CHECK: cache_key=' . $cache_key . ', cached=' . ( false !== $officials && null !== $officials ? 'YES' : 'NO' ), __FILE__, __LINE__ );
 
 	if ( false !== $officials && null !== $officials ) {
+		fi_log( 'GEOCOD CACHE HIT: Returning ' . count( $officials ) . ' officials from cache', __FILE__, __LINE__ );
 		return is_array( $officials )
 			? $officials
 			: array();
 	}
 
 	if ( ! defined( 'API_KEY_GEOCOD' ) || empty( API_KEY_GEOCOD ) ) {
-		fi_log(
-			'GEOCOD: API_KEY_GEOCOD is not defined.',
-			__FILE__,
-			__LINE__
-		);
-
+		fi_log( 'GEOCOD FETCH ERROR: API_KEY_GEOCOD not defined or empty', __FILE__, __LINE__ );
 		return array();
 	}
+	fi_log( 'GEOCOD API KEY: Present', __FILE__, __LINE__ );
 
 	$geocode_url = add_query_arg(
 		array(
@@ -167,6 +168,8 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 		),
 		'https://api.geocod.io/v1.9/geocode'
 	);
+
+	fi_log( 'GEOCOD API URL: ' . $geocode_url, __FILE__, __LINE__ );
 
 	$geocode_response = wp_remote_get(
 		$geocode_url,
@@ -197,12 +200,13 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 		return array();
 	}
 
-	$geocode_data = json_decode(
-		wp_remote_retrieve_body( $geocode_response ),
-		true
-	);
+	$response_body = wp_remote_retrieve_body( $geocode_response );
+	fi_log( 'GEOCOD API RAW RESPONSE: ' . substr( $response_body, 0, 500 ), __FILE__, __LINE__ );
+
+	$geocode_data = json_decode( $response_body, true );
 
 	if ( ! is_array( $geocode_data ) ) {
+		fi_log( 'GEOCOD FETCH ERROR: Invalid JSON response', __FILE__, __LINE__ );
 		fi_log(
 			'GEOCOD API ERROR: Invalid JSON response.',
 			__FILE__,
@@ -212,11 +216,14 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 		return array();
 	}
 
+	fi_log( 'GEOCOD API RESULTS COUNT: ' . ( isset( $geocode_data['results'] ) ? count( $geocode_data['results'] ) : 0 ), __FILE__, __LINE__ );
+
 	$fields = $geocode_data['results'][0]['fields'] ?? array();
+	fi_log( 'GEOCOD API FIELDS: ' . json_encode( array_keys( $fields ) ), __FILE__, __LINE__ );
 
 	if ( ! is_array( $fields ) || empty( $fields ) ) {
+		fi_log( 'GEOCOD FETCH ERROR: No fields data in API response', __FILE__, __LINE__ );
 		fi_cache( $cache_key, array() );
-
 		return array();
 	}
 
@@ -231,6 +238,7 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 	 * legislators are keyed by type and name to prevent duplicate senators.
 	 */
 	$congressional_districts = $fields['congressional_districts'] ?? array();
+	fi_log( 'GEOCOD CONGRESSIONAL DISTRICTS COUNT: ' . ( is_array( $congressional_districts ) ? count( $congressional_districts ) : 0 ), __FILE__, __LINE__ );
 
 	if ( is_array( $congressional_districts ) ) {
 		foreach ( $congressional_districts as $district ) {
@@ -286,11 +294,13 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 		array_values( $senators ),
 		array_values( $representatives )
 	);
+	fi_log( 'GEOCOD CONGRESSIONAL OFFICIALS: ' . count( $senators ) . ' senators, ' . count( $representatives ) . ' representatives', __FILE__, __LINE__ );
 
 	/*
 	 * Process state legislative districts.
 	 */
 	$state_districts = $fields['state_legislative_districts'] ?? array();
+	fi_log( 'GEOCOD STATE DISTRICTS: ' . ( is_array( $state_districts ) ? json_encode( array_keys( $state_districts ) ) : 'none' ), __FILE__, __LINE__ );
 
 	if ( is_array( $state_districts ) ) {
 		/*
@@ -365,9 +375,12 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 	}
 
 	$officials = fi_geocod_merge_legislators_to_officials( $officials );
+	fi_log( 'GEOCOD MERGE COMPLETE: ' . count( $officials ) . ' officials after merge', __FILE__, __LINE__ );
 
 	fi_cache( $cache_key, $officials );
+	fi_log( 'GEOCOD CACHE SAVED: cache_key=' . $cache_key . ', count=' . count( $officials ), __FILE__, __LINE__ );
 
+	fi_log( 'GEOCOD FETCH END: Returning ' . count( $officials ) . ' officials', __FILE__, __LINE__ );
 	return $officials;
 }
 
@@ -425,63 +438,35 @@ function fi_geocod_get_legislator_data( $references ) {
 
 	$legislator = fi_legislator_get_by_external_id( $references );
 
-	if ( ! $legislator || ! is_object( $legislator ) ) {
+	if ( ! $legislator || ! is_array( $legislator ) ) {
 		return array();
 	}
 
-	$legislator_id = isset( $legislator->id ) ? absint( $legislator->id ) : 0;
+	$legislator_id = isset( $legislator['id'] ) ? absint( $legislator['id'] ) : 0;
 
 	if ( $legislator_id < 1 ) {
 		return array();
 	}
 
-	/*
-	 * Generate the legislator URL.
-	 */
-	$legislator_url = home_url('/legislator/' . $legislator_id . '/');
-	/*
-	if ( ! empty( $legislator->url ) ) {
-		$legislator_url = $legislator->url;
-	} elseif ( function_exists( 'fi_get_legislator_url' ) ) {
-		$legislator_url = fi_get_legislator_url( $legislator_id );
-	} else {
-		$legislator_url = home_url(
-			'/legislator/' . $legislator_id . '/'
-		);
-	}*/
+	$legislator_url = $legislator['url'] ?? home_url('/legislator/' . $legislator_id . '/');
 
-	$image_id  = isset( $legislator->image_id ) ? absint( $legislator->image_id ): 0;
-	$image_url = isset( $legislator->image_url ) ? $legislator->image_url : '';
-	/*
-	 * Recover the image URL from the attachment when the stored URL is absent.
-	 */
-	if ($image_id > 0 && empty( $image_url ) ) {
-		$image_data = sis_get_attachment_image_src(
-			$image_id,
-			array( 200, 250 ),
-			true
-		);
-
-		if ( is_array( $image_data ) && ! empty( $image_data['src'] ) ) {
-			$image_url             = $image_data['src'];
-			$legislator->image_url = $image_url;
-		}
-	}
+	$image_id  = isset( $legislator['image_id'] ) ? absint( $legislator['image_id'] ) : 0;
+	$image_url = $legislator['image_url'] ?? '';
 
 	$legislator_data = array(
-		'name'        => $legislator->display_name ?? '',
-		'score'       => $legislator->freedom_score ?? '',
+		'name'        => $legislator['display_name'] ?? '',
+		'score'       => $legislator['score'] ?? '',
 		'score_label' => 'Freedom Score',
 		'legislator'  => array(
 			'id'         => $legislator_id,
 			'url'        => $legislator_url,
 			'image_id'   => $image_id,
-			'first_name' => $legislator->first_name ?? '',
-			'last_name'  => $legislator->last_name ?? '',
-			'district'   => $legislator->district ?? '',
-			'gov'        => $legislator->gov ?? '',
-			'state'      => $legislator->state ?? '',
-			'state_name' => $legislator->state_name ?? '',
+			'first_name' => $legislator['first_name'] ?? '',
+			'last_name'  => $legislator['last_name'] ?? '',
+			'district'   => $legislator['district'] ?? '',
+			'gov'        => $legislator['gov'] ?? '',
+			'state'      => $legislator['state'] ?? '',
+			'state_name' => $legislator['state_name'] ?? '',
 		),
 	);
 
@@ -612,11 +597,12 @@ function fi_geocod_update_legislator( $official ) {
 	}
 
 	if ( ! empty( $legislator_update ) ) {
-		fi_legislator_update(
-			$legislator_id,
-			$legislator_update
+		fi_legislator_save(
+			$legislator_update,
+			$legislator_id
 		);
 	}
+
 }
 
 /**
@@ -627,15 +613,23 @@ function fi_geocod_update_legislator( $official ) {
  * @return array
  */
 function fi_geocod_get_officials() {
+	fi_log( 'GEOCOD START: fi_geocod_get_officials() called', __FILE__, __LINE__ );
+	fi_log( 'GEOCOD POST data: ' . json_encode( $_POST ), __FILE__, __LINE__ );
+
 	$address         = fi_geocod_build_submitted_address();
+	fi_log( 'GEOCOD ADDRESS BUILT: ' . $address, __FILE__, __LINE__ );
+
 	$address_encoded = rawurlencode( $address );
+	fi_log( 'GEOCOD ADDRESS ENCODED: ' . $address_encoded, __FILE__, __LINE__ );
+
 	$officials       = fi_geocod_fetch_officials( $address_encoded );
+	fi_log( 'GEOCOD FETCH COMPLETE: Found ' . count( $officials ) . ' officials', __FILE__, __LINE__ );
 
 	$data = array(
 		'address'   => $address,
 		'officials' => $officials,
 	);
-	fi_log(json_encode($data),__FILE__,__LINE__);
+	fi_log( 'GEOCOD FINAL RESULT: ' . json_encode( $data ), __FILE__, __LINE__ );
 	return $data;
 }
 

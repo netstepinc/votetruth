@@ -22,9 +22,9 @@ What are the votes for this government?
 What are the vote reports for this government?
 
 Example Request URL: 
-- https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&gov=us&action=legislators_get&session_id=14
-- https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&gov=us&action=legislators_cards&session_id=14
-- https://votestellthetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislators_cards&gov=co&session_id=349&chamber=H&party=R&name=Armagost&sort=name&order=desc
+- https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&gov=us&action=legislators_get&session_id=14
+- https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&gov=us&action=legislators_cards&session_id=14
+- https://votetruth.us/fi_api.php?key=5f71b6205a7fef749f412c21ec971e43&action=legislators_cards&gov=co&session_id=349&chamber=H&party=R&name=Armagost&sort=name&order=desc
 */
 //define('SITE_DOMAIN', home_url() );
 define('SITE_URL',home_url());
@@ -48,7 +48,7 @@ if(strpos(__DIR__,'/var/www/html') !== false){
 	define('DB_NAME', 'vtstllthtrth_scorecard');
 	define('DB_USER', 'vtstllthtrth_frdmndx');
 	define('DB_PASSWORD', '5k{w=*z*W=LZebI$xB');
-	define('WP_CONTENT_URL', 'https://votestellthetruth.us/assets');
+	define('WP_CONTENT_URL', 'https://votetruth.us/assets');
 }
 
 

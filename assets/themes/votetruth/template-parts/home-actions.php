@@ -43,7 +43,7 @@ $actions[] = [
 
 /*These are related to TheNewAmerican.com...we probably should not confuse people by sending them to another site.
 Homepage converts a frustrated voter into someone who checks their legislator's score. That's the only job. Once they've engaged — once they've searched, seen a score, maybe shared it — then you introduce the deeper ecosystem. That's what email onboarding, the app experience, and interior pages are for.
-VotesTellTheTruth.com as a feeder for TNA subscriptions and JBS support is a legitimate long-term strategy. But the funnel has to work in order. You can't ask someone to subscribe to a magazine before they trust the tool.
+VoteTruth.com as a feeder for TNA subscriptions and JBS support is a legitimate long-term strategy. But the funnel has to work in order. You can't ask someone to subscribe to a magazine before they trust the tool.
 $actions[] = [
     'title' => 'Free Download',
     'desc' => 'Download the latest Congressional Freedom Index PDF.',

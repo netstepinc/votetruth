@@ -17,12 +17,12 @@ if (!defined('ABSPATH')) {
  * @return array Decoded meta array
  */
 function fi_vote_decode_meta(object $vote): array {
-	if (isset($vote->meta)) {
-		if (is_array($vote->meta)) {
-			return $vote->meta;
+	if (isset($vote['meta'])) {
+		if (is_array($vote['meta'])) {
+			return $vote['meta'];
 		}
-		if (is_string($vote->meta)) {
-			$decoded = json_decode($vote->meta, true);
+		if (is_string($vote['meta'])) {
+			$decoded = json_decode($vote['meta'], true);
 			return is_array($decoded) ? $decoded : [];
 		}
 	}

@@ -22,15 +22,13 @@ Preserved the existing 4-state vote cast model: Y, N, P, X.
 if (!defined('ABSPATH')) exit;
 
 /**
- * Get roll-call votes with optional filtering.
+ * Query roll-call votes with optional filtering (DB-only, no cache).
  *
  * @param array $args Optional filter/query arguments.
  * @return array|int Array of roll-call objects or count if count is true.
  */
-function fi_rollcalls_get(array $args = []): array|int {
+function fi_rollcalls_query(array $args = []): array|int {
 	global $wpdb;
-
-	static $cache_get = [];
 
 	$defaults = [
 		'vote_id'       => null,
@@ -49,18 +47,6 @@ function fi_rollcalls_get(array $args = []): array|int {
 	];
 
 	$args = wp_parse_args($args, $defaults);
-
-	$cache_key = md5(serialize($args));
-	if (isset($cache_get[$cache_key])) {
-		return $cache_get[$cache_key];
-	}
-
-	$cacheKey = fi_cache_key('rollcalls/get', $args);
-	$results = fi_cache($cacheKey);
-	if ($results) {
-		$cache_get[$cache_key] = $results;
-		return $results;
-	}
 
 	$need_legislator_session = !empty($args['chamber']) || !empty($args['party']) || !empty($args['district']);
 
@@ -154,10 +140,7 @@ function fi_rollcalls_get(array $args = []): array|int {
 			$sql = $wpdb->prepare($sql, $where_values);
 		}
 
-		$results = (int) $wpdb->get_var($sql);
-		fi_cache($cacheKey, $results);
-		$cache_get[$cache_key] = $results;
-		return $results;
+		return (int) $wpdb->get_var($sql);
 	}
 
 	$select_ls = $need_legislator_session ? ', ls.party, ls.chamber, ls.district' : '';
@@ -191,12 +174,29 @@ function fi_rollcalls_get(array $args = []): array|int {
 		$sql = $wpdb->prepare($sql, $where_values);
 	}
 
-	$results = $wpdb->get_results($sql);
-	fi_cache($cacheKey, $results);
-	$cache_get[$cache_key] = $results;
-	return $results;
+	return $wpdb->get_results($sql, ARRAY_A);
 }
 
+
+
+/**
+ * Get roll-call votes with optional filtering (cached for front-end).
+ *
+ * @param array $args Optional filter/query arguments.
+ * @return array|int Array of roll-call objects or count if count is true.
+ */
+function fi_rollcalls_get(array $args = []): array|int {
+	$cacheKey = fi_cache_key('rollcalls/get', $args);
+
+	$results = fi_cache($cacheKey);
+	if ($results) {
+		return $results;
+	}
+
+	$results = fi_rollcalls_query($args);
+	fi_cache($cacheKey, $results);
+	return $results;
+}
 /**
  * Get roll-call votes for a specific vote with legislator details.
  *
@@ -304,7 +304,7 @@ function fi_rollcalls_get_by_vote_ids(array $vote_ids): array {
 		ORDER BY rc.vote_id ASC, rc.legislator_id ASC
 	";
 
-	return $wpdb->get_results($wpdb->prepare($sql, $vote_ids));
+	return $wpdb->get_results($wpdb->prepare($sql, $vote_ids), ARRAY_A);
 }
 
 /**
@@ -329,11 +329,11 @@ function fi_rollcalls_get_counts_by_vote_ids(array $vote_ids): array {
 		GROUP BY vote_id
 	";
 
-	$results = $wpdb->get_results($wpdb->prepare($sql, $vote_ids));
+	$results = $wpdb->get_results($wpdb->prepare($sql, $vote_ids), ARRAY_A);
 	$counts = [];
 
 	foreach ($results as $row) {
-		$counts[(int) $row->vote_id] = (int) $row->total;
+		$counts[(int) $row['vote_id']] = (int) $row['total'];
 	}
 
 	return $counts;
@@ -344,9 +344,9 @@ function fi_rollcalls_get_counts_by_vote_ids(array $vote_ids): array {
  *
  * @param int $vote_id Vote ID.
  * @param int $legislator_id Legislator ID.
- * @return object|null
+ * @return array|null
  */
-function fi_rollcall_get(int $vote_id, int $legislator_id): ?object {
+function fi_rollcall_get(int $vote_id, int $legislator_id): ?array {
 	$results = fi_rollcalls_get([
 		'vote_id'       => $vote_id,
 		'legislator_id' => $legislator_id,
@@ -405,7 +405,7 @@ function fi_rollcall_save(array $data, ?int $vote_id = null, ?int $legislator_id
 			['%d', '%d']
 		);
 
-		return $result !== false ? (int) $existing->id : false;
+		return $result !== false ? (int) ($existing['id'] ?? 0) : false;
 	}
 
 	$result = $wpdb->insert(
@@ -518,7 +518,7 @@ function fi_rollcall_import(int $vote_id, string|array $rollcall_data, string $g
 
 		$result = fi_rollcall_save([
 			'vote_id'       => $vote_id,
-			'legislator_id' => $legislator->id,
+			'legislator_id' => $legislator['id'],
 			'cast'          => fi_rollcall_cast_normalize((string) $cast),
 			'is_override'   => 0,
 		]);

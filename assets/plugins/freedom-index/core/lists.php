@@ -101,7 +101,7 @@ function fi_lists_get(array $args = []): array|int {
 
 	$prepared = !empty($where_values) ? $wpdb->prepare($sql, $where_values) : $sql;
 
-	return $wpdb->get_results($prepared);
+	return $wpdb->get_results($prepared, ARRAY_A);
 }
 
 /**
@@ -110,7 +110,7 @@ function fi_lists_get(array $args = []): array|int {
  * @param int $list_id List ID.
  * @return object|null
  */
-function fi_list_get_by_id(int $list_id): ?object {
+function fi_list_get_by_id(int $list_id): ?array {
 	$results = fi_lists_get([
 		'id'       => $list_id,
 		'per_page' => 1,
@@ -345,8 +345,8 @@ function fi_list_get_legislators($list_param): array {
 	if (is_numeric($list_param)) {
 		$list = fi_list_get_by_id((int) $list_param);
 
-		if ($list && !empty($list->legislators)) {
-			$decoded = json_decode($list->legislators, true);
+		if ($list && !empty($list['legislators'])) {
+			$decoded = json_decode($list['legislators'], true);
 			if (is_array($decoded)) {
 				$legislator_ids = array_values(array_filter(array_map('absint', $decoded)));
 			}
@@ -357,9 +357,7 @@ function fi_list_get_legislators($list_param): array {
 		return [];
 	}
 
-	return function_exists('fi_legislators_get_by_ids')
-		? fi_legislators_get_by_ids($legislator_ids, true)
-		: [];
+	return fi_legislators_get_by_ids($legislator_ids, true);
 }
 
 /**
@@ -433,7 +431,7 @@ function fi_list_render_legislators(array $legislators, int $list_id, string $cl
 	}
 
 	$list_obj = fi_list_get_by_id($list_id);
-	$can_edit = is_user_logged_in() && $list_obj && (int) get_current_user_id() === (int) $list_obj->user_id;
+	$can_edit = is_user_logged_in() && $list_obj && (int) get_current_user_id() === (int) ($list_obj['user_id'] ?? 0);
 	$party_list = function_exists('fi_parties') ? fi_parties() : [];
 
 	ob_start();
@@ -441,26 +439,25 @@ function fi_list_render_legislators(array $legislators, int $list_id, string $cl
 	<div class="row">
 		<?php foreach ($legislators as $legislator): ?>
 			<?php
-			$leg_id = is_object($legislator) ? (int) $legislator->id : (int) ($legislator['id'] ?? 0);
-			$name = is_object($legislator) ? ($legislator->display_name ?? '') : ($legislator['display_name'] ?? '');
-			$party = is_object($legislator) ? ($legislator->party ?? '') : ($legislator['party'] ?? '');
-			$gov = is_object($legislator) ? ($legislator->gov ?? '') : ($legislator['gov'] ?? '');
+			$leg_id = (int) ($legislator['id'] ?? 0);
+			$name   = $legislator['display_name'] ?? '';
+			$party  = $legislator['party'] ?? '';
+			$gov    = $legislator['gov'] ?? '';
 			$party = $party_list[$party]['name'] ?? $party;
 
 			$chamber = '';
 			$district = '';
 			$state = '';
 
-			if (is_object($legislator) && !empty($legislator->sessions)) {
-				$latest_session = end($legislator->sessions);
-				$chamber = $latest_session->chamber ?? '';
-				$district = $latest_session->district ?? '';
-				$state = $latest_session->state ?? '';
-			} elseif (is_array($legislator) && !empty($legislator['sessions'])) {
+			if (!empty($legislator['sessions'])) {
 				$latest_session = end($legislator['sessions']);
-				$chamber = is_array($latest_session) ? ($latest_session['chamber'] ?? '') : ($latest_session->chamber ?? '');
-				$district = is_array($latest_session) ? ($latest_session['district'] ?? '') : ($latest_session->district ?? '');
-				$state = is_array($latest_session) ? ($latest_session['state'] ?? '') : ($latest_session->state ?? '');
+				$chamber  = $latest_session['chamber']  ?? '';
+				$district = $latest_session['district'] ?? '';
+				$state    = $latest_session['state']    ?? '';
+			} else {
+				$chamber  = $legislator['chamber']  ?? '';
+				$district = $legislator['district'] ?? '';
+				$state    = $legislator['state']    ?? '';
 			}
 
 			$gov_name = '';
@@ -478,12 +475,12 @@ function fi_list_render_legislators(array $legislators, int $list_id, string $cl
 
 			$legislator_url = function_exists('fi_get_legislator_url') ? fi_get_legislator_url($leg_id) : '#';
 
-			$image_id = is_object($legislator) ? ($legislator->image_id ?? 0) : ($legislator['image_id'] ?? 0);
+			$image_id = is_object($legislator) ? ($legislator['image_id'] ?? 0) : ($legislator['image_id'] ?? 0);
 			$photo_url = !empty($image_id) ? wp_get_attachment_image_url((int) $image_id, 'thumbnail') : '';
 
 			$freedom_score = null;
-			if (is_object($legislator) && isset($legislator->freedom_score)) {
-				$freedom_score = is_array($legislator->freedom_score) ? ($legislator->freedom_score['score'] ?? null) : $legislator->freedom_score;
+			if (is_object($legislator) && isset($legislator['freedom_score'])) {
+				$freedom_score = is_array($legislator['freedom_score']) ? ($legislator['freedom_score']['score'] ?? null) : $legislator['freedom_score'];
 			} elseif (is_array($legislator) && isset($legislator['freedom_score'])) {
 				$freedom_score = is_array($legislator['freedom_score']) ? ($legislator['freedom_score']['score'] ?? null) : $legislator['freedom_score'];
 			}

@@ -22,15 +22,15 @@ if (!$vote) {
 }
 
 // Get vote data
-$ID = $vote->id;
-$session_id = $vote->session_id;
-$session_name = $vote->session_name;
+$ID = $vote['id'];
+$session_id = $vote['session_id'];
+$session_name = $vote['session_name'];
 //SESSIONSLUG: Remove $session_slug variable - no longer needed, session_id is sufficient
 
-$chamber = $vote->chamber;
+$chamber = $vote['chamber'];
 $chamber_label = fi_chamber_label($gov, $chamber); // Senate or House
 
-$constitutional = $vote->constitutional;
+$constitutional = $vote['constitutional'];
 $constitutional_evaluation_text = "Constitutional Vote: ";
 if($constitutional == 'Y'){
 	$constitutional_text = 'Constitutional';	
@@ -50,14 +50,14 @@ if($constitutional == 'Y'){
 	$constitutional_icon_color = '<i class="bi bi-hand-thumbs-down text-danger"></i>';
 }
 
-$bill_number = $vote->bill_number ?? '';
-$title = $vote->title ?? '';
-$slug = $vote->slug ?? '';
+$bill_number = $vote['bill_number'] ?? '';
+$title = $vote['title'] ?? '';
+$slug = $vote['slug'] ?? '';
 $page_title = $title;
 
 $page_title = $constitutional_icon_color . ' ' . $title;
 
-$rollcall_number = $vote->rollcall_number;
+$rollcall_number = $vote['rollcall_number'];
 
 $chambers = fi_chamber_info($gov);
 $chamber = strtoupper((string) ($fi_chamber ?? ''));
@@ -65,7 +65,7 @@ if (!in_array($chamber, ['H', 'S'], true)) {
 	$chamber = '';
 }
 
-$vote_date = $vote->date_voted ?? '';
+$vote_date = $vote['date_voted'] ?? '';
 $vote_date_formatted = $vote_date ? date('n/j/Y', strtotime($vote_date)) : ''; // 11/18/2014 NOT November 18, 2014
 
 // Get vote meta data
@@ -88,9 +88,9 @@ $url_source = $vote_meta['url_source'] ?? $vote_meta['url'] ?? '';
 $url_bill = $vote_meta['url_bill'] ?? '';
 
 // Get roll call records
-$rollcalls = fi_rollcalls_get_by_vote($vote->id);
+$rollcalls = fi_rollcalls_get_by_vote($vote['id']);
 
-$tags = fi_vote_tags_get_tags_by_vote($vote->id);
+$tags = fi_vote_tags_get_tags_by_vote($vote['id']);
 
 // Process vote data for vote-card partial
 $report_format = 'scorecard';
@@ -102,7 +102,7 @@ $vote_format = fi_vote_format([
 ]);
 
 // Build URLs
-$url_vote = fi_url_vote($gov, $vote->id);
+$url_vote = fi_url_vote($gov, $vote['id']);
 
 // Build search text
 $search_description = $descriptions['long'] ?? ($descriptions['medium'] ?? $descriptions['short']);
@@ -181,8 +181,8 @@ if(get_current_user_id() == 1){
 				'date_voted' => $vote_date,
 				'date_formatted' => $vote_date_formatted,
 				'vote_format' => $vote_format,
-				'chamber' => $vote->chamber,
-				'chamber_label' => $chambers[$vote->chamber]['chamber'] ?? '',
+				'chamber' => $vote['chamber'],
+				'chamber_label' => $chambers[$vote['chamber']]['chamber'] ?? '',
 				'bill_url' => $url_bill,
 				'cost_html' => $cost_html,
 				'url_vote' => $url_vote,

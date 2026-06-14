@@ -36,7 +36,7 @@ if($gov == 'US'){
 	$gov_text = $gov;
 }
 $scorecard_about = "The {$legBody} Scorecard is a nationwide, nonpartisan educational program of The John Birch Society intended to inform voters about legislators' voting records. It does not promote any candidate or political party. Bills are chosen for their constitutional implications and taxpayer costs.";
-$scorecard_cta = "Find out if your legislators vote for freedom at votestellthetruth.us.";
+$scorecard_cta = "Find out if your legislators vote for freedom at votetruth.us.";
 $fi_title = $legBody . ' Scorecard';
 $fi_subtitle = $legBody . ' Scorecard based on the Constitution.';
 $report_basedon = 'Based on the the U.S. Constitution';
@@ -407,10 +407,10 @@ $qr_codes = [
 	],
 	'tools' => [
 		'title' => 'View the Freedom Toolbox',
-		//'text' => 'Scan to learn more about the Freedom Index, the Constitution, and the principles of liberty.<div class="fw-bold">votestellthetruth.us/tools</div>',
-		//'text' => 'Scan to learn more about the Freedom Index and its methodology, view and subscribe to legislative alerts, get informed about the U.S. Constitution and America\'s founding principles, and more.<div class="fw-bold">votestellthetruth.us/tools</div>',
-		'text' => 'Scan to learn more about the Freedom Index, view legislative alerts, and deepen your understanding of the U.S. Constitution and America\'s founding principles. Visit <span class="fw-bold">votestellthetruth.us/tools</span>',
-		'url' => urlencode('https://votestellthetruth.us/tools/?utm_source=qr'),
+		//'text' => 'Scan to learn more about the Freedom Index, the Constitution, and the principles of liberty.<div class="fw-bold">votetruth.us/tools</div>',
+		//'text' => 'Scan to learn more about the Freedom Index and its methodology, view and subscribe to legislative alerts, get informed about the U.S. Constitution and America\'s founding principles, and more.<div class="fw-bold">votetruth.us/tools</div>',
+		'text' => 'Scan to learn more about the Freedom Index, view legislative alerts, and deepen your understanding of the U.S. Constitution and America\'s founding principles. Visit <span class="fw-bold">votetruth.us/tools</span>',
+		'url' => urlencode('https://votetruth.us/tools/?utm_source=qr'),
 	],
 
 /*
@@ -432,7 +432,7 @@ $qr_codes = [
 	'methodology' => [
 		'title' => 'How Do We Choose Votes?',
 		'text' => 'What criteria do we use when selecting votes? Why do these votes matter? Learn more about the methodology we use to choose votes that reveal where legislators really stand.',
-		'url' => urlencode('https://votestellthetruth.us/about/?utm_source=qr&utm_medium=pdf'),
+		'url' => urlencode('https://votetruth.us/about/?utm_source=qr&utm_medium=pdf'),
 	],
 	'constitution' => [
 		'title' => 'The Constitution Is the Solution',

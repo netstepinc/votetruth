@@ -144,9 +144,9 @@ function fi_filter_get_options(string $gov, bool $force_refresh = false): array 
 	$sessions = [];
 	foreach ($sessions_raw as $session) {
 		$sessions[] = (object) [
-			'id'         => (int) ($session->id ?? 0),
-			'name'       => $session->name ?? '',
-			'date_start' => $session->date_start ?? '',
+			'id'         => (int) ($session['id'] ?? 0),
+			'name'       => $session['name'] ?? '',
+			'date_start' => $session['date_start'] ?? '',
 		];
 	}
 
@@ -408,7 +408,7 @@ function fi_legislator_filters($args = []): string {
 							<option value="" data-session-id="">All Sessions</option>
 						<?php endif; ?>
 						<?php foreach ($sessions as $session): ?>
-							<option value="<?php echo esc_attr($session->id); ?>" data-session-id="<?php echo esc_attr($session->id); ?>" <?php selected($current_session_id, $session->id); ?>><?php echo esc_html($session->name); ?></option>
+							<option value="<?php echo esc_attr($session['id']); ?>" data-session-id="<?php echo esc_attr($session['id']); ?>" <?php selected($current_session_id, $session['id']); ?>><?php echo esc_html($session['name']); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>

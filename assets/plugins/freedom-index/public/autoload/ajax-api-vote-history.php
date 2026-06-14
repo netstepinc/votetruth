@@ -119,7 +119,7 @@ function fi_public_ajax_vote_history_get_gov(?int $session_id): ?string {
 	}
 
 	$session = fi_session_get($session_id);
-	$gov = $session->gov ?? null;
+	$gov = $session['gov'] ?? null;
 
 	return $gov ? strtoupper((string) $gov) : null;
 }
@@ -273,13 +273,13 @@ function fi_public_ajax_vote_history_render_html(array $result, array $context =
  * @return array Vote-card data.
  */
 function fi_public_ajax_vote_history_prepare_vote_card_data(object $vote, array $context = []): array {
-	$gov = $context['gov'] ?? ($vote->gov ?? '');
+	$gov = $context['gov'] ?? ($vote['gov'] ?? '');
 	$chambers = is_array($context['chambers'] ?? null) ? $context['chambers'] : [];
 	$report_format = $context['report_format'] ?? 'scorecard';
 
 	$vote_meta = function_exists('fi_vote_decode_meta')
 		? fi_vote_decode_meta($vote)
-		: fi_public_ajax_vote_history_decode_meta($vote->meta ?? null);
+		: fi_public_ajax_vote_history_decode_meta($vote['meta'] ?? null);
 
 	$description = function_exists('fi_vote_get_description')
 		? fi_vote_get_description($vote_meta, 'small')
@@ -289,13 +289,13 @@ function fi_public_ajax_vote_history_prepare_vote_card_data(object $vote, array 
 		? fi_vote_get_description($vote_meta, 'freedomindex')
 		: ($vote_meta['description_long'] ?? '');
 
-	$formatted_date = fi_public_ajax_vote_history_format_date((string) ($vote->date_voted ?? ''));
+	$formatted_date = fi_public_ajax_vote_history_format_date((string) ($vote['date_voted'] ?? ''));
 
-	$cast = (string) ($vote->cast ?? 'X');
+	$cast = (string) ($vote['cast'] ?? 'X');
 	$vote_format = function_exists('fi_vote_format')
 		? fi_vote_format([
 			'cast'           => $cast,
-			'constitutional' => $vote->constitutional ?? '',
+			'constitutional' => $vote['constitutional'] ?? '',
 			'format'         => 'full',
 		])
 		: [
@@ -312,10 +312,10 @@ function fi_public_ajax_vote_history_prepare_vote_card_data(object $vote, array 
 	}
 
 	$url_vote = function_exists('fi_url_vote')
-		? fi_url_vote($vote->gov ?? '', $vote->id ?? 0)
+		? fi_url_vote($vote['gov'] ?? '', $vote['id'] ?? 0)
 		: '';
 
-	$vote_chamber = (string) ($vote->chamber ?? '');
+	$vote_chamber = (string) ($vote['chamber'] ?? '');
 	$chamber_label = $chambers[$vote_chamber]['chamber'] ?? '';
 	if ($chamber_label === '' && function_exists('fi_chamber_label')) {
 		$chamber_label = fi_chamber_label($gov, $vote_chamber);
@@ -327,21 +327,21 @@ function fi_public_ajax_vote_history_prepare_vote_card_data(object $vote, array 
 	}
 
 	$search_text = strtolower(
-		(string) ($vote->title ?? '') . ' ' .
-		(string) ($vote->bill_number ?? '') . ' ' .
+		(string) ($vote['title'] ?? '') . ' ' .
+		(string) ($vote['bill_number'] ?? '') . ' ' .
 		wp_strip_all_tags((string) $description)
 	);
 
 	return [
-		'id'              => (int) ($vote->id ?? 0),
-		'gov'             => (string) ($vote->gov ?? ''),
-		'title'           => (string) ($vote->title ?? ''),
+		'id'              => (int) ($vote['id'] ?? 0),
+		'gov'             => (string) ($vote['gov'] ?? ''),
+		'title'           => (string) ($vote['title'] ?? ''),
 		'text'            => (string) $description,
 		'text_more'       => (string) $text_more,
 		'tags'            => $tags,
-		'bill_number'     => (string) ($vote->bill_number ?? ''),
-		'constitutional'  => (string) ($vote->constitutional ?? ''),
-		'date_voted'      => (string) ($vote->date_voted ?? ''),
+		'bill_number'     => (string) ($vote['bill_number'] ?? ''),
+		'constitutional'  => (string) ($vote['constitutional'] ?? ''),
+		'date_voted'      => (string) ($vote['date_voted'] ?? ''),
 		'date_formatted'  => $formatted_date,
 		'vote_format'     => $vote_format,
 		'bill_url'        => (string) ($vote_meta['url_bill'] ?? ''),

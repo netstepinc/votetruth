@@ -22,7 +22,7 @@ function finfo_close(\finfo $finfo): void
 
 
 /**
- * Procedural style
+ * style
  *
  * Object-oriented style (constructor):
  *
@@ -38,7 +38,7 @@ function finfo_close(\finfo $finfo): void
  *
  * Passing NULL or an empty string will be equivalent to the default
  * value.
- * @return \finfo (Procedural style only)
+ * @return \finfo (style only)
  * Returns an finfo instance on success.
  * @throws FileinfoException
  *

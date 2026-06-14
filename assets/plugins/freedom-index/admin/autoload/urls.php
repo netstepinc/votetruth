@@ -22,7 +22,7 @@ Preserved valid helpers:
 	fi_admin_edit_session_url()
 	fi_admin_recalculate_scores_url()
 	fi_report_url()
-Added/kept useful procedural helpers:
+Added/kept useful helpers:
 	fi_url_legislator()
 	fi_url_legislator_by_id()
 	fi_list_url()

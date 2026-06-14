@@ -6,7 +6,7 @@
  * Usage: 
  *   GET with params: ?auth_key=...&gov=...&session=...
  * 
- * TEST: https://votestellthetruth.us/wp-content/jbsfi/legiscan/compiler.php?auth_key=aba1fcf8e23f67cd261842c7a8f30012&gov=US&session=2025-2026_119th_Congress
+ * TEST: https://votetruth.us/wp-content/jbsfi/legiscan/compiler.php?auth_key=aba1fcf8e23f67cd261842c7a8f30012&gov=US&session=2025-2026_119th_Congress
  */
 
 // Referrer check (set to false to disable for direct testing)

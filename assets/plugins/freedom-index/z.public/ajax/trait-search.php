@@ -200,9 +200,9 @@ namespace FI\Public {
 /*
 public/ajax/trait-search.php:184 Debug legislator search result: {
 "id":1414,"first_name":"Thomas","middle_name":null,"last_name":"Massie","display_name":"Thomas Massie","image_id":15676,
-"image_url":"https:\/\/votestellthetruth.us\/assets\/sites\/5\/img\/15676\/1414_Massie_Thomas_119th_Congress_28cropped_229-200x250-f50_50.jpg",
+"image_url":"https:\/\/votetruth.us\/assets\/sites\/5\/img\/15676\/1414_Massie_Thomas_119th_Congress_28cropped_229-200x250-f50_50.jpg",
 "bioguide_id":"M001184","lis_id":"","legiscan_id":14026,"govtrack_id":"412503","votesmart_id":"132068","ballotpedia_id":"Thomas Massie",
-"url":"https:\/\/votestellthetruth.us\/legislator\/1414\/","freedom_score":99,
+"url":"https:\/\/votetruth.us\/legislator\/1414\/","freedom_score":99,
 "freedom_score_data":{"score":99,"total":250,"good":240,"bad":3,"not":7,"scored":243},
 "freedom_score_date":"2026-02-20 23:21:35",
 "meta":{"legacy_post":{"id":142971,"post_name":"M001184","image_url":""},

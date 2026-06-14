@@ -8,9 +8,9 @@ My idea is to load all three of these and consolidate them into an update array 
 We'll need to evaluate how to deal with addresses where they are stored as an array. We don't want to create duplicates, and if we have an address that's no longer in use, we should remove it. Special care must be given to reconciling the data with what we have an updating everything from the reference data.
 In the case of US legislators, we have bioguide ID for all so we can key this infor by bioguide ID. When saving, we don't care about their gov because we have a positive match by bioguide ID.
 I'd like this to be a supplemental hidden process only I run such has by appending the URL with &reference=US.
-votestellthetruth.us/wp-admin/admin.php?page=fi-legislators&reference=US.
+votetruth.us/wp-admin/admin.php?page=fi-legislators&reference=US.
 Then at the bottom of the Legislator list or in place of the legislator list, display a detailed report of what data is being imported to who, etc.
-I don't want this to be some complicated process. I will only run it once or twice per year. I want to use procedural code with a complete output of the data being handled.
+I don't want this to be some complicated process. I will only run it once or twice per year. I want to use code with a complete output of the data being handled.
 
 fi_legislators external IDs fields: bioguide_id,lis_id, legiscan_id, govtrack_id, votesmart_id, ballotpedia_id, openstates_id
 	Other data will be stored in the meta field as JSON.

@@ -31,7 +31,7 @@ $billData = [
     ]
 ];
 
-https://votestellthetruth.us/wp-content/cache/jbsfi/legiscan/extractor.php?key=aba1fcf8e23f67cd261842c7a8f30012&gov=US&session=2025-2026_119th_Congress&file=HB1
+https://votetruth.us/wp-content/cache/jbsfi/legiscan/extractor.php?key=aba1fcf8e23f67cd261842c7a8f30012&gov=US&session=2025-2026_119th_Congress&file=HB1
 */
 
 $extractor_auth_key = md5(strtotime(date('Y-m-d') . ' 00:00:01'));
