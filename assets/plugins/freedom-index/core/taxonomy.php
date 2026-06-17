@@ -119,7 +119,6 @@ function fi_taxonomies_query(array $args = []): array|int {
 
 	$defaults = [
 		'id'       => null,
-		'slug'     => null,
 		'taxonomy' => null,
 		'gov'      => null,
 		'search'   => null,
@@ -144,11 +143,6 @@ function fi_taxonomies_query(array $args = []): array|int {
 		$where_values[] = absint($args['id']);
 	}
 
-	if (!empty($args['slug'])) {
-		$where_conditions[] = 'slug = %s';
-		$where_values[] = sanitize_title($args['slug']);
-	}
-
 	if (!empty($args['taxonomy'])) {
 		$where_conditions[] = 'taxonomy = %s';
 		$where_values[] = sanitize_key($args['taxonomy']);
@@ -160,15 +154,14 @@ function fi_taxonomies_query(array $args = []): array|int {
 	}
 
 	if (!empty($args['search'])) {
-		$where_conditions[] = '(name LIKE %s OR slug LIKE %s)';
+		$where_conditions[] = 'name LIKE %s';
 		$search_term = '%' . $wpdb->esc_like((string) $args['search']) . '%';
-		$where_values[] = $search_term;
 		$where_values[] = $search_term;
 	}
 
 	$where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
-	$allowed_orderby = ['id', 'name', 'slug', 'taxonomy', 'gov', 'date_created', 'date_updated'];
+	$allowed_orderby = ['id', 'name', 'taxonomy', 'gov', 'date_created', 'date_updated'];
 	$orderby_field = sanitize_key((string) $args['orderby']);
 	if (!in_array($orderby_field, $allowed_orderby, true)) {
 		$orderby_field = 'name';
@@ -375,14 +368,14 @@ function fi_taxonomy_check_duplicates(array $data, ?int $exclude_id = null): arr
 	$conditions = [];
 	$values = [];
 
-	if (!empty($data['slug']) && !empty($data['taxonomy'])) {
+	if (!empty($data['name']) && !empty($data['taxonomy'])) {
 		if (($data['taxonomy'] ?? '') === 'tag') {
-			$conditions[] = '(slug = %s AND taxonomy = %s)';
-			$values[] = $data['slug'];
+			$conditions[] = '(name = %s AND taxonomy = %s)';
+			$values[] = $data['name'];
 			$values[] = $data['taxonomy'];
 		} elseif (!empty($data['gov'])) {
-			$conditions[] = '(slug = %s AND taxonomy = %s AND gov = %s)';
-			$values[] = $data['slug'];
+			$conditions[] = '(name = %s AND taxonomy = %s AND gov = %s)';
+			$values[] = $data['name'];
 			$values[] = $data['taxonomy'];
 			$values[] = strtoupper((string) $data['gov']);
 		}
@@ -433,20 +426,6 @@ function fi_taxonomy_save(array $data, ?int $taxonomy_id = null): int|false {
 		return false;
 	}
 
-	if ($taxonomy === 'district' && !empty($data['slug']) && is_string($data['slug'])) {
-		$slug = strtolower(trim($data['slug']));
-		if (preg_match('/^([a-z]{2})-(\d+)(st|nd|rd|th)$/', $slug, $m)) {
-			$slug = $m[1] . '-' . ltrim($m[2], '0');
-		}
-		$data['slug'] = $slug;
-	}
-
-	if (empty($data['slug'])) {
-		$data['slug'] = $taxonomy === 'district'
-			? fi_taxonomy_generate_district_slug((string) $data['name'])
-			: fi_taxonomy_generate_slug((string) $data['name'], $taxonomy, $is_tag ? null : (string) $data['gov']);
-	}
-
 	$duplicate_check = fi_taxonomy_check_duplicates($data, $taxonomy_id);
 	if ($duplicate_check['is_duplicate']) {
 		return $duplicate_check['existing_id'];
@@ -461,7 +440,6 @@ function fi_taxonomy_save(array $data, ?int $taxonomy_id = null): int|false {
 		'gov'      => $gov,
 		'taxonomy' => $taxonomy,
 		'name'     => sanitize_text_field($data['name']),
-		'slug'     => sanitize_title($data['slug']),
 	];
 
 	if (array_key_exists('meta', $data)) {
@@ -634,9 +612,6 @@ function fi_taxonomy_validate_data(array $data): array {
 		$errors[] = 'Government code must be 2 uppercase letters';
 	}
 
-	if (!empty($data['slug']) && !preg_match('/^[a-z0-9-]+$/', (string) $data['slug'])) {
-		$errors[] = 'Slug must contain only lowercase letters, numbers, and hyphens';
-	}
 
 	return [
 		'valid'  => empty($errors),
@@ -708,6 +683,43 @@ function fi_districts_get(?string $gov = null, array $filters = []): array {
 }
 
 /**
+ * Look up a district name by taxonomy ID.
+ *
+ * Loads ALL district names in a single query and caches them as id=>name.
+ * If the requested ID is not in the cache, the cache is refreshed once.
+ *
+ * @param int $id District taxonomy ID.
+ * @return string District name, or empty string if not found.
+ */
+function fi_district_name(int $id): string {
+	if ($id <= 0) return '';
+
+	static $names = null;
+
+	$cache_key = 'reference/district-names';
+
+	if ($names === null) {
+		$cached = fi_cache($cache_key);
+		$names  = is_array($cached) ? $cached : [];
+	}
+
+	if (!isset($names[$id])) {
+		global $wpdb;
+		$rows  = $wpdb->get_results(
+			"SELECT id, name FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy = 'district'",
+			ARRAY_A
+		) ?: [];
+		$names = [];
+		foreach ($rows as $row) {
+			$names[(int) $row['id']] = $row['name'];
+		}
+		fi_cache($cache_key, $names, DAY_IN_SECONDS);
+	}
+
+	return $names[$id] ?? '';
+}
+
+/**
  * Get district by ID, trimmed for front-end use.
  *
  * @param int $district_id District taxonomy ID.
@@ -752,15 +764,7 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
 
 	$chamber = $chamber ? strtoupper(trim($chamber)) : null;
 
-	$slug = strtolower($district_raw);
-	$id = (int) $wpdb->get_var($wpdb->prepare(
-		"SELECT id FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy = 'district' AND gov = %s AND slug = %s LIMIT 1",
-		$gov,
-		$slug
-	));
-	if ($id > 0) {
-		return $id;
-	}
+	// No slug column — fall through to name-based lookup below.
 
 	if ($gov !== 'US') {
 		return null;
@@ -793,11 +797,11 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
 			return null;
 		}
 
-		$slug = strtolower($state . '-at-large');
+		$at_large_name = strtoupper($state) . ' At Large';
 		$existing = (int) $wpdb->get_var($wpdb->prepare(
-			"SELECT id FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy='district' AND gov=%s AND slug=%s LIMIT 1",
+			"SELECT id FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy='district' AND gov=%s AND name=%s LIMIT 1",
 			$gov,
-			$slug
+			$at_large_name
 		));
 		if ($existing) {
 			return $existing;
@@ -806,8 +810,7 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
 		$new_id = fi_taxonomy_save([
 			'gov'      => $gov,
 			'taxonomy' => 'district',
-			'name'     => strtoupper($state) . ' At Large',
-			'slug'     => $slug,
+			'name'     => $at_large_name,
 			'meta'     => [
 				'created_from' => 'legiscan',
 				'state'        => strtoupper($state),
@@ -822,63 +825,39 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
 		return null;
 	}
 
-	$needle = strtolower($state . '-' . ltrim($num, '0'));
+	$ordinal = function_exists('fi_format_ordinal') ? fi_format_ordinal((int) $num) : (string) ((int) $num);
+	$district_name = strtoupper($state) . ' ' . $ordinal;
 
 	$row = $wpdb->get_row($wpdb->prepare(
-		"SELECT id, slug
-		FROM {$wpdb->prefix}fi_taxonomy
-		WHERE taxonomy = 'district' AND gov = %s AND slug = %s
+		"SELECT id FROM {$wpdb->prefix}fi_taxonomy
+		WHERE taxonomy = 'district' AND gov = %s AND name = %s
 		LIMIT 1",
 		$gov,
-		$needle
+		$district_name
 	), ARRAY_A);
 
 	if ($row && !empty($row['id'])) {
 		return (int) $row['id'];
 	}
 
-	$like = $wpdb->esc_like($needle) . '%';
+	$like = $wpdb->esc_like(strtoupper($state) . ' ' . ltrim($num, '0')) . '%';
 	$row2 = $wpdb->get_row($wpdb->prepare(
-		"SELECT id, slug
-		FROM {$wpdb->prefix}fi_taxonomy
-		WHERE taxonomy = 'district' AND gov = %s AND slug LIKE %s
-		ORDER BY id DESC
+		"SELECT id FROM {$wpdb->prefix}fi_taxonomy
+		WHERE taxonomy = 'district' AND gov = %s AND name LIKE %s
+		ORDER BY id ASC
 		LIMIT 1",
 		$gov,
 		$like
 	), ARRAY_A);
 
 	if ($row2 && !empty($row2['id'])) {
-		$existing_slug = (string) ($row2['slug'] ?? '');
-		if ($existing_slug !== '' && $existing_slug !== $needle) {
-			$exists_target = (int) $wpdb->get_var($wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy='district' AND gov=%s AND slug=%s LIMIT 1",
-				$gov,
-				$needle
-			));
-			if (!$exists_target) {
-				$wpdb->update(
-					$wpdb->prefix . 'fi_taxonomy',
-					['slug' => $needle],
-					['id' => (int) $row2->id],
-					['%s'],
-					['%d']
-				);
-				fi_taxonomy_clear_cache();
-			}
-		}
-
-		return (int) $row2->id;
+		return (int) $row2['id'];
 	}
-
-	$ordinal = function_exists('fi_format_ordinal') ? fi_format_ordinal((int) $num) : (string) ((int) $num);
-	$name = strtoupper($state) . ' ' . $ordinal;
 
 	$new_id = fi_taxonomy_save([
 		'gov'      => $gov,
 		'taxonomy' => 'district',
-		'name'     => $name,
-		'slug'     => $needle,
+		'name'     => $district_name,
 		'meta'     => [
 			'created_from' => 'legiscan',
 			'state'        => strtoupper($state),
@@ -896,11 +875,11 @@ function fi_district_id_from_legiscan(string $district_raw, string $gov = 'US', 
  * @param string|null $gov Government code.
  * @return string Tag URL.
  */
-function fi_tag_url(string $tag_slug, ?string $gov = null): string {
+function fi_tag_url(int $tag_id, ?string $gov = null): string {
 	if (!$gov) {
-		$tag = fi_taxonomy_get_by_slug($tag_slug, 'tag', null);
-		$gov = ($tag && !empty($tag->gov)) ? strtolower($tag->gov) : 'us';
+		$tag = fi_taxonomy_get($tag_id);
+		$gov = ($tag && !empty($tag['gov'])) ? strtolower($tag['gov']) : 'us';
 	}
 
-	return home_url('/' . strtolower($gov) . '/votes/issue/' . sanitize_title($tag_slug) . '/');
+	return home_url('/' . strtolower($gov) . '/votes/issue/' . $tag_id . '/');
 }

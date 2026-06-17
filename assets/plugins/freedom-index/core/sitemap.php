@@ -134,7 +134,7 @@ add_action('plugins_loaded', static function (): void {
 
 		private function row_url(string $type, object $row): string {
 			return match ($type) {
-				'fi-legislators' => \FI\Public\Rewrite::get_legislator_url((int) $row->id),
+				'fi-legislators' => fi_legislator_get_url((int) $row->id),
 				'fi-votes'       => home_url('/' . strtolower($row->gov) . '/vote/' . $row->id . '/'),
 				'fi-reports'     => home_url('/' . strtolower($row->gov) . '/report/' . $row->id . '/'),
 				default          => '',

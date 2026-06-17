@@ -55,50 +55,24 @@ $query_filters['orderby'] = $orderby;
 $query_filters['order']   = $order;
 
 $legislators = [];
-if ($session_id > 0) {
+if ($session_id > 0 && $gov !== '') {
 	// Filter by specific session (shows all legislators in that session)
-	$legislators = fi_legislators_get_by_session($session_id, $query_filters);
+	$query_filters['gov'] = $gov;
+	$query_filters['session_id'] = $session_id;
+	$legislators = fi_legislators_query($query_filters);
 } elseif ($gov !== '') {
-	// Filter by gov - show ALL legislators with any session assignment in this gov (even if their latest session differs)
+	// Filter by gov - show ALL legislators with any session assignment in this gov
 	$query_filters['gov'] = $gov;
 	$query_filters['gov_mode'] = 'any';
 	$legislators = fi_legislators_query($query_filters);
 }
 
-// Total count in scope (no search/chamber/party) for "Showing X of Y" summary.
-$total_in_scope = 0;
-if ($gov !== '') {
-	global $wpdb;
-	if ($session_id > 0) {
-		$total_in_scope = (int) $wpdb->get_var($wpdb->prepare(
-			"SELECT COUNT(DISTINCT legislator_id) FROM {$wpdb->prefix}fi_legislator_sessions WHERE session_id = %d",
-			$session_id
-		));
-	} else {
-		$total_in_scope = (int) $wpdb->get_var($wpdb->prepare(
-			"SELECT COUNT(DISTINCT legislator_id) FROM {$wpdb->prefix}fi_legislator_sessions WHERE gov = %s",
-			$gov
-		));
-	}
-}
-$showing_count = count($legislators);
+// Total count for display.
+$legislators_count = count($legislators);
 $gov_label = $gov !== '' && function_exists('fi_gov_name') ? fi_gov_name($gov) : $gov;
 
 $chamber_options = fi_chamber_options($gov ?: 'US');
-$party_options = [];
 $parties = fi_parties();
-foreach ($parties as $abbr => $data) {
-	$party_options[strtoupper($abbr)] = $data['name'] ?? strtoupper($abbr);
-}
-
-$filters = $filter_inputs;
-
-$chamber_options = $chamber_options ?? [];
-$party_options    = $party_options ?? [];
-$current_session  = (int) $session_id;
-$has_session      = $current_session > 0;
-$has_gov          = $gov !== '';
-$is_us_gov        = $gov === 'US';
 
 // Summary: used to return to this exact list state after editing.
 $return_query = $_GET;
@@ -106,13 +80,13 @@ unset($return_query['action'], $return_query['legislator_id']);
 $return_query['page'] = 'fi-legislators';
 $return_url = add_query_arg($return_query, admin_url('admin.php'));
 
-$build_sort_link = static function (string $label, string $key) use ($orderby, $order, $is_us_gov): string {
+$build_sort_link = static function (string $label, string $key) use ($orderby, $order, $gov): string {
 	$key = sanitize_key($key);
 	$allowed = ['id', 'name', 'party', 'chamber', 'state', 'updated', 'created'];
 	if (!in_array($key, $allowed, true)) {
 		return esc_html($label);
 	}
-	if ($key === 'state' && !$is_us_gov) {
+	if ($key === 'state' && $gov !== 'US') {
 		return esc_html($label);
 	}
 	
@@ -146,8 +120,8 @@ else:
 			<a href="<?php echo esc_url(fi_admin_url('fi-legislators', ['action' => 'add'])); ?>" class="btn btn-sm btn-primary px-5">
 				Add New
 			</a>
-		<?php if ($has_gov): ?>
-			<?php if ($has_session): ?>
+		<?php if ($gov !== ''): ?>
+			<?php if ($session_id > 0): ?>
 				<button
 					type="button"
 					class="btn btn-sm btn-outline-success fi-recalculate-scores"
@@ -171,16 +145,16 @@ else:
 		</div>
 	</div>
 	<hr class="wp-header-end">
-	<?php if (!$has_gov): ?>
+	<?php if ($gov === ''): ?>
 		<div class="notice notice-warning is-dismissible">
 			<p>Select a government to manage legislators. (Optional: select a session to view one session roster.)</p>
 		</div>
 	<?php endif; ?>
 
-	<?php if ($has_gov): ?>
+	<?php if ($gov !== ''): ?>
 		<div class="mb-3">
 			<small class="text-muted">
-				Showing <strong><?php echo esc_html((string) $showing_count); ?></strong> of <strong><?php echo esc_html((string) $total_in_scope); ?></strong> <?php echo esc_html($gov_label); ?> Legislators.
+				<strong><?php echo esc_html((string) $legislators_count); ?></strong> <?php echo esc_html($gov_label); ?> Legislators.
 			</small>
 		</div>
 	<?php endif; ?>
@@ -197,9 +171,9 @@ else:
 					class="form-control"
 					id="fi-filter-search"
 					name="search"
-					value="<?php echo esc_attr($filters['search']); ?>"
+					value="<?php echo esc_attr($filter_inputs['search']); ?>"
 					placeholder="Name, ID, district…"
-				>
+			>
 			</div>
 			<div class="col-md-3 col-lg-2">
 				<label for="fi-filter-session" class="form-label">Session</label>
@@ -217,12 +191,8 @@ else:
 				<select id="fi-filter-chamber" class="form-select" name="chamber">
 					<option value="">All Chambers</option>
 					<?php foreach ($chamber_options as $abbr => $label): ?>
-						<?php 
-						// Handle arrays from chamber options (extract 'name' or 'short' key)
-						$label_str = is_array($label) ? ($label['chamber'] ?? $label['short'] ?? (string) $abbr) : (string) ($label ?? $abbr);
-						?>
-						<option value="<?php echo esc_attr($abbr); ?>" <?php selected(strtoupper($filters['chamber']), strtoupper($abbr)); ?>>
-							<?php echo esc_html($label_str); ?>
+						<option value="<?php echo esc_attr($abbr); ?>" <?php selected(strtoupper($filter_inputs['chamber']), strtoupper($abbr)); ?>>
+							<?php echo esc_html(is_array($label) ? ($label['chamber'] ?? $abbr) : $label); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -231,24 +201,20 @@ else:
 				<label for="fi-filter-party" class="form-label">Party</label>
 				<select id="fi-filter-party" class="form-select" name="party">
 					<option value="">All Parties</option>
-					<?php foreach ($party_options as $abbr => $label): ?>
-						<?php 
-						// Ensure label is a string (handle arrays if any)
-						$label_str = is_array($label) ? ($label['name'] ?? (string) $abbr) : (string) ($label ?? $abbr);
-						?>
-						<option value="<?php echo esc_attr($abbr); ?>" <?php selected(strtoupper($filters['party']), strtoupper($abbr)); ?>>
-							<?php echo esc_html($label_str); ?>
+					<?php foreach ($parties as $abbr => $data): ?>
+						<option value="<?php echo esc_attr($abbr); ?>" <?php selected(strtoupper($filter_inputs['party']), strtoupper($abbr)); ?>>
+							<?php echo esc_html($data['name'] ?? $abbr); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
 			</div>
-			<?php if ($is_us_gov): ?>
+			<?php if ($gov === 'US'): ?>
 			<div class="col-md-2 col-lg-1">
 				<label for="fi-filter-state" class="form-label">State</label>
 				<select id="fi-filter-state" class="form-select" name="state">
 					<option value="">All States</option>
 					<?php foreach (fi_state_options() as $abbr => $name): ?>
-						<option value="<?php echo esc_attr($abbr); ?>" <?php selected($filters['state'], $abbr); ?>>
+						<option value="<?php echo esc_attr($abbr); ?>" <?php selected($filter_inputs['state'], $abbr); ?>>
 							<?php echo esc_html($abbr); ?> &mdash; <?php echo esc_html($name); ?>
 						</option>
 					<?php endforeach; ?>
@@ -268,13 +234,13 @@ else:
 	</div>
 	</form>
 
-	<?php if (($has_session || $has_gov) && empty($legislators)): ?>
+	<?php if (($session_id > 0 || $gov !== '') && empty($legislators)): ?>
 		<div class="notice notice-info">
 			<p>No legislators found for this scope. Import data or adjust your filters.</p>
 		</div>
 	<?php endif; ?>
 
-	<?php if (($has_session || $has_gov) && !empty($legislators)): ?>
+	<?php if (($session_id > 0 || $gov !== '') && !empty($legislators)): ?>
 	<div class="table-responsive">
 		<table class="wp-list-table widefat fixed striped table table-hover align-middle">
 			<thead>
@@ -284,7 +250,7 @@ else:
 					<th class="legislator-id"><?php echo $build_sort_link('ID', 'id'); ?></th>
 					<th class="legislator-party"><?php echo $build_sort_link('Party', 'party'); ?></th>
 					<th class="legislator-chamber"><?php echo $build_sort_link('Chamber', 'chamber'); ?></th>
-					<?php if ($is_us_gov): ?>
+					<?php if ($gov === 'US'): ?>
 						<th class="legislator-state"><?php echo $build_sort_link('State', 'state'); ?></th>
 					<?php endif; ?>
 					<th class="legislator-district">District</th>
@@ -311,14 +277,14 @@ else:
 							<div class="d-flex flex-wrap gap-2">
 								<a href="<?php echo esc_url(fi_admin_edit_legislator_url((int) $legislator['id'], ['return_url' => $return_url])); ?>" class="btn btn-sm btn-primary">Edit</a>
 								<a href="<?php echo esc_url(fi_admin_legislator_sessions_url($legislator['id'])); ?>" class="btn btn-sm btn-secondary">Sessions</a>
-								<a href="<?php echo esc_url(fi_get_legislator_url($legislator['id'])); ?>" class="btn btn-sm btn-secondary" target="_blank">View</a>
+								<a href="<?php echo esc_url(fi_legislator_get_url($legislator['id'])); ?>" class="btn btn-sm btn-secondary" target="_blank">View</a>
 							</div>
 						</td>
 						<td><strong><?php echo esc_html($legislator['display_name'] ?? ''); ?></strong></td>
 						<td><small class="text-muted">ID: <?php echo esc_html($legislator['id'] ?? ''); ?></small></td>
 						<td><span class="badge <?= esc_attr($party_class); ?>"><?php echo esc_html($party_label); ?></span></td>
 						<td><?php echo esc_html($chamber_label); ?></td>
-						<?php if ($is_us_gov): ?>
+						<?php if ($gov === 'US'): ?>
 							<td><?php echo esc_html($state_code !== '' ? $state_code : '—'); ?></td>
 						<?php endif; ?>
 						<td><?php echo $district_name; ?></td>

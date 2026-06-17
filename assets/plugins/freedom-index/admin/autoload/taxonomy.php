@@ -44,7 +44,6 @@ function fi_admin_post_save_taxonomy_item(): void {
 		$gov = 'US';
 	}
 	$name = sanitize_text_field($_POST['name'] ?? '');
-	$slug = sanitize_text_field($_POST['slug'] ?? '');
 
 
 	if ($taxonomy === '' || $name === '' || ($taxonomy !== 'tag' && $gov === '')) {
@@ -52,10 +51,9 @@ function fi_admin_post_save_taxonomy_item(): void {
 	}
 
 	$data = [
-		'gov' => $gov,
+		'gov'      => $gov,
 		'taxonomy' => $taxonomy,
-		'name' => $name,
-		'slug' => $slug,
+		'name'     => $name,
 	];
 	$saved_id = fi_taxonomy_save($data, $taxonomy_id ?: null);
 	if (!$saved_id) {

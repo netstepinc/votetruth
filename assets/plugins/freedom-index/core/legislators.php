@@ -10,8 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-const LEGISLATORS_DEFAULT_LIMIT = 24;
-const LEGISLATORS_MAX_LIMIT     = 600;
+const LEGISLATORS_LIMIT = 600;
 
 // =============================================================================
 // SINGLE RECORD
@@ -20,71 +19,41 @@ const LEGISLATORS_MAX_LIMIT     = 600;
 /**
  * Get a legislator by ID.
  *
- * Always includes full session history (parent sessions only, date_end DESC).
- * Top-level keys are flattened from the most recent session for fast access.
- * Pass $with_sessions = false to skip the session query when only base data is needed.
+ * Pass $with_sessions = true to include full session history (profile page only).
  *
  * @param int  $id            Legislator ID.
- * @param bool $with_sessions Include session history. Default true.
+ * @param bool $with_sessions Include session history. Default false.
  * @return array|null
  */
-function fi_legislator_get(int $id, bool $with_sessions = true): ?array {
+function fi_legislator_get(int $id, bool $with_sessions = false): ?array {
 	global $wpdb;
 
-	$row = $wpdb->get_row($wpdb->prepare(
+	$legislator = $wpdb->get_row($wpdb->prepare(
 		"SELECT * FROM {$wpdb->prefix}fi_legislators WHERE id = %d",
 		$id
 	), ARRAY_A);
 
-	if (!$row) {
+	if (!$legislator) {
 		return null;
 	}
 
-	$legislator = _fi_legislator_format_base($row);
+	//Enhance Legislator array
+	$legislator['image_id']       = (int) ($legislator['image_id'] ?? 0);
+	$legislator['meta']           = !empty($legislator['meta']) ? json_decode($legislator['meta'], true) : [];
+	$legislator['sessions']       = [];
+	$legislator['score']          = isset($legislator['score']) && $legislator['score'] !== null && $legislator['score'] !== '' ? (int) $legislator['score'] : null;
+	$legislator['session_id']    = (int) ($legislator['session_id'] ?? 0);
+	$legislator['gov_name']      = isset($legislator['gov']) && !empty(FI_GOVERNMENTS[$legislator['gov']]['name']) ? FI_GOVERNMENTS[$legislator['gov']]['name'] : $legislator['gov'];
+	$legislator['state_name']    = isset($legislator['gov']) && !empty(FI_GOVERNMENTS[$legislator['gov']]['state_name']) ? FI_GOVERNMENTS[$legislator['gov']]['state_name'] : '';
+	$legislator['party_name']    = fi_party_name($legislator['party'] ?? '');
+	$legislator['chamber_label'] = isset($legislator['chamber']) && !empty(FI_CHAMBERS[$legislator['chamber']]['label']) ? FI_CHAMBERS[$legislator['chamber']]['label'] : ($legislator['chamber'] ?? '');
+	$legislator['chamber_title'] = isset($legislator['chamber']) && !empty(FI_CHAMBERS[$legislator['chamber']]['title']) ? FI_CHAMBERS[$legislator['chamber']]['title'] : '';
 
-	// Populate current-session overlay from the cached fields on fi_legislators.
-	// These are written by fi_legislator_sync_cached_session() and are always
-	// authoritative for "latest session" data without a second JOIN.
-	$gov = $row['gov'] ?? '';
-	if ($gov) {
-		$legislator['session_id']    = (int) ($row['session_id'] ?? 0);
-		$legislator['gov']           = $gov;
-		$legislator['state']         = $row['state'] ?? '';
-		$legislator['chamber']       = $row['chamber'] ?? '';
-		$legislator['district']      = $row['district'] ?? '';
-		$legislator['party']         = $row['party'] ?? '';
-		$legislator['gov_name']      = FI_GOVERNMENTS[$gov]['name'] ?? $gov;
-		$legislator['state_name']    = FI_GOVERNMENTS[$gov]['state_name'] ?? '';
-		$legislator['party_name']    = FI_PARTIES[$row['party'] ?? ''] ?? ($row['party'] ?? '');
-		$legislator['chamber_label'] = FI_CHAMBERS[$row['chamber'] ?? '']['label'] ?? ($row['chamber'] ?? '');
-		$legislator['chamber_title'] = FI_CHAMBERS[$row['chamber'] ?? '']['title'] ?? '';
-	}
 
-	if (!$with_sessions) {
-		if (!empty($legislator['session_id'])) {
-			$legislator['session_name'] = (string) $wpdb->get_var($wpdb->prepare(
-				"SELECT name FROM {$wpdb->prefix}fi_sessions WHERE id = %d",
-				$legislator['session_id']
-			));
-		}
-		return $legislator;
-	}
-
-	// Full session history — second query, only when explicitly needed.
-	$sessions = _fi_legislator_query_sessions($id);
-	$legislator['sessions'] = $sessions;
-
-	// Supplement with per-session score/image/date fields from the most recent row
-	// since those are NOT stored on fi_legislators.
-	if (!empty($sessions)) {
-		$current = $sessions[0];
-		$legislator['session_name']       = $current['session_name'];
-		$legislator['session_score']      = $current['session_score'];
-		$legislator['session_score_data'] = $current['session_score_data'];
-		$legislator['image_id']           = $current['image_id'] ?: ($legislator['image_id'] ?? null);
-		$legislator['date_start']         = $current['date_start'];
-		$legislator['date_end']           = $current['date_end'];
-		$legislator['lifetime_score']     = $current['lifetime_score'];
+	// Full session history — delegated to legislator-sessions.php.
+	if ($with_sessions) {
+		$sessions = fi_legislator_sessions_get_history($id);
+		$legislator['sessions'] = $sessions;
 	}
 
 	return $legislator;
@@ -111,7 +80,7 @@ function fi_legislator_get_by_external_id(array $references): ?array {
 
 	foreach (['bioguide_id', 'lis_id', 'legiscan_id', 'votesmart_id', 'ballotpedia_id', 'openstates_id'] as $field) {
 		if (!empty($references[$field])) {
-			$where[]  = "l.{$field} = %s";
+			$where[]  = "{$field} = %s";
 			$params[] = $references[$field];
 		}
 	}
@@ -163,7 +132,7 @@ function fi_legislators_query(array $args): array {
 		'state'      => '',
 		'search'     => '',
 		'sort'       => 'na',
-		'limit'      => LEGISLATORS_DEFAULT_LIMIT,
+		'limit'      => LEGISLATORS_LIMIT,
 		'offset'     => 0,
 	]);
 
@@ -174,16 +143,25 @@ function fi_legislators_query(array $args): array {
 
 	[$where, $params] = _fi_legislators_build_where($args, $gov);
 
-	$order_by = _fi_legislators_build_order_by($args['sort']);
+	$order_by = [
+		'na' => 'l.last_name ASC,  l.first_name ASC',
+		'nd' => 'l.last_name DESC, l.first_name DESC',
+		'sa' => 'l.score ASC,  l.last_name ASC, l.first_name ASC',
+		'sd' => 'l.score DESC, l.last_name ASC, l.first_name ASC',
+		'pa' => 'l.party ASC,  l.last_name ASC, l.first_name ASC',
+		'pd' => 'l.party DESC, l.last_name ASC, l.first_name ASC',
+		'oa' => 'l.chamber ASC,  l.district ASC, l.last_name ASC, l.first_name ASC',
+		'od' => 'l.chamber DESC, l.district ASC, l.last_name ASC, l.first_name ASC',
+	][strtolower(trim($args['sort']))] ?? 'l.last_name ASC, l.first_name ASC';
 	$raw_limit = (int) $args['limit'];
-	$limit     = ($raw_limit <= 0) ? LEGISLATORS_MAX_LIMIT : min($raw_limit, LEGISLATORS_MAX_LIMIT);
+	$limit     = ($raw_limit <= 0) ? LEGISLATORS_LIMIT : min($raw_limit, LEGISLATORS_LIMIT);
 	$offset    = max(0, (int) $args['offset']);
 	$where_sql = implode(' AND ', $where);
 
 	$sql = "
 		SELECT
-			ls.legislator_id AS id,
-			ls.gov,
+			l.id,
+			l.gov,
 			l.display_name,
 			l.first_name,
 			l.last_name,
@@ -191,23 +169,16 @@ function fi_legislators_query(array $args): array {
 			l.image_url,
 			l.legacy_image_url,
 			l.date_updated,
-			ls.chamber,
-			ls.party,
-			ls.state,
-			ls.district,
-			ls.score,
-			ls.grade,
-			ls.session_id,
+			l.chamber,
+			l.party,
+			l.state,
+			l.district,
+			l.score,
+			l.session_id,
 			s.name AS session_name,
-			s.parent_id AS session_parent_id,
-			t.name AS district_name
-		FROM {$wpdb->prefix}fi_legislator_sessions ls
-		JOIN {$wpdb->prefix}fi_legislators l ON ls.legislator_id = l.id
-		JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
-		LEFT JOIN {$wpdb->prefix}fi_taxonomy t
-			ON ls.district = t.slug
-			AND t.gov = ls.gov
-			AND t.taxonomy = 'district'
+			s.parent_id AS session_parent_id
+		FROM {$wpdb->prefix}fi_legislators l
+		LEFT JOIN {$wpdb->prefix}fi_sessions s ON l.session_id = s.id
 		WHERE {$where_sql}
 		ORDER BY {$order_by}
 		LIMIT {$limit} OFFSET {$offset}
@@ -216,6 +187,7 @@ function fi_legislators_query(array $args): array {
 	$results = $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A);
 
 	if (!is_array($results)) {
+		fi_log('ERROR: ' . $wpdb->last_error);
 		return [];
 	}
 
@@ -266,7 +238,7 @@ function fi_legislators_get_by_session(int $session_id, array $filters = []): ar
 		}
 	}
 	if (empty($args['limit'])) {
-		$args['limit'] = LEGISLATORS_MAX_LIMIT;
+		$args['limit'] = LEGISLATORS_LIMIT;
 	}
 
 	$cache_key = _fi_legislators_build_cache_key($args);
@@ -349,17 +321,6 @@ function fi_legislators_count(array $args): int {
 // =============================================================================
 // ALIASES & CROSS-REFERENCE HELPERS
 // =============================================================================
-
-/**
- * Alias for fi_legislator_get() with sessions always included.
- * Exists so templates/rewrite.php that call this name continue to work.
- *
- * @param int $legislator_id
- * @return array|null
- */
-function fi_legislator_get_with_sessions(int $legislator_id): ?array {
-	return fi_legislator_get($legislator_id, true);
-}
 
 /**
  * Get multiple legislators by an array of IDs, each with full session data.
@@ -815,6 +776,66 @@ function fi_legislators_count_uncached(): int {
 	);
 }
 
+/**
+ * Total count of all legislators regardless of gov or session.
+ *
+ * @return int
+ */
+function fi_legislators_count_all(): int {
+	global $wpdb;
+	return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}fi_legislators");
+}
+
+/**
+ * Search legislators by name, joined to their most recent session.
+ *
+ * @param string $term Search term (min 3 chars).
+ * @param array  $args {
+ *   @type int  $limit Max rows. Default 50.
+ *   @type bool $full  True = full card columns + district join (ARRAY_A).
+ *                     False = minimal autocomplete columns (OBJECT). Default true.
+ * }
+ * @return array
+ */
+function fi_legislators_search(string $term, array $args = []): array {
+	global $wpdb;
+
+	if (strlen($term) < 3) return [];
+
+	$limit = min(100, max(1, (int) ($args['limit'] ?? 50)));
+	$full  = (bool) ($args['full'] ?? true);
+	$like  = '%' . $wpdb->esc_like($term) . '%';
+
+	if ($full) {
+		$select     = "ls.legislator_id AS id, ls.gov, l.display_name, l.first_name, l.last_name,
+			l.image_id, l.image_url, l.legacy_image_url,
+			ls.chamber, ls.party, ls.state, ls.district, td.name AS district_name,
+			ls.score, ls.session_id, s.name AS session_name, s.parent_id AS session_parent_id";
+		$extra_join = "LEFT JOIN {$wpdb->prefix}fi_taxonomy td ON td.id = ls.district AND td.taxonomy = 'district'";
+		$format     = ARRAY_A;
+	} else {
+		$select     = "l.id, l.first_name, l.last_name, l.display_name, ls.party, ls.chamber, s.gov";
+		$extra_join = '';
+		$format     = OBJECT;
+	}
+
+	$sql = "SELECT {$select}
+		FROM {$wpdb->prefix}fi_legislators l
+		INNER JOIN (
+			SELECT legislator_id, MAX(session_id) AS max_session_id
+			FROM {$wpdb->prefix}fi_legislator_sessions GROUP BY legislator_id
+		) latest ON l.id = latest.legislator_id
+		INNER JOIN {$wpdb->prefix}fi_legislator_sessions ls
+			ON ls.legislator_id = latest.legislator_id AND ls.session_id = latest.max_session_id
+		INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
+		{$extra_join}
+		WHERE (l.first_name LIKE %s OR l.last_name LIKE %s OR l.display_name LIKE %s)
+		ORDER BY l.last_name ASC, l.first_name ASC
+		LIMIT %d";
+
+	return $wpdb->get_results($wpdb->prepare($sql, $like, $like, $like, $limit), $format) ?: [];
+}
+
 // =============================================================================
 // SAVE / UPDATE / DELETE
 // =============================================================================
@@ -996,17 +1017,6 @@ function fi_legislator_save(array $data, ?int $legislator_id = null): int|false 
 }
 
 /**
- * Thin wrapper: update an existing legislator.
- *
- * @param int   $legislator_id
- * @param array $data
- * @return bool
- */
-function fi_legislator_update(int $legislator_id, array $data): bool {
-	return fi_legislator_save($data, $legislator_id) !== false;
-}
-
-/**
  * Delete a legislator and their session records.
  *
  * @param int $legislator_id
@@ -1160,18 +1170,30 @@ function fi_legislators_format_row(array $row): array {
 		'chamber'           => $chamber,
 		'state'             => $state,
 		'district'          => $district,
-		'district_name'     => $row['district_name'] ?? null,
+		'district_name'     => null,
 		'session_id'        => (int) ($row['session_id'] ?? 0),
 		'session_name'      => $row['session_name'] ?? null,
 		'session_parent_id' => !empty($row['session_parent_id']) ? (int) $row['session_parent_id'] : null,
 		'date_updated'      => $row['date_updated'] ?? null,
 	];
 
-	$leg['url']           = fi_get_legislator_url($leg['id']);
+	$leg['url']           = fi_legislator_get_url($leg['id']);
 	$leg['party_name']    = $leg['party']   ? fi_party_name($leg['party'])            : '';
 	$leg['chamber_label'] = $leg['chamber'] ? fi_chamber_label($gov, $leg['chamber']) : '';
 	$leg['chamber_title'] = $leg['chamber'] ? fi_chamber_title($gov, $leg['chamber']) : '';
 	$leg['state_name']    = $leg['state']   ? fi_state_name($leg['state'])             : '';
+
+	// Resolve district name from cache (single bulk query for all districts)
+	if (!empty($district) && is_numeric($district)) {
+		$dname = fi_district_name((int) $district);
+		if ($dname !== '') {
+			// US: strip leading "STATE " prefix (e.g. "AL 4th" → "4th")
+			if ($gov === 'US' && $state) {
+				$dname = ltrim(str_replace($state . ' ', '', $dname));
+			}
+			$leg['district_name'] = $dname;
+		}
+	}
 
 	return $leg;
 }
@@ -1179,94 +1201,6 @@ function fi_legislators_format_row(array $row): array {
 // =============================================================================
 // PRIVATE HELPERS
 // =============================================================================
-
-/**
- * Format a raw fi_legislators table row into the base legislator array.
- * Used by fi_legislator_get() for full single-record retrieval.
- *
- * @param array $row Raw database row from fi_legislators.
- * @return array
- */
-function _fi_legislator_format_base(array $row): array {
-	return [
-		'id'             => (int) ($row['id'] ?? 0),
-		'first_name'     => $row['first_name'] ?? '',
-		'middle_name'    => $row['middle_name'] ?? '',
-		'last_name'      => $row['last_name'] ?? '',
-		'display_name'   => $row['display_name'] ?? '',
-		'sort_name'      => $row['sort_name'] ?? '',
-		'slug'           => $row['slug'] ?? '',
-		'email'          => $row['email'] ?? '',
-		'phone'          => $row['phone'] ?? '',
-		'website'        => $row['website'] ?? '',
-		'address'        => $row['address'] ?? '',
-		'twitter'        => $row['twitter'] ?? '',
-		'facebook'       => $row['facebook'] ?? '',
-		'image_id'       => (int) ($row['image_id'] ?? 0),
-		'image_url'      => $row['image_url'] ?? '',
-		'bioguide_id'    => $row['bioguide_id'] ?? '',
-		'lis_id'         => $row['lis_id'] ?? '',
-		'legiscan_id'    => $row['legiscan_id'] ?? '',
-		'govtrack_id'    => $row['govtrack_id'] ?? '',
-		'votesmart_id'   => $row['votesmart_id'] ?? '',
-		'ballotpedia_id' => $row['ballotpedia_id'] ?? '',
-		'openstates_id'  => $row['openstates_id'] ?? '',
-		'meta'           => !empty($row['meta']) ? json_decode($row['meta'], true) : [],
-		'sessions'       => [],
-	];
-}
-
-/**
- * Query parent sessions for a single legislator, most-recent first.
- *
- * @param int $legislator_id
- * @return array
- */
-function _fi_legislator_query_sessions(int $legislator_id): array {
-	global $wpdb;
-
-	$rows = $wpdb->get_results($wpdb->prepare(
-		"SELECT
-			s.id           AS session_id,
-			s.name         AS session_name,
-			s.date_start,
-			s.date_end,
-			s.gov,
-			ls.score       AS session_score,
-			ls.score_data  AS session_score_data,
-			ls.chamber,
-			ls.district,
-			ls.party,
-			ls.image_id,
-			ls.score       AS lifetime_score
-		FROM {$wpdb->prefix}fi_legislator_sessions ls
-		INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
-		WHERE ls.legislator_id = %d
-			AND s.parent_id IS NULL
-		ORDER BY
-			COALESCE(s.date_start, '9999-12-31') DESC,
-			s.id DESC",
-		$legislator_id
-	), ARRAY_A);
-
-	if (!$rows) {
-		return [];
-	}
-
-	foreach ($rows as &$session) {
-		$gov = $session['gov'] ?? '';
-		$session['session_id']    = (int) $session['session_id'];
-		$session['image_id']      = (int) ($session['image_id'] ?? 0);
-		$session['gov_name']      = FI_GOVERNMENTS[$gov]['name'] ?? $gov;
-		$session['state_name']    = FI_GOVERNMENTS[$gov]['state_name'] ?? '';
-		$session['party_name']    = FI_PARTIES[$session['party']] ?? $session['party'];
-		$session['chamber_label'] = FI_CHAMBERS[$session['chamber']]['label'] ?? $session['chamber'];
-		$session['chamber_title'] = FI_CHAMBERS[$session['chamber']]['title'] ?? '';
-	}
-	unset($session);
-
-	return $rows;
-}
 
 /**
  * Build shared WHERE conditions + params array for fi_legislators_get() and fi_legislators_count().
@@ -1279,32 +1213,32 @@ function _fi_legislator_query_sessions(int $legislator_id): array {
 function _fi_legislators_build_where(array $args, string $gov): array {
 	global $wpdb;
 
-	$where  = ['ls.gov = %s'];
+	$where  = ['l.gov = %s'];
 	$params = [$gov];
 
-	// If explicit session_id provided, use it directly. Skip scope resolution for admin queries.
+	// If explicit session_id provided, use it directly.
 	if ( ! empty( $args['session_id'] ) ) {
-		$where[]  = 'ls.session_id = %d';
+		$where[]  = 'l.session_id = %d';
 		$params[] = (int) $args['session_id'];
 	}
 
 	if (!empty($args['chamber'])) {
 		$chamber = strtoupper(substr($args['chamber'], 0, 1));
 		if (in_array($chamber, ['S', 'H'], true)) {
-			$where[]  = 'ls.chamber = %s';
+			$where[]  = 'l.chamber = %s';
 			$params[] = $chamber;
 		}
 	}
 
 	if (!empty($args['party'])) {
 		$party    = sanitize_text_field($args['party']);
-		$where[]  = '(ls.party = %s OR ls.party LIKE %s)';
+		$where[]  = '(l.party = %s OR l.party LIKE %s)';
 		$params[] = $party;
 		$params[] = '%' . $wpdb->esc_like($party) . '%';
 	}
 
 	if (!empty($args['state'])) {
-		$where[]  = 'ls.state = %s';
+		$where[]  = 'l.state = %s';
 		$params[] = strtoupper(substr($args['state'], 0, 2));
 	}
 
@@ -1381,26 +1315,6 @@ function fi_legislators_resolve_session_scope(?int $session_id, string $gov): ar
 }
 
 /**
- * Build ORDER BY clause from a sort code.
- *
- * @param string $sort Sort code: na|nd|sa|sd|pa|pd|oa|od
- * @return string
- */
-function _fi_legislators_build_order_by(string $sort): string {
-	$map = [
-		'na' => 'l.last_name ASC,  l.first_name ASC',
-		'nd' => 'l.last_name DESC, l.first_name DESC',
-		'sa' => 'ls.score ASC,  l.last_name ASC, l.first_name ASC',
-		'sd' => 'ls.score DESC, l.last_name ASC, l.first_name ASC',
-		'pa' => 'ls.party ASC,  l.last_name ASC, l.first_name ASC',
-		'pd' => 'ls.party DESC, l.last_name ASC, l.first_name ASC',
-		'oa' => 'ls.chamber ASC,  ls.district ASC, l.last_name ASC, l.first_name ASC',
-		'od' => 'ls.chamber DESC, ls.district ASC, l.last_name ASC, l.first_name ASC',
-	];
-	return $map[strtolower(trim($sort))] ?? $map['na'];
-}
-
-/**
  * Build a deterministic cache key from query args.
  *
  * @param array  $args Query args.
@@ -1418,7 +1332,7 @@ function _fi_legislators_build_cache_key(array $args, string $type = 'list'): st
 		strtoupper($args['state'] ?? ''),
 		md5($args['search'] ?? ''),
 		$args['sort'] ?? 'na',
-		(int) ($args['limit'] ?? LEGISLATORS_DEFAULT_LIMIT),
+		(int) ($args['limit'] ?? LEGISLATORS_LIMIT),
 		(int) ($args['offset'] ?? 0),
 	]);
 }

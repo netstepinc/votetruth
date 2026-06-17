@@ -18,9 +18,10 @@ $state_name = $legislator['state_name'] ?? '';
 $district = $legislator['district'] ?? '';
 $chamber_label = $legislator['chamber_label'] ?? '';
 $chamber_title = $legislator['chamber_title'] ?? '';
-$lifetime_score = $legislator['lifetime_score'] ?? null;
-$session_score = $legislator['session_score'] ?? null;
-$session_name = $legislator['session_name'] ?? '';
+$score         = $legislator['score'] ?? null;
+$_current_session = $legislator['sessions'][0] ?? [];
+$score_session = $_current_session['score_session'] ?? null;
+$session_name  = $_current_session['session_name'] ?? '';
 $image_id = $legislator['image_id'] ?? 0;
 
 // Build page title
@@ -100,16 +101,16 @@ $base_url = home_url('/legislator/' . $legislator['id'] . '/');
                 
                 <!-- Scores -->
                 <div class="d-flex gap-4 mb-3">
-                    <?php if ($lifetime_score !== null): ?>
+                    <?php if ($score !== null): ?>
                         <div class="text-center">
-                            <div class="h4 mb-0"><?php echo esc_html($lifetime_score); ?>%</div>
-                            <small class="text-white-50">Lifetime Score</small>
+                            <div class="h4 mb-0"><?php echo esc_html($score); ?>%</div>
+                            <small class="text-white-50">Freedom Score</small>
                         </div>
                     <?php endif; ?>
                     
-                    <?php if ($session_score !== null): ?>
+                    <?php if ($score_session !== null): ?>
                         <div class="text-center">
-                            <div class="h4 mb-0"><?php echo esc_html($session_score); ?>%</div>
+                            <div class="h4 mb-0"><?php echo esc_html($score_session); ?>%</div>
                             <small class="text-white-50"><?php echo esc_html($session_name); ?></small>
                         </div>
                     <?php endif; ?>

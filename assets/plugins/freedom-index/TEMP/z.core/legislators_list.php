@@ -15,8 +15,8 @@ if(!defined('ABSPATH')) { exit; }
 // Request-level cache (single request deduplication)
 static $legislators_request_cache = [];
 
-const LEGISLATORS_DEFAULT_LIMIT = 24;
-const LEGISLATORS_MAX_LIMIT = 600;
+const LEGISLATORS_LIMIT = 24;
+const LEGISLATORS_LIMIT = 600;
 
 /**
  * Get legislators list with all filters and child session roll-up
@@ -46,7 +46,7 @@ function fi_legislators_list_get(array $args): array {
         'state'      => '',
         'search'     => '',
         'sort'       => 'na',
-        'limit'      => LEGISLATORS_DEFAULT_LIMIT,
+        'limit'      => LEGISLATORS_LIMIT,
         'offset'     => 0,
         'no_cache'   => false,
     ]);
@@ -131,7 +131,7 @@ function fi_legislators_list_get(array $args): array {
     $order_by = legislators_list_build_order_by($args['sort']);
 
     // Build LIMIT
-    $limit = min((int) $args['limit'], LEGISLATORS_MAX_LIMIT);
+    $limit = min((int) $args['limit'], LEGISLATORS_LIMIT);
     $offset = max(0, (int) $args['offset']);
 
     // Build SQL
@@ -387,7 +387,7 @@ function legislators_list_build_cache_key(array $args, string $type = 'list'): s
         strtoupper($args['state'] ?? ''),
         md5($args['search'] ?? ''),
         $args['sort'] ?? 'na',
-        (int) ($args['limit'] ?? LEGISLATORS_DEFAULT_LIMIT),
+        (int) ($args['limit'] ?? LEGISLATORS_LIMIT),
         (int) ($args['offset'] ?? 0),
     ];
 

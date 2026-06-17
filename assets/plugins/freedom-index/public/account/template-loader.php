@@ -247,7 +247,7 @@ function fi_reports_nav_html(array $report_links): string {
     }
     
 	function fi_legislators_find_mine(array $args = array()) {
-		fi_get_public_template('partials/legislators-find-mine', $args);
+		fi_get_public_template('legislators-find-mine', $args);
 	}
 
 	/**

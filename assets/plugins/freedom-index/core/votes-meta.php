@@ -13,10 +13,10 @@ if (!defined('ABSPATH')) {
 /**
  * Decode vote meta JSON to array
  * 
- * @param object $vote Vote object with meta property
+ * @param array $vote Vote row array with meta key
  * @return array Decoded meta array
  */
-function fi_vote_decode_meta(object $vote): array {
+function fi_vote_decode_meta(array $vote): array {
 	if (isset($vote['meta'])) {
 		if (is_array($vote['meta'])) {
 			return $vote['meta'];

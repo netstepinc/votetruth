@@ -133,7 +133,7 @@ $header_args = [
 	],
 ];
 
-fi_get_public_template('partials/template-header', $header_args);
+fi_get_public_template('template-header', $header_args);
 
 $all_votes = empty($tag_slug) && empty($chamber);
 ?>
@@ -248,7 +248,7 @@ $all_votes = empty($tag_slug) && empty($chamber);
 					$cost = !empty($vote_meta['cost']) ? fi_vote_cost_format($vote_meta['cost']) : ['html' => ''];
 
 					// Build URLs
-					$url_vote = fi_url_vote($vote['gov'], $vote['id']);
+					$url_vote = fi_vote_get_url($vote['gov'], $vote['id']);
 					$bill_url = $vote_meta['url_bill'] ?? '';
 					
 					// Build search text (vote-specific fields only)
@@ -279,7 +279,7 @@ $all_votes = empty($tag_slug) && empty($chamber);
 
 					// Wrap vote card in a container that can be hidden
 					echo '<div class="fi-vote-wrapper' . esc_attr($hidden_class) . '">';
-					fi_get_public_template('partials/vote-card', $vote_data);
+					fi_get_public_template('vote-card', $vote_data);
 					echo '</div>';
 				endforeach;
 			endif;
@@ -415,5 +415,5 @@ jQuery(document).ready(function($) {
 });
 </script>
 <?php 
-fi_get_public_template('partials/template-footer');
+fi_get_public_template('template-footer');
 get_footer();

@@ -1,66 +1,11 @@
 <?php
-/*
- * Freedom Index Public Template and UI Helpers
- *
- * Straight function version of the former FI\Public\TemplateLoader class file.
- *
- * Handles:
- * - Loading public template parts from FI_PUBLIC_DIR/templates/.
- * - Rendering shared reports navigation markup.
- * - Rendering shared personalize/contact form markup.
- * - Public query-var helper accessors.
- * - Small public UI helpers used by templates and PDF generation.
- * Refactored the public template-loader/UI helper file into straight functions.
-Key adjustments:
-Removed the FI\Public\TemplateLoader class/namespace wrapper.
-Preserved existing public helpers:
-fi_get_public_template()
-fi_get_personalize_form_html()
-fi_reports_nav_html()
-fi_legislators_find_mine()
-fi_public_get_legislator_id()
-fi_public_get_legislator_session_id()
-fi_public_get_report_id()
-fi_public_get_legislator_report_id()
-fi_public_get_legislator_tag_id()
-fi_scrollbar_css()
-fi_pdf_part()
-jbs_alert_signup_form()
-Added:
-fi_template_log()
-fi_template_normalize_name()
-fi_template_path()
-fi_get_template_html()
-jbs_alert_signup_form_config()
-Kept theme override support omitted, matching your comment that the theme and template are purpose-built together.
-Hardened template/part path handling against traversal.
-Changed extract($args) to extract($args, EXTR_SKIP).
-Escaped form_action with esc_url() instead of esc_attr().
-Sanitized the privacy notice with wp_kses_post().
-Kept legacy fi_public_get_report_id() slug helper, but documented it as legacy/non-legislator context. Legislator report/tag helpers remain ID-based.
- */
 
 if (!defined('ABSPATH')) exit;
 
 /**
- * Template-loader scoped log helper.
- *
- * @param string $message Log message.
- * @param string $file Optional file path.
- * @param int $line Optional line number.
- * @param string $level Log level.
- * @return bool
- */
-function fi_template_log(string $message, string $file = '', int $line = 0, string $level = 'debug'): bool {
-	// Enable if needed for template debugging.
-	// return function_exists('fi_log_area') ? fi_log_area('template_loader', $message, $file, $line, $level) : false;
-	return false;
-}
-
-/**
  * Normalize a public template name to a safe relative template path without extension.
  *
- * Allows nested template names such as partials/legislator-card-sm while preventing traversal.
+ * Allows nested template names such as legislator-card-sm while preventing traversal.
  *
  * @param string $template_name Template name without .php extension.
  * @return string Safe relative template name.
@@ -128,7 +73,6 @@ function fi_get_public_template($template_name, $args = []): void {
 		return;
 	}
 
-	fi_template_log('Freedom Index template not found: ' . $template_name, __FILE__, __LINE__, 'warning');
 }
 
 /**
@@ -327,7 +271,7 @@ function fi_get_personalize_form_html(array $args = []): string {
  * @return void
  */
 function fi_legislators_find_mine(array $args = []): void {
-	fi_get_public_template('partials/legislators-find-mine', $args);
+	fi_get_public_template('legislators-find-mine', $args);
 }
 
 /**

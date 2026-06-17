@@ -155,6 +155,57 @@ function fi_legislator_sessions_query(array $args = []): array|int {
 
 
 /**
+ * Get full session history for a legislator profile, most-recent first.
+ * Parent sessions only (sub-sessions excluded). District name resolved from fi_taxonomy.
+ * Returns formatted rows ready for display (gov_name, party_name, chamber_label, etc.).
+ *
+ * @param int $legislator_id
+ * @return array
+ */
+function fi_legislator_sessions_get_history(int $legislator_id): array {
+	global $wpdb;
+
+	$rows = $wpdb->get_results($wpdb->prepare(
+		"SELECT
+			s.id           AS session_id,
+			s.name         AS session_name,
+			s.date_start,
+			s.date_end,
+			s.gov,
+			ls.score       AS score_session,
+			ls.score_data  AS score_session_data,
+			ls.chamber,
+			ls.district,
+			td.name        AS district_name,
+			ls.party,
+			ls.image_id
+		FROM {$wpdb->prefix}fi_legislator_sessions ls
+		INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
+		LEFT  JOIN {$wpdb->prefix}fi_taxonomy td ON td.id = ls.district AND td.taxonomy = 'district'
+		WHERE ls.legislator_id = %d
+			AND s.parent_id IS NULL
+		ORDER BY
+			COALESCE(s.date_start, '9999-12-31') DESC,
+			s.id DESC",
+		$legislator_id
+	), ARRAY_A) ?: [];
+
+	foreach ($rows as &$row) {
+		$gov = $row['gov'] ?? '';
+		$row['session_id']    = (int) $row['session_id'];
+		$row['image_id']      = (int) ($row['image_id'] ?? 0);
+		$row['gov_name']      = FI_GOVERNMENTS[$gov]['name'] ?? $gov;
+		$row['state_name']    = FI_GOVERNMENTS[$gov]['state_name'] ?? '';
+		$row['party_name']    = fi_party_name($row['party'] ?? '');
+		$row['chamber_label'] = FI_CHAMBERS[$row['chamber']]['label'] ?? $row['chamber'];
+		$row['chamber_title'] = FI_CHAMBERS[$row['chamber']]['title'] ?? '';
+	}
+	unset($row);
+
+	return $rows;
+}
+
+/**
  * Get legislator sessions with optional filtering (cached for front-end).
  *
  * @param array $args Optional query arguments.
@@ -573,6 +624,27 @@ function fi_legislator_session_update_meta(int $record_id, array $meta_updates):
 	$meta = fi_legislator_session_get_all_meta($record_id);
 	$meta = array_merge($meta, $meta_updates);
 	return fi_legislator_session_set_all_meta($record_id, $meta);
+}
+
+/**
+ * Get distinct party abbreviations and chamber codes used in a government's sessions.
+ * Returns raw pairs for building filter options.
+ *
+ * @param string $gov Government code (e.g. 'US', 'TX').
+ * @return array[] Rows with keys 'party' and 'chamber'.
+ */
+function fi_legislator_sessions_get_party_chamber(string $gov): array {
+	global $wpdb;
+
+	return $wpdb->get_results($wpdb->prepare(
+		"SELECT DISTINCT ls.party, ls.chamber
+		FROM {$wpdb->prefix}fi_legislator_sessions ls
+		INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
+		WHERE s.gov = %s
+		AND ((ls.party IS NOT NULL AND ls.party != '') OR (ls.chamber IS NOT NULL AND ls.chamber IN ('H', 'S')))
+		ORDER BY ls.party ASC, ls.chamber ASC",
+		strtoupper($gov)
+	)) ?: [];
 }
 
 /**

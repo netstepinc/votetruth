@@ -4,6 +4,7 @@
  *
  * Retrieves elected officials from Geocodio, merges them with Freedom Index
  * legislator records, and updates available legislator metadata.
+ * 
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -140,23 +141,21 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 
 	if ( empty( $address_encoded ) ) {
 		fi_log( 'GEOCOD FETCH ERROR: Empty address_encoded', __FILE__, __LINE__ );
-		return array();
+		return array( 'officials' => array(), 'city' => '', 'state' => '' );
 	}
 
 	$cache_key = fi_cache_key('findmy/' . $address_encoded);
-	$officials = fi_cache( $cache_key );
-	fi_log( 'GEOCOD CACHE CHECK: cache_key=' . $cache_key . ', cached=' . ( false !== $officials && null !== $officials ? 'YES' : 'NO' ), __FILE__, __LINE__ );
+	$cached = fi_cache( $cache_key );
+	fi_log( 'GEOCOD CACHE CHECK: cache_key=' . $cache_key . ', cached=' . ( false !== $cached && null !== $cached ? 'YES' : 'NO' ), __FILE__, __LINE__ );
 
-	if ( false !== $officials && null !== $officials ) {
-		fi_log( 'GEOCOD CACHE HIT: Returning ' . count( $officials ) . ' officials from cache', __FILE__, __LINE__ );
-		return is_array( $officials )
-			? $officials
-			: array();
+	if ( false !== $cached && null !== $cached && is_array( $cached ) ) {
+		fi_log( 'GEOCOD CACHE HIT: Returning ' . count( $cached['officials'] ?? array() ) . ' officials from cache', __FILE__, __LINE__ );
+		return $cached;
 	}
 
 	if ( ! defined( 'API_KEY_GEOCOD' ) || empty( API_KEY_GEOCOD ) ) {
 		fi_log( 'GEOCOD FETCH ERROR: API_KEY_GEOCOD not defined or empty', __FILE__, __LINE__ );
-		return array();
+		return array( 'officials' => array(), 'city' => '', 'state' => '' );
 	}
 	fi_log( 'GEOCOD API KEY: Present', __FILE__, __LINE__ );
 
@@ -185,7 +184,7 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 			__LINE__
 		);
 
-		return array();
+		return array( 'officials' => array(), 'city' => '', 'state' => '' );
 	}
 
 	$response_code = wp_remote_retrieve_response_code( $geocode_response );
@@ -197,7 +196,7 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 			__LINE__
 		);
 
-		return array();
+		return array( 'officials' => array(), 'city' => '', 'state' => '' );
 	}
 
 	$response_body = wp_remote_retrieve_body( $geocode_response );
@@ -213,7 +212,7 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 			__LINE__
 		);
 
-		return array();
+		return array( 'officials' => array(), 'city' => '', 'state' => '' );
 	}
 
 	fi_log( 'GEOCOD API RESULTS COUNT: ' . ( isset( $geocode_data['results'] ) ? count( $geocode_data['results'] ) : 0 ), __FILE__, __LINE__ );
@@ -223,8 +222,10 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 
 	if ( ! is_array( $fields ) || empty( $fields ) ) {
 		fi_log( 'GEOCOD FETCH ERROR: No fields data in API response', __FILE__, __LINE__ );
-		fi_cache( $cache_key, array() );
-		return array();
+		$addr_comp    = $geocode_data['results'][0]['address_components'] ?? array();
+		$empty_result = array( 'officials' => array(), 'city' => $addr_comp['city'] ?? '', 'state' => $addr_comp['state'] ?? '' );
+		fi_cache( $cache_key, $empty_result );
+		return $empty_result;
 	}
 
 	$officials       = array();
@@ -377,11 +378,13 @@ function fi_geocod_fetch_officials( $address_encoded ) {
 	$officials = fi_geocod_merge_legislators_to_officials( $officials );
 	fi_log( 'GEOCOD MERGE COMPLETE: ' . count( $officials ) . ' officials after merge', __FILE__, __LINE__ );
 
-	fi_cache( $cache_key, $officials );
+	$addr_comp = $geocode_data['results'][0]['address_components'] ?? array();
+	$result    = array( 'officials' => $officials, 'city' => $addr_comp['city'] ?? '', 'state' => $addr_comp['state'] ?? '' );
+	fi_cache( $cache_key, $result );
 	fi_log( 'GEOCOD CACHE SAVED: cache_key=' . $cache_key . ', count=' . count( $officials ), __FILE__, __LINE__ );
 
 	fi_log( 'GEOCOD FETCH END: Returning ' . count( $officials ) . ' officials', __FILE__, __LINE__ );
-	return $officials;
+	return $result;
 }
 
 /**
@@ -622,7 +625,8 @@ function fi_geocod_get_officials() {
 	$address_encoded = rawurlencode( $address );
 	fi_log( 'GEOCOD ADDRESS ENCODED: ' . $address_encoded, __FILE__, __LINE__ );
 
-	$officials       = fi_geocod_fetch_officials( $address_encoded );
+	$fetch           = fi_geocod_fetch_officials( $address_encoded );
+	$officials       = $fetch['officials'];
 	fi_log( 'GEOCOD FETCH COMPLETE: Found ' . count( $officials ) . ' officials', __FILE__, __LINE__ );
 
 	$data = array(
@@ -653,7 +657,8 @@ function fi_geocod_get_officials_for_user_dashboard( string $address ) {
 	}
 
 	$address_encoded = rawurlencode( $address );
-	$officials       = fi_geocod_fetch_officials( $address_encoded );
+	$fetch     = fi_geocod_fetch_officials( $address_encoded );
+	$officials = $fetch['officials'];
 
 	return array(
 		'address'   => $address,

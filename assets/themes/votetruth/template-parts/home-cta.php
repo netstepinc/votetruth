@@ -47,19 +47,34 @@ Hold them to the standard they swore to uphold.
 		<p class="fs-3 fw-7 text-anchor text-center">Slogans lose power when <span class="text-nowrap">you know the score.</span></p>
 	</div>
 </div>
+
+<p class="fs-4 text-anchor fw-5 text-center">See their Freedom score.</p>
+<p class="fs-4 text-anchor fw-7 text-center mb-0">Hold them accountable.</p>
 */
 ?>
 <div class="container-fluid py-5 bg-amber-light-2">
 	<div class="container">
 		<div class="row">
 			<div class="col-12">
-				<p class="fs-3 fw-7 text-anchor text-center">Slogans lose power when <span class="text-nowrap">you know the score.</span></p>
-				<!-- <p class="fs-6 text-fade-anchor text-center">Find out if your legislators are working for you.</p> -->
-				<!-- <p class="fs-4 text-anchor fw-5 text-center">See their Freedom score.</p> -->
-				<!-- <p class="fs-4 text-anchor fw-7 text-center mb-0">Hold them accountable.</p> -->
-				<div class="mx-auto col-12 col-md-10 col-lg-8 col-xl-6 text-center py-5">
-					<a href="#findmy" class="btn btn-lg btn-primary fs-4 fw-7 bg-anchor w-100">Find My Legislators</a>
-				</div>
+				<p class="fs-4 text-anchor text-center mt-5">Slogans lose power when <span class="text-nowrap">you know the score.</span></p>
+				<p class="fs-3 fw-7 text-black text-center">Check Your <span class="text-nowrap">Legislators' Scores.</span></p>
+				<form id="footer-legislator-search-form" class="mx-auto col-12 col-md-10 col-lg-9 col-xl-8 mt-4 mb-5 pb-5" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
+					<div class="input-group position-relative">
+						<input id="footer-legislator-search-input" class="form-control form-control-lg fs-7 bg-white" name="fi_search" type="search" placeholder="Enter ZIP code or legislator name" value="" aria-label="Enter ZIP code" autocomplete="off" minlength="3">
+						<div id="footer-search-suggestions" class="position-absolute bg-white border rounded shadow d-none" style="z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
+						<button id="footer-search-clear-btn" class="btn btn-warning p-2 d-none" type="button" aria-label="Clear search" title="Clear search">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+						<button class="btn btn-amber fw-4 fs-6" type="submit" aria-label="Search">
+							<span class="d-none d-xl-inline">Find My Legislators</span>
+							<span class="d-none d-lg-inline d-xl-none">Find Legislators</span>
+							<span class="d-lg-none">Search</span>
+						</button>
+					</div>
+				</form>
 			</div>
 		</div>
 	</div>

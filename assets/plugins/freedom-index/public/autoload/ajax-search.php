@@ -126,7 +126,7 @@ function fi_search_representatives(string $query, array $source) {
 		$district_check = fi_check_multiple_districts($cached['officials']);
 		return [
 			'mode' => 'representatives',
-			'html' => fi_render_representatives($cached['officials'], $address, $district_check['has_multiple'], $district_check),
+			'html' => fi_render_representatives($cached['officials'], $address, $district_check['has_multiple'], $district_check, $cached['city'] ?? '', $cached['state'] ?? ''),
 			'address' => $address,
 			'count' => count($cached['officials']),
 			'officials' => $cached['officials'],
@@ -141,9 +141,11 @@ function fi_search_representatives(string $query, array $source) {
 
     // Call Geocod API directly with address
     fi_log( 'AJAX REPS: calling fi_geocod_fetch_officials with=' . $address_encoded, __FILE__, __LINE__ );
-    $officials = fi_geocod_fetch_officials($address_encoded);
-    fi_log( 'AJAX REPS: fi_geocod_fetch_officials returned ' . ( is_array($officials) ? count($officials) : 'non-array' ) . ' officials', __FILE__, __LINE__ );
-    if (!is_array($officials)) $officials = [];
+    $fetch        = fi_geocod_fetch_officials($address_encoded);
+    $officials    = $fetch['officials'];
+    $geocod_city  = $fetch['city'];
+    $geocod_state = $fetch['state'];
+    fi_log( 'AJAX REPS: fi_geocod_fetch_officials returned ' . count($officials) . ' officials, city=' . $geocod_city . ', state=' . $geocod_state, __FILE__, __LINE__ );
 
     // Check for multiple districts
     $district_info = fi_check_multiple_districts($officials);
@@ -151,7 +153,7 @@ function fi_search_representatives(string $query, array $source) {
 
     $result = [
         'mode' => 'representatives',
-        'html' => fi_render_representatives($officials, $address, $has_multiple, $district_info),
+        'html' => fi_render_representatives($officials, $address, $has_multiple, $district_info, $geocod_city, $geocod_state),
         'address' => $address,
         'count' => count($officials),
         'officials' => $officials,
@@ -171,36 +173,46 @@ function fi_search_representatives(string $query, array $source) {
  * Detect multiple districts in results.
  */
 function fi_check_multiple_districts(array $officials): array {
-    $us_districts = [];
-    $state_districts = [];
+    $us_house_districts    = [];
+    $state_house_districts = [];
 
     foreach ($officials as $official) {
-        $chamber = strtolower($official['chamber'] ?? '');
-        $type = strtolower($official['type'] ?? '');
-        $gov = $official['legislator']['gov'] ?? '';
+        $chamber  = strtolower($official['chamber'] ?? '');
         $district = $official['division'] ?? $official['legislator']['district'] ?? '';
+        if (!$district) continue;
 
-        $is_us_rep = ($gov === 'US' || $type === 'representative') && strpos($chamber, 'state') === false;
-        $is_state_rep = strpos($chamber, 'state') !== false || ($gov !== 'US' && $type === 'representative');
+        // Senators cover the entire state — two senators per state is expected, not ambiguous.
+        // Only House/Representative members have district-level assignments.
+        if (strpos($chamber, 'senator') !== false || strpos($chamber, 'senate') !== false) continue;
 
-        if ($is_us_rep && $district) $us_districts[$district] = true;
-        elseif ($is_state_rep && $district) $state_districts[$district] = true;
+        $is_state = strpos($chamber, 'state') !== false;
+        $is_house = strpos($chamber, 'representative') !== false
+            || strpos($chamber, 'house') !== false
+            || strpos($chamber, 'assembly') !== false;
+
+        if ($is_house && !$is_state) {
+            $us_house_districts[$district] = true;
+        } elseif ($is_house && $is_state) {
+            $state_house_districts[$district] = true;
+        }
     }
 
-    if (count($us_districts) > 1) return ['has_multiple' => true, 'type' => 'federal', 'count' => count($us_districts)];
-    if (count($state_districts) > 1) return ['has_multiple' => true, 'type' => 'state', 'count' => count($state_districts)];
+    if (count($us_house_districts) > 1)    return ['has_multiple' => true, 'type' => 'federal', 'count' => count($us_house_districts)];
+    if (count($state_house_districts) > 1) return ['has_multiple' => true, 'type' => 'state',   'count' => count($state_house_districts)];
     return ['has_multiple' => false, 'type' => '', 'count' => 0];
 }
 
 /**
  * Render representatives HTML with optional address refinement.
  */
-function fi_render_representatives(array $officials, string $address, bool $has_multiple, array $district_info): string {
+function fi_render_representatives(array $officials, string $address, bool $has_multiple, array $district_info, string $geocod_city = '', string $geocod_state = ''): string {
     ob_start();
 
     if ($has_multiple) {
         $zip = '';
         if (preg_match('/\b(\d{5}(-\d{4})?)\b/', $address, $m)) $zip = $m[1];
+
+        $detected_state = strtoupper($geocod_state);
         ?>
         <div class="alert alert-warning p-2 mb-3">
             <div class="d-flex align-items-start gap-2">
@@ -209,11 +221,11 @@ function fi_render_representatives(array $officials, string $address, bool $has_
             </div>
             <form class="row g-2 mt-1 fi-address-refine-form" onsubmit="return false;">
                 <div class="col-12 col-sm-6 col-md-4"><input type="text" class="form-control form-control-sm" name="street" placeholder="Street Address" required style="font-size: 0.875rem;"></div>
-                <div class="col-6 col-sm-3 col-md-2"><input type="text" class="form-control form-control-sm" name="city" placeholder="City" required style="font-size: 0.875rem;"></div>
+                <div class="col-6 col-sm-3 col-md-2"><input type="text" class="form-control form-control-sm" name="city" placeholder="City" value="<?= esc_attr($geocod_city) ?>" style="font-size: 0.875rem;"></div>
                 <div class="col-3 col-sm-2 col-md-2">
                     <select class="form-control form-control-sm" name="state" required style="font-size: 0.875rem;">
-                        <?php foreach (FI_GOVERNMENTS as $abbr => $state): if($abbr != 'US'): ?>
-                        <option value="<?= esc_attr($abbr) ?>"><?= esc_html($state) ?></option>
+                        <?php foreach (FI_GOVERNMENTS as $abbr => $gov_name): if($abbr !== 'US'): ?>
+                        <option value="<?= esc_attr($abbr) ?>" <?= $abbr === $detected_state ? 'selected' : ''; ?>><?= esc_html($gov_name) ?></option>
                         <?php endif; endforeach; ?>
                     </select>
                 </div>
@@ -225,40 +237,51 @@ function fi_render_representatives(array $officials, string $address, bool $has_
     }
 
     if (!empty($officials)) {
-        echo '<div class="container-xl"><div class="row g-3">';
+        // Group officials by gov so we can render a heading per group.
+        $groups = [];
         foreach ($officials as $official) {
             if (!is_array($official)) continue;
-
-            $bio = $official['bio'] ?? [];
             $chamber = $official['chamber'] ?? '';
             $gov = $official['legislator']['gov'] ?? '';
             if ($gov === '') $gov = (strpos(strtolower($chamber), 'state') !== false) ? 'state' : 'US';
-            $score = $official['score'] ?? null;
+            $groups[$gov][] = $official;
+        }
 
-            $leg = [
-                'id' => (int) ($official['id'] ?? 0),
-                'display_name' => $official['name'] ?? '',
-                'first_name' => $bio['first_name'] ?? '',
-                'last_name' => $bio['last_name'] ?? '',
-                'image_url' => $official['photo_url'] ?? ($bio['photo_url'] ?? null),
-                'image_id' => null,
-                'session_image_id' => null,
-                'lazy_load' => true,
-                'score' => ($score !== null && $score !== '') ? (int) $score : null,
-                'chamber' => $chamber,
-                'party' => $official['party'] ?? '',
-                'state' => $official['legislator']['state'] ?? '',
-                'district' => $official['legislator']['district'] ?? '',
-                'district_name' => $official['division'] ?? '',
-                'gov' => $gov,
-                'url' => $official['legislator']['url'] ?? ($official['contact']['url'] ?? ''),
-            ];
+        echo '<div class="container-xl">';
+        foreach ($groups as $gov => $group_officials) {
+            $heading = ($gov === 'US') ? 'Federal' : (FI_GOVERNMENTS[$gov] ?? $gov);
+            echo '<h3 class="fs-7 fw-7 text-muted border-bottom pb-2 mt-3 mb-3">' . esc_html($heading) . '</h3>';
+            echo '<div class="row g-3">';
+            foreach ($group_officials as $official) {
+                $bio = $official['bio'] ?? [];
+                $chamber = $official['chamber'] ?? '';
+                $score = $official['score'] ?? null;
 
-            echo '<div class="col-12 col-md-6">';
-            fi_get_public_template('legislators-card', ['legislator' => $leg, 'gov' => $leg['gov']]);
+                $leg = [
+                    'id' => (int) ($official['legislator']['id'] ?? 0),
+                    'display_name' => $official['name'] ?? '',
+                    'first_name' => $bio['first_name'] ?? '',
+                    'last_name' => $bio['last_name'] ?? '',
+                    'image_id' => $official['legislator']['image_id'] ?? null,
+                    'image_url' => empty($official['legislator']['image_id']) ? ($official['photo_url'] ?? ($bio['photo_url'] ?? '')) : '',
+                    'lazy_load' => true,
+                    'score' => ($score !== null && $score !== '') ? (int) $score : null,
+                    'chamber' => $chamber,
+                    'party' => $official['party'] ?? '',
+                    'state' => $official['legislator']['state'] ?? '',
+                    'district' => $official['legislator']['district'] ?? '',
+                    'district_name' => $official['division'] ?? '',
+                    'gov' => $gov,
+                    'url' => $official['legislator']['url'] ?? ($official['contact']['url'] ?? ''),
+                ];
+
+                echo '<div class="col-12 col-md-6">';
+                fi_get_public_template('legislators-card', ['legislator' => $leg, 'gov' => $leg['gov']]);
+                echo '</div>';
+            }
             echo '</div>';
         }
-        echo '</div></div>';
+        echo '</div>';
     } else {
         echo '<div class="alert alert-warning">No officials found' . ($address ? ': ' . esc_html($address) : '') . '.</div>';
     }
@@ -278,22 +301,7 @@ function fi_search_legislators(string $query) {
         ];
     }
 
-    global $wpdb;
-    $like = '%' . $wpdb->esc_like($query) . '%';
-
-    $sql = "
-        SELECT ls.legislator_id AS id, ls.gov, l.display_name, l.first_name, l.last_name, l.image_id, l.image_url, l.legacy_image_url,
-            ls.chamber, ls.party, ls.state, ls.district, ls.score, ls.session_id, s.name AS session_name, s.parent_id AS session_parent_id
-        FROM {$wpdb->prefix}fi_legislators l
-        INNER JOIN (SELECT legislator_id, MAX(session_id) AS max_session_id FROM {$wpdb->prefix}fi_legislator_sessions GROUP BY legislator_id) latest ON l.id = latest.legislator_id
-        INNER JOIN {$wpdb->prefix}fi_legislator_sessions ls ON ls.legislator_id = latest.legislator_id AND ls.session_id = latest.max_session_id
-        INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
-        WHERE (l.display_name LIKE %s OR l.first_name LIKE %s OR l.last_name LIKE %s)
-        ORDER BY l.last_name ASC, l.first_name ASC
-        LIMIT 50
-    ";
-
-    $rows = $wpdb->get_results($wpdb->prepare($sql, $like, $like, $like), ARRAY_A);
+    $rows = fi_legislators_search($query, ['limit' => 50, 'full' => true]);
 
     ob_start();
     echo '<div class="row g-3">';
@@ -333,21 +341,7 @@ function fi_public_ajax_handle_search_autocomplete(): void {
     $cached = fi_cache($cache_key);
     if (is_array($cached)) wp_send_json_success($cached);
 
-    global $wpdb;
-    $search_term = '%' . $wpdb->esc_like($term) . '%';
-
-    $sql = "
-        SELECT l.id, l.first_name, l.last_name, l.display_name, ls.party, ls.chamber, s.gov
-        FROM {$wpdb->prefix}fi_legislators l
-        INNER JOIN (SELECT legislator_id, MAX(session_id) AS max_session_id FROM {$wpdb->prefix}fi_legislator_sessions GROUP BY legislator_id) latest ON l.id = latest.legislator_id
-        INNER JOIN {$wpdb->prefix}fi_legislator_sessions ls ON ls.legislator_id = latest.legislator_id AND ls.session_id = latest.max_session_id
-        INNER JOIN {$wpdb->prefix}fi_sessions s ON ls.session_id = s.id
-        WHERE (l.first_name LIKE %s OR l.last_name LIKE %s OR l.display_name LIKE %s)
-        ORDER BY l.last_name ASC, l.first_name ASC
-        LIMIT %d
-    ";
-
-    $results = $wpdb->get_results($wpdb->prepare($sql, $search_term, $search_term, $search_term, $limit));
+    $results = fi_legislators_search($term, ['limit' => $limit, 'full' => false]);
     if (empty($results)) wp_send_json_success([]);
 
     $suggestions = [];
@@ -356,9 +350,7 @@ function fi_public_ajax_handle_search_autocomplete(): void {
         if (!empty($r->party)) $label .= ' (' . strtoupper($r->party) . ')';
         if (!empty($r->gov)) $label .= ' ' . strtoupper($r->gov);
 
-        $url = function_exists('fi_get_legislator_url')
-            ? fi_get_legislator_url((int) $r->id)
-            : home_url('/legislator/' . (int) $r->id . '/');
+        $url = fi_legislator_get_url((int) $r->id);
 
         $suggestions[] = ['type' => 'legislator', 'label' => $label, 'value' => $r->display_name ?? '', 'url' => $url];
     }

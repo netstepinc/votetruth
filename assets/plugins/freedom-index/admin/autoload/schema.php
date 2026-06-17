@@ -82,7 +82,7 @@ function fi_schema_ensure(): void {
 		ballotpedia_id VARCHAR(100) NULL,
 		openstates_id VARCHAR(100) NULL,
 		image_id BIGINT UNSIGNED NULL,
-		image_url VARCHAR(255) NULL,
+		image_url VARCHAR(255) NULL, /* DEPRECATED: This cached value is too risky to rely on. We'll need to remove it from the admin:legislator edit process */
 		session_id BIGINT UNSIGNED NULL,
 		gov VARCHAR(2) NULL,
 		state VARCHAR(2) NULL,
@@ -299,7 +299,6 @@ function fi_schema_ensure(): void {
 		gov CHAR(2) NOT NULL,
 		taxonomy ENUM('tag', 'district') NOT NULL,
 		name VARCHAR(255) NOT NULL,
-		slug VARCHAR(255) NULL,
 		meta JSON NULL,
 		date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		date_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

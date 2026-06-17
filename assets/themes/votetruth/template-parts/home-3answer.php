@@ -16,9 +16,16 @@ The Freedom Index scores every legislator against one standard: the Constitution
 	<div class="container py-5">
 		<div class="row g-0">
 			<div class="col-12 col-md-6 pb-4 pb-md-0">
-				<p class="text-uppercase text-anchor fs-6">One number tells a story</p>
+				<p class="text-uppercase text-anchor fs-6 text-center text-lg-start">One number tells a story</p>
+				<p class="fs-6 fw-5 text-center text-lg-start">The Freedom Score shows whether your legislators voted to keep government small and your life big.</p>
+				<!--
 				<p class="fs-6 fw-5">The Constitution was written to keep government small and your life big.</p>
 				<p class="fs-7">The <span class="fw-7">Freedom Score</span> tells you how often your legislators voted to protect your rights, wallet, country, and independence.</p>
+				<p class="fs-6 fw-7 text-anchor">Scores are all backed by vote records.</p>
+-->
+<?php if(isset($_GET['words']) && $_GET['words'] == 'more'): ?>
+				<p class="fs-6 fw-7 text-anchor mt-4 text-center text-lg-start">Every score is backed by voting records.</p>
+<?php endif; ?>
 			</div>
 			<div class="col-12 col-md-6">
 				<?php get_template_part('template-parts/score-chart'); ?>

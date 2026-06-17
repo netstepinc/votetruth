@@ -56,7 +56,7 @@ $form_action   = $is_edit
 	: fi_admin_url('fi-legislators', ['action' => 'add']);
 $page_title    = $is_edit ? 'Edit Legislator' : 'Add Legislator';
 
-$view_url      = $legislator_id ? fi_get_legislator_url($legislator_id) : '';
+$view_url      = $legislator_id ? fi_legislator_get_url($legislator_id) : '';
 $updated       = isset($_GET['updated']) ? (int) $_GET['updated'] : 0;
 
 

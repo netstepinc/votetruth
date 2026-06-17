@@ -693,11 +693,13 @@ function fi_score_calculate_average(array $legislators, ?string $filter_by = nul
 			}
 		}
 
-		$score = (float) ($legislator['score'] ?? 0);
-		if ($score > 0) {
-			$sum += $score;
-			$count++;
+		$raw = $legislator['score'] ?? null;
+		if ($raw === null || $raw === '') {
+			continue;
 		}
+		$score = (float) $raw;
+		$sum += $score;
+		$count++;
 	}
 
 	return [
@@ -722,8 +724,8 @@ function fi_score_calculate_average_by_party(array $legislators): array {
 	$party_counts = [];
 
 	foreach ($legislators as $leg) {
-		$score = $leg->score ?? null;
-		$party = $leg->party ?? '';
+		$score = $leg['score'] ?? null;
+		$party = $leg['party'] ?? '';
 
 		if ($score === null || $score === '' || !$party) {
 			continue;
@@ -764,8 +766,8 @@ function fi_score_calculate_average_by_chamber(array $legislators): array {
 	$chamber_counts = [];
 
 	foreach ($legislators as $leg) {
-		$score = $leg->score ?? null;
-		$chamber = $leg->chamber ?? '';
+		$score = $leg['score'] ?? null;
+		$chamber = $leg['chamber'] ?? '';
 
 		if ($score === null || $score === '') {
 			continue;

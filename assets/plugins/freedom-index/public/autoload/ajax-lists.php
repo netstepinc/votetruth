@@ -149,23 +149,11 @@ function fi_public_ajax_lists_get_owned_list(int $list_id, int $user_id): ?objec
 		return null;
 	}
 
-	if (function_exists('fi_list_get_by_id')) {
-		$list = fi_list_get_by_id($list_id);
-		if ($list && (int) ($list->user_id ?? 0) === $user_id) {
-			return $list;
-		}
-		return null;
+	$list = fi_list_get_by_id($list_id);
+	if ($list && (int) ($list->user_id ?? 0) === $user_id) {
+		return $list;
 	}
-
-	global $wpdb;
-
-	$list = $wpdb->get_row($wpdb->prepare(
-		"SELECT * FROM {$wpdb->prefix}fi_user_lists WHERE id = %d AND user_id = %d LIMIT 1",
-		$list_id,
-		$user_id
-	));
-
-	return $list ?: null;
+	return null;
 }
 
 /**
@@ -185,24 +173,7 @@ function fi_public_ajax_lists_decode_legislators($value): array {
  * @return array Meta array.
  */
 function fi_public_ajax_lists_decode_meta($value): array {
-	if (function_exists('fi_meta_decode')) {
-		return fi_meta_decode($value);
-	}
-
-	if (is_array($value)) {
-		return $value;
-	}
-
-	if (is_object($value)) {
-		return (array) $value;
-	}
-
-	if (is_string($value) && $value !== '') {
-		$decoded = json_decode($value, true);
-		return is_array($decoded) ? $decoded : [];
-	}
-
-	return [];
+	return fi_meta_decode($value);
 }
 
 /**
@@ -213,43 +184,7 @@ function fi_public_ajax_lists_decode_meta($value): array {
  * @return int|false List ID or false.
  */
 function fi_public_ajax_lists_save(array $data, ?int $list_id = null) {
-	if (function_exists('fi_list_save')) {
-		return fi_list_save($data, $list_id);
-	}
-
-	global $wpdb;
-
-	$list_id = $list_id ? absint($list_id) : null;
-	$user_id = absint($data['user_id'] ?? get_current_user_id());
-	$name = fi_public_ajax_lists_normalize_name($data['name'] ?? '');
-	$legislators = fi_public_ajax_lists_normalize_legislator_ids($data['legislators'] ?? []);
-	$meta = isset($data['meta']) && is_array($data['meta']) ? $data['meta'] : [];
-
-	$db_data = [
-		'user_id'     => $user_id,
-		'name'        => $name,
-		'legislators' => wp_json_encode($legislators),
-		'meta'        => !empty($meta) ? wp_json_encode($meta) : null,
-	];
-
-	if ($list_id) {
-		$result = $wpdb->update(
-			$wpdb->prefix . 'fi_user_lists',
-			$db_data,
-			['id' => $list_id, 'user_id' => $user_id],
-			['%d', '%s', '%s', '%s'],
-			['%d', '%d']
-		);
-		return $result !== false ? $list_id : false;
-	}
-
-	$result = $wpdb->insert(
-		$wpdb->prefix . 'fi_user_lists',
-		$db_data,
-		['%d', '%s', '%s', '%s']
-	);
-
-	return $result !== false ? (int) $wpdb->insert_id : false;
+	return fi_list_save($data, $list_id);
 }
 
 /**
@@ -547,19 +482,7 @@ function fi_public_ajax_handle_delete_list(): void {
 		wp_send_json_error(['message' => 'List not found']);
 	}
 
-	if (function_exists('fi_list_delete')) {
-		$result = fi_list_delete($list_id, $user_id);
-	} else {
-		global $wpdb;
-		$result = $wpdb->delete(
-			$wpdb->prefix . 'fi_user_lists',
-			[
-				'id'      => $list_id,
-				'user_id' => $user_id,
-			],
-			['%d', '%d']
-		);
-	}
+	$result = fi_list_delete($list_id);
 
 	if ($result) {
 		wp_send_json_success();

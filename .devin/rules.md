@@ -3,9 +3,9 @@
 ## Project Context
 
 **Project:** Freedom Index WordPress Plugin + Integrated Theme  
-**Location:** `/var/www/html/votestellthetruth/`  
+**Location:** `/var/www/html/votetruth/`  
 **Core Plugin:** `assets/plugins/freedom-index/`  
-**Active Theme:** `assets/themes/truth/`  
+**Active Theme:** `assets/themes/votetruth/`  
 **Philosophy:** ZERO BLOAT - Procedural code, no backward compatibility, delete before adding
 
 ---
@@ -34,6 +34,8 @@
 - **Use existing functions** - avoid redundant functions at all costs.
 - **If legacy behavior conflicts with correctness**, remove legacy behavior.
 - **Delete before adding** - remove complexity before implementing new solutions.
+- **No compatibility wrappers.** Never add `function_exists()`, `class_exists()`, fallback shims, or defensive guards to hide broken code. If something is broken, it should break visibly so it gets fixed.
+- **No silent failure.** Do not add `try/catch`, empty error returns, or fallback values to mask missing functions or bad data. Surface the problem.
 
 ### Decision Defaults
 - If there are two viable approaches, **choose the simpler one**.
@@ -277,7 +279,48 @@ Before marking work complete:
 
 ---
 
-## 10. Tool / Workflow Expectations
+## 10. Project History & Codebase State
+
+- **Origin:** Standalone PHP/Joomla → WP posts/taxonomies → WP multisite (50 states) → Single-site custom DB tables (current)
+- **Current data model:** Custom tables, single site, no multisite. This is the authoritative architecture.
+- **Previous AI refactors:** Devin Adaptive agent ran multiple sweeping refactors. Codebase quality is **unknown in places** — verify before trusting existing code, especially in `core/`, `public/`, and `admin/`.
+- **`z.*` directories** (`z.core/`, `z.public/`, `z.api/`) are legacy reference only — do not use or restore from them.
+
+---
+
+## 11. AI Agent Workflow Rules
+
+### Diagnose Before Coding
+- **State the problem and the proposed fix first.** Do not write any code until the approach is confirmed.
+- **Show your reasoning** in one or two sentences: what is broken, why, and what the fix is.
+- **Wait for explicit approval** before implementing anything.
+- Exception: If the fix is a single-line, obviously correct, zero-risk change AND it was directly requested, proceed.
+
+### Scope Discipline
+- **No sweeping refactors.** Work through the UX flow start-to-finish, fixing issues as encountered.
+- **One task at a time.** Complete it, verify it, then move on.
+- **If you notice something broken outside the current task:** stop, describe it in one sentence, ask whether to fix it now or log it. Do not touch it until told to.
+- **Targeted edits only.** If a fix requires touching more than the immediate task, flag it before proceeding.
+
+### Function Change Protocol
+- **Before changing any function** (signature, behavior, name, return type): grep all call sites and report them.
+- **Update all call sites** as part of the same change. Do not leave orphaned callers.
+- **No compatibility shims.** If the old signature is wrong, fix it everywhere. Do not wrap it.
+- **If a call site cannot be found:** say so explicitly. Do not assume it is safe.
+
+### No Defensive Code
+- **No `function_exists()`, `class_exists()`, or `isset()` guards** added to hide missing functions or bad structure.
+- **No fallback return values** that mask errors (e.g., returning `[]` when a required function is missing).
+- **Let breakage surface.** A fatal error on the spot is better than silent wrong behavior buried in the code.
+
+### General
+- **Ask one concise question, wait for the answer** before proceeding when scope is unclear.
+- **Token discipline.** A confident wrong answer is worse than a brief honest question.
+- **Do not refactor healthy code** while fixing something else.
+
+---
+
+## 12. Tool / Workflow Expectations
 
 - **Search before editing** when scope is unclear
 - **Prefer targeted edits** over broad rewrites
@@ -285,6 +328,4 @@ Before marking work complete:
 - **Log significant architectural changes** in relevant DEV.DOCS file when requested
 - **Do not run destructive commands** without explicit approval
 
----
-
-**Summary: ZERO BLOAT. Procedural code. Arrays over objects. Delete before adding. Fix root causes. Minimal changes. Verify everything.**
+**Summary: ZERO BLOAT. Procedural code. Arrays over objects. Delete before adding. Fix root causes. Minimal changes. Verify everything. No sweeping refactors.**

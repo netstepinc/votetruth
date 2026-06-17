@@ -155,7 +155,7 @@ if($district_id){
 }
 $represents .= ' (' . $party . ')';
 
-$url_shortcut = str_replace('https://', '', fi_get_legislator_short_url($leg_id));
+$url_shortcut = str_replace('https://', '', fi_legislator_get_short_url($leg_id));
 ob_start();
 ?>
 <table cellspacing="0" cellpadding="0" class="table table-borderless mb-1">

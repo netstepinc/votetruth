@@ -60,7 +60,7 @@ function fi_url_legislator($id): string {
 	}
 
 	if (function_exists('fi_get_legislator_url')) {
-		return fi_get_legislator_url($legislator_id);
+		return fi_legislator_get_url($legislator_id);
 	}
 
 	return home_url('/legislator/' . $legislator_id . '/');

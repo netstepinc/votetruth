@@ -23,7 +23,7 @@ $current_report_id = (int) (get_query_var('fi_report_id') ?: 0);
 $current_tag_id = (int) (get_query_var('fi_tag_id') ?: get_query_var('issue_id') ?: 0);
 
 // FAST: Get legislator with sessions for header (single query)
-$legislator = fi_legislator_get_with_sessions($legislator_id);
+$legislator = fi_legislator_get($legislator_id, true);
 if (!$legislator) {
     wp_redirect(home_url('/legislators/'));
     exit;

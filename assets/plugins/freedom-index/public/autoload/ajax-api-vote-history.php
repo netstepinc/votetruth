@@ -254,7 +254,7 @@ function fi_public_ajax_vote_history_render_html(array $result, array $context =
 		]);
 
 		if (function_exists('fi_get_public_template')) {
-			fi_get_public_template('partials/vote-card', $vote_data);
+			fi_get_public_template('vote-card', $vote_data);
 		} else {
 			fi_public_ajax_vote_history_render_fallback_vote_card($vote_data);
 		}

@@ -308,14 +308,14 @@ function fi_legislator_votes_get(int $legislator_id, string $chamber): array {
 		$reports = fi_reports_get_by_session($session_id);
 		$reports = is_array($reports) ? $reports : [];
 
-		$score_data_raw = $session['session_score_data'] ?? null;
+		$score_data_raw = $session['score_session_data'] ?? null;
 		$session_data = [
 			'session_id'   => $session_id,
 			'session_name' => $session['session_name'] ?? ($session_cache['session_name'] ?? ''),
 			'gov'          => $session['gov'] ?? ($session_cache['gov'] ?? ''),
 			'date_start'   => $session['date_start'] ?? null,
 			'date_end'     => $session['date_end'] ?? null,
-			'score'        => $session['session_score'] ?? null,
+			'score'        => $session['score_session'] ?? null,
 			'score_data'   => is_string($score_data_raw) ? json_decode($score_data_raw, true) : $score_data_raw,
 			'reports'      => [],
 			'all_votes'    => [],

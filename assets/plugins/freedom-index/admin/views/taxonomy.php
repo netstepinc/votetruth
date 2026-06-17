@@ -48,7 +48,7 @@ if ($is_tag) {
 }
 
 if ($search !== '') {
-	$where[] = "(name LIKE %s OR slug LIKE %s)";
+	$where[] = "name LIKE %s";
 	$like = '%' . $wpdb->esc_like($search) . '%';
 	$vals[] = $like;
 	$vals[] = $like;
@@ -56,13 +56,11 @@ if ($search !== '') {
 
 // Districts: allow state narrowing for US congressional districts.
 if ($taxonomy === 'district' && $gov === 'US' && $state !== '') {
-	// District slugs look like "tn-7th" and names like "TN 7th"
-	$where[] = "(slug LIKE %s OR name LIKE %s)";
-	$vals[] = strtolower($state) . '-%';
+	$where[] = "name LIKE %s";
 	$vals[] = $state . ' %';
 }
 
-$sql = "SELECT id, gov, taxonomy, name, slug, date_updated
+$sql = "SELECT id, gov, taxonomy, name, date_updated
 		FROM {$wpdb->prefix}fi_taxonomy
 		WHERE " . implode(' AND ', $where) . "
 		ORDER BY name ASC";
@@ -120,19 +118,6 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 							>
 						</div>
 
-						<div class="mb-3">
-							<label class="form-label fw-semibold" for="fi-taxonomy-slug">Slug</label>
-							<input
-								name="slug"
-								id="fi-taxonomy-slug"
-								type="text"
-								class="form-control"
-								value="<?php echo esc_attr((string) ($item->slug ?? '')); ?>"
-								placeholder="auto-generated if blank"
-							>
-							<div class="form-text">Leave blank to auto-generate from name.</div>
-						</div>
-
 						<div class="d-flex gap-2">
 							<button type="submit" class="btn btn-primary"><?php echo esc_html($is_edit ? 'Save Changes' : 'Add New'); ?></button>
 							<?php if ($is_edit): ?>
@@ -154,7 +139,7 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 							<?php if ($taxonomy === 'district' && $gov === 'US'): ?>
 								<input type="text" name="state" value="<?php echo esc_attr($state); ?>" placeholder="State" class="form-control form-control-sm" style="width:90px;">
 							<?php endif; ?>
-							<input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search name/slug" class="form-control form-control-sm">
+							<input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search name" class="form-control form-control-sm">
 							<button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
 						</form>
 					</div>
@@ -170,14 +155,13 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 										<th style="width:80px;">Gov</th>
 									<?php endif; ?>
 									<th>Name</th>
-									<th style="width:35%;">Slug</th>
-									<th style="width:180px;">Updated</th>
+										<th style="width:180px;">Updated</th>
 									<th style="width:120px;">Actions</th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php if (empty($rows)): ?>
-										<tr><td colspan="<?php echo $is_tag ? 5 : 6; ?>" class="text-muted">No results.</td></tr>
+										<tr><td colspan="<?php echo $is_tag ? 3 : 4; ?>" class="text-muted">No results.</td></tr>
 								<?php else: ?>
 									<?php foreach ($rows as $row): ?>
 										<tr>
@@ -186,8 +170,7 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 												<td><?php echo esc_html((string) $row->gov); ?></td>
 											<?php endif; ?>
 											<td class="fw-semibold"><?php echo esc_html((string) $row->name); ?></td>
-											<td><code><?php echo esc_html((string) $row->slug); ?></code></td>
-											<td class="text-muted small"><?php echo esc_html((string) ($row->date_updated ?? '')); ?></td>
+												<td class="text-muted small"><?php echo esc_html((string) ($row->date_updated ?? '')); ?></td>
 											<td>
 												<div class="d-flex align-items-center gap-2">
 													<a class="btn btn-sm btn-outline-primary" href="<?php echo esc_url(add_query_arg(['page' => $page_slug, 'action' => 'edit', 'id' => (int) $row->id], admin_url('admin.php'))); ?>">Edit</a>

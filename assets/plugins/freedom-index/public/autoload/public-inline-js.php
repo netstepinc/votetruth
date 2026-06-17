@@ -70,6 +70,7 @@ FI.initLegislatorSearch = function() {
     var $hero = $('#hero-search-section');
     var $headerForm = $('#header-legislator-search-form'), $headerInput = $('#header-legislator-search-input'), $headerClear = $('#header-search-clear-btn'), $headerSuggestions = $('#header-search-suggestions');
     var $mobileForm = $('#mobile-legislator-search-form'), $mobileInput = $('#mobile-legislator-search-input'), $mobileClear = $('#mobile-search-clear-btn'), $mobileSuggestions = $('#mobile-search-suggestions');
+    var $footerForm = $('#footer-legislator-search-form'), $footerInput = $('#footer-legislator-search-input'), $footerClear = $('#footer-search-clear-btn'), $footerSuggestions = $('#footer-search-suggestions');
 
     function toggleClearBtn($input, $btn) { 
         if ($input.length && $btn.length) $btn.toggleClass('d-none', !$.trim($input.val())); 
@@ -148,11 +149,13 @@ FI.initLegislatorSearch = function() {
     // Initialize all forms
     initFormSubmit($headerForm, $headerInput, $headerSuggestions, $headerClear);
     initFormSubmit($mobileForm, $mobileInput, $mobileSuggestions, $mobileClear);
+    initFormSubmit($footerForm, $footerInput, $footerSuggestions, $footerClear);
 
     // Click outside to close suggestions
     $(document).on('click', function(e) {
         if ($headerForm.length && !$headerForm.has(e.target).length && $headerSuggestions.length) $headerSuggestions.addClass('d-none');
         if ($mobileForm.length && !$mobileForm.has(e.target).length && $mobileSuggestions.length) $mobileSuggestions.addClass('d-none');
+        if ($footerForm.length && !$footerForm.has(e.target).length && $footerSuggestions.length) $footerSuggestions.addClass('d-none');
     });
 
     // Auto-search from URL param
@@ -266,7 +269,37 @@ FI.initBottomSheet = function() {
             content.innerHTML = '<div class="alert alert-warning">' + message + '</div>';
         });
     });
-    
+
+    // Address refinement form - dynamically injected into content, requires delegation
+    content?.addEventListener('submit', function(e) {
+        var form = e.target.closest('.fi-address-refine-form');
+        if (!form) return;
+        e.preventDefault();
+        var street = (form.querySelector('[name="street"]')?.value || '').trim();
+        var city   = (form.querySelector('[name="city"]')?.value || '').trim();
+        var state  = (form.querySelector('[name="state"]')?.value || '').trim();
+        var zip    = (form.querySelector('[name="zip"]')?.value || '').trim();
+        if (!zip) return;
+        var query = [street, city, state, zip].filter(Boolean).join(' ');
+        content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        fetch(FI.ajaxurl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'fi_unified_search', nonce: FI.nonce, query: query, zip: zip, address: street, city: city, state: state })
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject('Network error'); })
+        .then(function(data) {
+            if (data.success && data.data.html) {
+                content.innerHTML = data.data.html;
+                if (title) title.textContent = 'Your Representatives';
+                if (searchInput) searchInput.value = query;
+            } else {
+                content.innerHTML = '<div class="alert alert-warning">' + (data.data && data.data.message ? data.data.message : 'No results found.') + '</div>';
+            }
+        })
+        .catch(function() { content.innerHTML = '<div class="alert alert-danger">Search failed. Please try again.</div>'; });
+    });
+
     // Triggers (federal/state selectors)
     document.addEventListener('click', function(e) {
         var trigger = e.target.closest('[data-bs-toggle="bottom-sheet"]');

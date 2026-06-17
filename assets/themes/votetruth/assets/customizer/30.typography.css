@@ -67,7 +67,7 @@ small, .small {font-size: .875em !important;}
 	.fs-5 {font-size: 2rem !important;}
 	.fs-6 {font-size: 1.75rem !important;}
 	.fs-7 {font-size: 1.5rem !important;}
-	.fs-8 {font-size: 1rem !important;}
+	.fs-8 {font-size: 1.1875rem !important;}
 }
 @media (max-width: 992px) {
 	.fs-1 {font-size: 5rem !important;}
@@ -75,9 +75,9 @@ small, .small {font-size: .875em !important;}
 	.fs-3 {font-size: 2.5rem !important;}
 	.fs-4 {font-size: 2rem !important;}
 	.fs-5 {font-size: 1.5rem !important;}
-	.fs-6 {font-size: 1rem !important;}
-	.fs-7 {font-size: 1rem !important;}
-	.fs-8 {font-size: 0.9375rem !important;}
+	.fs-6 {font-size: 1.375rem !important;}
+	.fs-7 {font-size: 1.25rem !important;}
+	.fs-8 {font-size: 1.125rem !important;}
 }
 @media (max-width: 768px) {
 	.fs-1 {font-size: 4.5rem !important;}
@@ -85,16 +85,19 @@ small, .small {font-size: .875em !important;}
 	.fs-3 {font-size: 2.5rem !important;}
 	.fs-4 {font-size: 2rem !important;}
 	.fs-5 {font-size: 1.5rem !important;}
-	.fs-6 {font-size: 1rem !important;}
-	.fs-7 {font-size: 0.9375rem !important;}
+	.fs-6 {font-size: 1.25rem !important;}
+	.fs-7 {font-size: 1.125rem !important;}
+	.fs-8 {font-size: 1.0625rem !important;}
 }
 @media (max-width: 576px) {
 	.fs-1 {font-size: 4.5rem !important;}
-	.fs-2 {font-size: 3rem !important;}
+	.fs-2 {font-size: 2.75rem !important;}
 	.fs-3 {font-size: 2rem !important;}
 	.fs-4 {font-size: 1.5rem !important;}
-	.fs-5 {font-size: 1.25rem !important;}
-	.fs-6 {font-size: 1rem !important;}
+	.fs-5 {font-size: 1.375rem !important;}
+	.fs-6 {font-size: 1.25rem !important;}
+	.fs-7 {font-size: 1.125rem !important;}
+	.fs-8 {font-size: 1rem !important;}
 }
 /*Font Family*/
 .ff-p{font-family: var(--bs-font-primary);}

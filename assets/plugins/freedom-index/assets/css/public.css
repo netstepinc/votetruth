@@ -148,6 +148,7 @@
 */
 
 
+
 .navbar-brand{font-family: var(--bs-font-headings);}
 .ordsfx{font-size: 1rem; font-weight: 500; color: var(--bs-gray-600); padding-bottom: 0.25rem;}
 .legislator-card-image{object-fit: cover; object-position: top;}
@@ -223,6 +224,9 @@
 	}
 */
 }
+/* Score badge: never wrap the percentage (e.g. "100%") */
+.fi-gs { white-space: nowrap; }
+
 @media (max-width: 767.99px) {
 	#fi-legislator .freedom-score{font-size: 3rem;}
 	#fi-legislator .freedom-score-label{font-size: 1rem;}

@@ -79,7 +79,7 @@ function fi_breadcrumbs($items = array(), $args = array()) {
         
         if ($is_last || !$item['url']) {
             // Active item (last or no URL)
-            $breadcrumb_list .= '<li class="' . $item_class . ' active d-none d-md-block" aria-current="page">';
+            $breadcrumb_list .= '<li class="' . $item_class . ' active" aria-current="page">';
             $breadcrumb_list .= esc_html($item['text']);
             $breadcrumb_list .= '</li>';
         } else {
@@ -92,30 +92,47 @@ function fi_breadcrumbs($items = array(), $args = array()) {
         }
     }
 
-	// Build button group with buttons and help link
+	// Inline secondary nav links (pipe-separated, appended to breadcrumb trail)
+	$nav_links = $args['nav_links'] ?? [];
+	if (!empty($nav_links)) {
+		$breadcrumb_list .= '<li class="fi-nav-divider text-muted mx-2" aria-hidden="true">|</li>';
+		foreach ($nav_links as $i => $link) {
+			if ($i > 0) {
+				$breadcrumb_list .= '<li class="fi-nav-divider text-muted mx-1" aria-hidden="true">|</li>';
+			}
+			$breadcrumb_list .= '<li class="fi-nav-link">';
+			if (!empty($link['url'])) {
+				$breadcrumb_list .= '<a href="' . esc_url($link['url']) . '" class="fw-semibold text-decoration-none">' . esc_html($link['text']) . '</a>';
+			} else {
+				$breadcrumb_list .= '<span class="text-muted">' . esc_html($link['text']) . '</span>';
+			}
+			$breadcrumb_list .= '</li>';
+		}
+	}
+
+	// Right-aligned action buttons (help link, PDF, etc.)
+/* Probably will remove this
 	$buttons = $args['buttons'] ?? array();
 	$has_buttons = !empty($buttons) || !empty($help_link);
 
 	if ($has_buttons) {
-		$breadcrumb_list .= '<li class="flex-fill text-end d-none d-md-block">';
+		$breadcrumb_list .= '<li class="flex-fill text-end">';
 		$breadcrumb_list .= '<div class="btn-group" role="group" aria-label="Page actions">';
 		
-		// Add custom buttons to right side of page inline with the breadcrumb list
 		foreach ($buttons as $button) {
 			$button_text = $button['text'] ?? '';
 			$button_url = $button['url'] ?? '#';
 			$button_class = $button['class'] ?? 'btn-primary';
 			$button_target = '';
-			if(isset($button['icon'])){
+			if (isset($button['icon'])) {
 				$button_text = '<i class="fas fa-chevron-right me-2"></i>' . $button_text;
 			}
-			if(isset($button['target'])){
+			if (isset($button['target'])) {
 				$button_target = ' target="' . esc_attr($button['target']) . '"';
 			}
-			$breadcrumb_list .= '<a href="' . esc_url($button_url) . '" class="btn btn-sm ' . esc_attr($button_class) . ' d-none d-lg-block ff-h fs-7"'.$button_target.'>' . esc_html($button_text) . '</a>';
+			$breadcrumb_list .= '<a href="' . esc_url($button_url) . '" class="btn btn-sm ' . esc_attr($button_class) . ' ff-h fs-7"' . $button_target . '>' . esc_html($button_text) . '</a>';
 		}
 		
-		// Add help link as last button in group
 		if ($help_link) {
 			$breadcrumb_list .= $help_link;
 		}
@@ -123,7 +140,7 @@ function fi_breadcrumbs($items = array(), $args = array()) {
 		$breadcrumb_list .= '</div>';
 		$breadcrumb_list .= '</li>';
 	}
-
+*/
     $breadcrumb_list .= '</ol>';
     
     // Add share link for legislators page with filters

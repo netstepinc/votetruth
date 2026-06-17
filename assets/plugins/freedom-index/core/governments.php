@@ -418,3 +418,20 @@ function fi_is_crawler(): bool {
 
 	return false;
 }
+
+/**
+ * Sort options for the legislators filter bar.
+ * Keys match ORDER BY codes in fi_legislators_query().
+ *
+ * @return array<string,string>
+ */
+function fi_legislators_sort_options(): array {
+	return [
+		'na' => 'Name A-Z',
+		'nd' => 'Name Z-A',
+		'sd' => 'Score High-Low',
+		'sa' => 'Score Low-High',
+		'oa' => 'Office / District',
+		'pa' => 'Party A-Z',
+	];
+}

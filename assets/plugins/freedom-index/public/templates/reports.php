@@ -57,7 +57,7 @@ $header_args = [
 	'filter_enabled' => false,
 ];
 
-fi_get_public_template('partials/template-header', $header_args);
+fi_get_public_template('template-header', $header_args);
 ?>
 <div class="row g-4">
 	<?php if (empty($reports)): ?>
@@ -93,7 +93,7 @@ fi_get_public_template('partials/template-header', $header_args);
 				<div class="card h-100 shadow rounded-4">
 					<div class="card-header rounded-top-4 bg-white">
 						<h3 class="card-title fs-3 mb-0 d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
-							<a href="<?php echo esc_url(fi_url_report($report['id'], strtolower($gov))); ?>" class="text-decoration-none">
+							<a href="<?php echo esc_url(fi_report_get_url($report['id'], strtolower($gov))); ?>" class="text-decoration-none">
 								<?php echo esc_html($report['title']); ?>
 							</a>
 <?php
@@ -120,7 +120,7 @@ if (!empty($pdf_url)) {
 											$meta = json_decode($vote['meta'],true) ?? [];
 											$descriptions = fi_vote_get_description($meta);
 											$description = $descriptions['short'] ?? '';
-											$vote_url = fi_url_vote($vote['gov'], $vote['id']);
+											$vote_url = fi_vote_get_url($vote['gov'], $vote['id']);
 										?>
 										<li class="list-group-item px-0 py-1 border-bottom">
 											<a href="<?php echo esc_url($vote_url); ?>" class="text-decoration-none fw-semibold">
@@ -144,6 +144,6 @@ if (!empty($pdf_url)) {
 	<?php endif; ?>
 </div>
 <?php
-fi_get_public_template('partials/template-footer');
+fi_get_public_template('template-footer');
 get_footer();
 ?>

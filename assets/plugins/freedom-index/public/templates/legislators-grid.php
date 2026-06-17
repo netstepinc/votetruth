@@ -18,7 +18,7 @@ global $fi_legislators, $fi_gov, $fi_has_more, $fi_offset, $fi_limit, $fi_total_
 $all_legislators = $fi_legislators ?? [];
 $gov = $fi_gov ?? 'US';
 $total_count = $fi_total_count ?? count($all_legislators);
-$limit = $fi_limit ?? 24;
+$limit = $fi_limit ?? 48;
 $is_bot = fi_is_crawler();
 
 // For crawlers: show all. For users: show first batch initially
@@ -50,7 +50,7 @@ $has_more = count($all_legislators) > $limit && !$is_bot;
                 id="fi-load-more-btn"
                 class="btn btn-outline-primary px-4"
                 data-shown="<?php echo $limit; ?>"
-                data-batch="24"
+                data-batch="48"
             >
                 <span id="fi-load-more-text">Load More Legislators</span>
             </button>

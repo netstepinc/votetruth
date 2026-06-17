@@ -39,7 +39,7 @@ if (
 		if (!$session_id || !$chamber) {
 			$fi_manual_notice = ['type' => 'error', 'message' => 'Vote is missing session or chamber data.'];
 		} else {
-			$legislators = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => LEGISLATORS_MAX_LIMIT]);
+			$legislators = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => LEGISLATORS_LIMIT]);
 			if (empty($legislators)) {
 				$fi_manual_notice = [
 					'type'    => 'error',
@@ -79,7 +79,7 @@ if (
 			$fi_manual_notice = ['type' => 'error', 'message' => 'Vote is missing session or chamber data.'];
 		} else {
 			// Build lastname → ID map from DB
-			$legislators  = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => LEGISLATORS_MAX_LIMIT]);
+			$legislators  = fi_legislators_get_by_session($session_id, ['chamber' => $chamber, 'limit' => LEGISLATORS_LIMIT]);
 			$lastname_map = [];
 			foreach ($legislators as $leg) {
 				$leg_id    = (int) ($leg['id'] ?? 0);
@@ -222,7 +222,7 @@ echo '<textarea style="width:100%; height:300px;">'; print_r($roll_calls); echo 
 */
 
 $legislators = fi_legislators_get_by_session((int) $vote['session_id'], [
-	'limit' => LEGISLATORS_MAX_LIMIT,
+	'limit' => LEGISLATORS_LIMIT,
 ]);
 $legislator_lookup = [];
 foreach ($legislators as $legislator) {

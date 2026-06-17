@@ -9,6 +9,27 @@ function fi_qr_code($url, $size = 50,$alt = 'QR Code') {
 
 
 /**
+ * Render a compact grade/score badge for use in legislator cards and lists.
+ * CSS lives in 99.freedomindex.css under .fi-grade.
+ *
+ * @param int|string|null $score Numeric score 0-100, or null/'' if unscored.
+ * @return string HTML badge.
+ */
+function fi_score_badge($score): string {
+	if ($score === null || $score === '') {
+		return '<div class="fi-grade fi-grade--none"><span class="fi-gl">N/A</span></div>';
+	}
+	$score_int = (int) $score;
+	$grade     = fi_score_calculate_grade((float) $score_int);
+	$key       = strtolower($grade[0]);
+	return '<div class="fi-grade fi-grade--' . esc_attr($key) . '">'
+		. '<span class="fi-gl">' . esc_html($grade) . '</span>'
+		. '<span class="fi-gs">' . $score_int . '%</span>'
+		. '</div>';
+}
+
+
+/**
 * Display score as progress bar
 * 
 * @param int|float $score Score percentage (0-100)
@@ -209,22 +230,12 @@ function fi_legislator_modal(array $args = array()) {
 }
 
 
-function fi_content_stats(){
-	global $wpdb;
-	//Get total published votes from #_fi_legislators table
-	$legislators_tracked = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_LEGISLATORS);
-	$tracked = number_format($legislators_tracked);
-	//Get total publish votes from #_fi_votes table
-	$votes_scored = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_VOTES." WHERE status = 'publish'");
-	$scored = number_format($votes_scored);
-	//Get total published rollcalls from #_fi_voterc table
-	$rollcalls_counted = $wpdb->get_var("SELECT COUNT(*) FROM ".TBFI_VOTERC);
-	$counted = number_format($rollcalls_counted);
-	return array(
-		'tracked' => $tracked,
-		'scored' => $scored,
-		'counted' => $counted
-	);
+function fi_content_stats(): array {
+	return [
+		'tracked' => number_format(fi_legislators_count_all()),
+		'scored'  => number_format((int) fi_votes_query(['count' => true, 'status' => 'publish'])),
+		'counted' => number_format((int) fi_rollcalls_query(['count' => true])),
+	];
 }
 
 
@@ -261,20 +272,23 @@ function fi_score_class($score, string $type = 'text'): string {
 function fi_legislator_image(?int $image_id, ?int $session_image_id = null, array $args = []): string {
 	$defaults = [
 		'size' => [200, 250],
-		'class' => 'img-fluid rounded-circle',
+		'class' => 'img-fluid',
 		'alt' => '',
 		'image_url' => '',
 	];
 	$args = wp_parse_args($args, $defaults);
 
+	//Do we have an image URL?...this tends to get stale. Use the image generator unless we really need more caching.
+	/*
 	//Get width and height from size
 	$width = $args['size'][0];
 	$height = $args['size'][1];
 
-	//Do we have an image URL?
 	if (!empty($args['image_url'])) {
+		//We need to make sure this image exists
 		return '<img src="' . esc_url($args['image_url']) . '" width="' . esc_attr($width) . '" height="' . esc_attr($height) . '" class="' . esc_attr($args['class']) . '" alt="' . esc_attr($args['alt']) . '">';
 	}
+	*/
 
 	// Prefer session-specific image if available
 	$use_image_id = $session_image_id ?: $image_id;

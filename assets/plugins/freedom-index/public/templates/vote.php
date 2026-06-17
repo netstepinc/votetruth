@@ -102,7 +102,7 @@ $vote_format = fi_vote_format([
 ]);
 
 // Build URLs
-$url_vote = fi_url_vote($gov, $vote['id']);
+$url_vote = fi_vote_get_url($gov, $vote['id']);
 
 // Build search text
 $search_description = $descriptions['long'] ?? ($descriptions['medium'] ?? $descriptions['short']);
@@ -155,7 +155,7 @@ $header_args = [
 	],
 ];
 
-fi_get_public_template('partials/template-header', $header_args);
+fi_get_public_template('template-header', $header_args);
 
 /*
 if(get_current_user_id() == 1){
@@ -201,7 +201,7 @@ if(get_current_user_id() == 1){
 				'footer_class_col' => 'col-4 text-center',
 			];
 			
-			fi_get_public_template('partials/vote-card', $vote_data);
+			fi_get_public_template('vote-card', $vote_data);
 			?>
 
 			<!-- Vote Tags -->
@@ -247,7 +247,7 @@ if(get_current_user_id() == 1){
 			ob_start();
 			foreach ($rollcalls as $rc): 
 				$legislator_name = $rc->display_name ? $rc->display_name : $rc->first_name . ' ' . $rc->last_name;
-				$legislator_url = !empty($rc->legislator_id) ? fi_get_legislator_url($rc->legislator_id) : '';
+				$legislator_url = !empty($rc->legislator_id) ? fi_legislator_get_url($rc->legislator_id) : '';
 				$cast = fi_rollcall_cast_normalize((string) ($rc->cast ?? ''));
 				$vote_format = fi_vote_format_badge([
 					'cast' => $cast,
@@ -313,5 +313,5 @@ if(get_current_user_id() == 1){
 	</div>
 </div>
 <?php 
-fi_get_public_template('partials/template-footer');
+fi_get_public_template('template-footer');
 get_footer();

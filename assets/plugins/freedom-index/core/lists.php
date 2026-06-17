@@ -473,7 +473,7 @@ function fi_list_render_legislators(array $legislators, int $list_id, string $cl
 				$chamber_display .= ' - ' . $state;
 			}
 
-			$legislator_url = function_exists('fi_get_legislator_url') ? fi_get_legislator_url($leg_id) : '#';
+			$legislator_url = function_exists('fi_get_legislator_url') ? fi_legislator_get_url($leg_id) : '#';
 
 			$image_id = is_object($legislator) ? ($legislator['image_id'] ?? 0) : ($legislator['image_id'] ?? 0);
 			$photo_url = !empty($image_id) ? wp_get_attachment_image_url((int) $image_id, 'thumbnail') : '';

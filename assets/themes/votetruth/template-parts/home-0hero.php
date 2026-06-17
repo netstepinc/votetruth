@@ -12,6 +12,7 @@ Ignore their slogans. See their record.
 
 <p class="fs-3 mb-3 text-white fw-7 text-center">Know the score.</p>
 <p class="fs-3 mb-3 fw-7 text-amber text-center">Hold them accountable.</p>
+<p class="fs-5 text-fade fw-5 text-center">Promises are easy. <span class="text-nowrap">Votes are proof.</span></p>
 */
 ?>
 <div id="findmy" class="container-fluid border-bottom">
@@ -20,8 +21,11 @@ Ignore their slogans. See their record.
 			<div class="col-12 px-0 px-md-3 px-lg-5">
 				<h1 class="text-center mx-auto fs-1 my-5"><span class="text-amber">Votes</span> Tell <span class="text-nowrap">the <span class="text-amber">Truth</span></span></h1>
 				<div class="my-4">
-					<p class="fs-2 text-white fw-7 text-center">Are your legislators <span class="text-nowrap">working for you?</span></p>
-					<p class="fs-3 mb-3 text-fade-amber fw-7 text-center">Find Your Legislators</p>
+					<p class="fs-2 text-white fw-7 text-center mb-4">Are your legislators <span class="text-nowrap">working for you?</span></p>
+					<p class="fs-4 mb-3 text-fade-amber fw-7 text-center">See how they voted.</p>
+<?php if(isset($_GET['words']) && $_GET['words'] == 'more'): ?>
+					<p class="fs-4 mb-3 text-white fw-7 text-center">Hold them accountable.</p>
+<?php endif; ?>
 				</div>
 				<form id="header-legislator-search-form" class="mb-4 col-12 col-md-11 col-lg-10 col-xl-9 col-xxl-8 mx-auto" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
 					<div class="input-group position-relative">
@@ -34,17 +38,16 @@ Ignore their slogans. See their record.
 							</svg>
 						</button>
 						<button class="btn btn-amber fw-4 fs-6" type="submit" aria-label="Search">
-							<span class="d-none d-xl-inline">Find My Legislator</span>
-							<span class="d-none d-lg-inline d-xl-none">Find Legislator</span>
+							<span class="d-none d-xl-inline">Find My Legislators</span>
+							<span class="d-none d-lg-inline d-xl-none">Find Legislators</span>
 							<span class="d-lg-none">Search</span>
 						</button>
 					</div>
 				</form>
-				<p class="fs-5 text-fade fw-5 text-center">Promises are easy. <span class="text-nowrap">Votes are proof.</span></p>
 			</div>
 		</div>
 	</div>
-	<div class="container text-center py-5">
+	<div class="container text-center py-5 mb-3">
 		<button type="button" class="btn btn-sm btn-glass px-3 fw-5 fs-8 m-2" data-bs-toggle="bottom-sheet" data-content="federal">View Federal Legislators</button>
 		<button type="button" class="btn btn-sm btn-glass px-3 fw-5 fs-8 m-2" data-bs-toggle="bottom-sheet" data-content="state">View State Legislators</button>
 	</div>

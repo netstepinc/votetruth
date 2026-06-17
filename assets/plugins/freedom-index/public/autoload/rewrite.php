@@ -33,7 +33,7 @@ add_filter('redirect_canonical', 'fi_rewrite_prevent_canonical_redirect', 10, 2)
  * @param string|null $gov Deprecated, kept for compatibility
  * @return string Full URL
  */
-function fi_get_legislator_url(int $legislator_id, ?string $gov = null): string {
+function fi_legislator_get_url(int $legislator_id, ?string $gov = null): string {
 	return home_url('/legislator/' . $legislator_id . '/');
 }
 
@@ -43,7 +43,7 @@ function fi_get_legislator_url(int $legislator_id, ?string $gov = null): string 
  * @param int $legislator_id Legislator ID
  * @return string Short URL (redirects to full URL)
  */
-function fi_get_legislator_short_url(int $legislator_id): string {
+function fi_legislator_get_short_url(int $legislator_id): string {
 	return home_url('/' . $legislator_id . '/');
 }
 
@@ -55,7 +55,7 @@ function fi_get_legislator_short_url(int $legislator_id): string {
  * @param array $args Optional arguments
  * @return string Report URL
  */
-function fi_get_report_url(int $report_id, ?string $gov = null, array $args = []): string {
+function fi_report_get_url(int $report_id, ?string $gov = null, array $args = []): string {
 	if (!$gov) {
 		$gov = 'us';
 	}
@@ -82,8 +82,8 @@ function fi_get_report_url(int $report_id, ?string $gov = null, array $args = []
  * @param string|null $gov Government code
  * @return string Vote URL
  */
-function fi_get_vote_url(int $vote_id, ?string $gov = null): string {
-	return home_url('/' . ($gov ?: 'us') . '/vote/' . $vote_id . '/');
+function fi_vote_get_url(int $vote_id, ?string $gov = null): string {
+	return home_url('/' . strtolower($gov ?: 'us') . '/vote/' . $vote_id . '/');
 }
 
 /**
@@ -93,7 +93,7 @@ function fi_get_vote_url(int $vote_id, ?string $gov = null): string {
  * @param array $args Query arguments
  * @return string URL
  */
-function fi_get_legislators_url(?string $gov = null, array $args = []): string {
+function fi_legislators_get_url(?string $gov = null, array $args = []): string {
 	if (!$gov) {
 		return home_url('/legislators/');
 	}
@@ -115,7 +115,6 @@ function fi_get_legislators_url(?string $gov = null, array $args = []): string {
  * Add all rewrite rules
  */
 function fi_rewrite_add_rules(): void {
-	fi_rewrite_log('Adding rewrite rules');
 	
 	// Legislator routes (stable URLs, no gov prefix)
 	add_rewrite_rule(
@@ -140,10 +139,16 @@ function fi_rewrite_add_rules(): void {
 	// Government routes
 	add_rewrite_rule(
 		'^([a-z]{2})/?$',
-		'index.php?fi_gov=$matches[1]',
+		'index.php?fi_gov=$matches[1]&fi_entity=government',
 		'top'
 	);
 	
+	// Legislators with optional filter path segments: /us/legislators/session/14/party/r/...
+	add_rewrite_rule(
+		'^([a-z]{2})/legislators/(.+)/?$',
+		'index.php?fi_gov=$matches[1]&fi_entity=legislators&fi_leg_filters=$matches[2]',
+		'top'
+	);
 	add_rewrite_rule(
 		'^([a-z]{2})/legislators/?$',
 		'index.php?fi_gov=$matches[1]&fi_entity=legislators',
@@ -195,6 +200,7 @@ function fi_rewrite_add_query_vars(array $vars): array {
 	$vars[] = 'fi_state';
 	$vars[] = 'fi_search';
 	$vars[] = 'fi_sort';
+	$vars[] = 'fi_leg_filters';
 	return $vars;
 }
 
@@ -207,7 +213,6 @@ function fi_rewrite_add_query_vars(array $vars): array {
  */
 function fi_rewrite_handle_requests(): void {
 	$request_uri = $_SERVER['REQUEST_URI'] ?? '';
-	fi_rewrite_log('Handling request: ' . $request_uri);
 	
 	// Get query vars
 	$gov = get_query_var('fi_gov');
@@ -215,11 +220,10 @@ function fi_rewrite_handle_requests(): void {
 	$legislator_id = get_query_var('fi_legislator_id');
 	$short_id = get_query_var('fi_short_id');
 	
-	fi_rewrite_log("Vars: gov={$gov}, entity={$entity}, legislator_id={$legislator_id}, short_id={$short_id}");
 	
 	// Handle short URL redirect: /{id}/ -> /legislator/{id}/
 	if ($short_id && is_numeric($short_id)) {
-		wp_redirect(fi_get_legislator_url((int)$short_id), 301);
+		wp_redirect(fi_legislator_get_url((int)$short_id), 301);
 		exit;
 	}
 	
@@ -253,9 +257,10 @@ function fi_rewrite_handle_requests(): void {
 					fi_rewrite_handle_single_vote((int)$vote_id, $gov);
 				}
 				break;
+			case 'government':
 			default:
-				// Default to legislators list for gov root
-				fi_rewrite_handle_legislators_list($gov);
+				// Gov root — landing/scorecard page
+				fi_rewrite_handle_government($gov);
 		}
 		return;
 	}
@@ -267,25 +272,15 @@ function fi_rewrite_handle_requests(): void {
  * @param int $legislator_id Legislator ID
  */
 function fi_rewrite_handle_legislator(int $legislator_id): void {
-	fi_rewrite_log('handle_legislator: START, legislator_id=' . $legislator_id);
-	
-	// Check if function exists
-	if (!function_exists('fi_legislator_get_with_sessions')) {
-		fi_rewrite_log('handle_legislator: fi_legislator_get_with_sessions not found');
-		fi_rewrite_handle_404();
-		return;
-	}
 	
 	// Get legislator data
-	$legislator = fi_legislator_get_with_sessions($legislator_id);
+	$legislator = fi_legislator_get($legislator_id, true);
 	
 	if (!$legislator) {
-		fi_rewrite_log('handle_legislator: Legislator not found, 404');
 		fi_rewrite_handle_404();
 		return;
 	}
 	
-	fi_rewrite_log('handle_legislator: Found legislator: ' . $legislator['display_name']);
 	
 	// Make available to template
 	global $fi_legislator;
@@ -296,16 +291,104 @@ function fi_rewrite_handle_legislator(int $legislator_id): void {
 }
 
 /**
+ * Handle government landing/scorecard page (e.g. /us/, /tx/)
+ *
+ * @param string $gov Government code
+ */
+function fi_rewrite_handle_government(string $gov): void {
+
+	$gov = strtoupper($gov);
+
+	global $fi_gov, $fi_gov_name, $fi_current_session, $fi_sessions, $fi_reports, $fi_legislators;
+
+	$fi_gov      = $gov;
+	$fi_gov_name = fi_gov_name($gov);
+
+	$current_session   = fi_session_get_current($gov);
+	$fi_current_session = $current_session['id'] ?? null;
+
+	$fi_sessions   = fi_sessions_get_by_gov($gov);
+
+	$fi_legislators = $fi_current_session
+		? fi_legislators_get(['gov' => $gov, 'session_id' => $fi_current_session, 'limit' => 600])
+		: [];
+
+	fi_rewrite_load_template('gov');
+}
+
+/**
  * Handle legislators list page
  * 
  * @param string $gov Government code
  */
 function fi_rewrite_handle_legislators_list(string $gov): void {
-	fi_rewrite_log('handle_legislators_list: gov=' . $gov);
-	
-	global $fi_gov;
-	$fi_gov = $gov;
-	
+	$gov = strtoupper($gov);
+
+	global $fi_gov, $fi_gov_name, $fi_session, $fi_legislators, $fi_total_count, $fi_filter_description, $fi_filters;
+
+	$fi_gov      = $gov;
+	$fi_gov_name = fi_gov_name($gov);
+
+	// Parse key/value segments from URL path: session/14/party/r/chamber/h/...
+	$path     = (string) get_query_var('fi_leg_filters', '');
+	$segments = array_values(array_filter(explode('/', trim($path, '/'))));
+	$raw      = [];
+	for ($i = 0, $n = count($segments) - 1; $i < $n; $i += 2) {
+		$raw[$segments[$i]] = $segments[$i + 1];
+	}
+
+	$session_id = !empty($raw['session']) ? (int) $raw['session'] : 0;
+	$chamber    = strtoupper(sanitize_key($raw['chamber'] ?? ''));
+	$party      = strtoupper(sanitize_key($raw['party']   ?? ''));
+	$state      = strtoupper(sanitize_key($raw['state']   ?? ''));
+	$sort       = sanitize_key($raw['sort'] ?? 'na') ?: 'na';
+	$search     = sanitize_text_field(urldecode($raw['search'] ?? ''));
+
+	if ($session_id <= 0) {
+		$current    = fi_session_get_current($gov);
+		$session_id = $current ? (int) $current['id'] : 0;
+	}
+	$fi_session = $session_id;
+
+	$fi_filters = [
+		'session_id' => $session_id,
+		'chamber'    => $chamber,
+		'party_slug' => $party,
+		'state'      => $state,
+		'sort'       => $sort,
+		'search'     => $search,
+	];
+
+	$fi_legislators = fi_legislators_get([
+		'gov'        => $gov,
+		'session_id' => $session_id,
+		'chamber'    => $chamber,
+		'party'      => $party,
+		'state'      => $state,
+		'sort'       => $sort,
+		'search'     => $search,
+		'limit'      => LEGISLATORS_LIMIT,
+	]);
+	$fi_total_count = count($fi_legislators);
+
+	$fi_filter_description = fi_filter_build_description([
+		'gov'     => $gov,
+		'session' => $session_id,
+		'party'   => $party,
+		'chamber' => $chamber,
+		'state'   => $state,
+	]);
+
+	// HTMX partial request — return only the grid, not the full page
+	if (!empty($_SERVER['HTTP_HX_REQUEST'])) {
+		fi_get_public_template('legislators-grid', [
+			'fi_legislators' => $fi_legislators,
+			'fi_gov'         => $fi_gov,
+			'fi_total_count' => $fi_total_count,
+		]);
+		exit;
+	}
+
 	fi_rewrite_load_template('legislators');
 }
 
@@ -315,7 +398,6 @@ function fi_rewrite_handle_legislators_list(string $gov): void {
  * @param string $gov Government code
  */
 function fi_rewrite_handle_reports(string $gov): void {
-	fi_rewrite_log('handle_reports: gov=' . $gov);
 	
 	global $fi_gov;
 	$fi_gov = $gov;
@@ -330,7 +412,6 @@ function fi_rewrite_handle_reports(string $gov): void {
  * @param string $gov Government code
  */
 function fi_rewrite_handle_single_report(int $report_id, string $gov): void {
-	fi_rewrite_log('handle_single_report: report_id=' . $report_id . ', gov=' . $gov);
 	
 	global $fi_gov, $fi_report_id;
 	$fi_gov = $gov;
@@ -345,7 +426,6 @@ function fi_rewrite_handle_single_report(int $report_id, string $gov): void {
  * @param string $gov Government code
  */
 function fi_rewrite_handle_votes(string $gov): void {
-	fi_rewrite_log('handle_votes: gov=' . $gov);
 	
 	global $fi_gov;
 	$fi_gov = $gov;
@@ -360,7 +440,6 @@ function fi_rewrite_handle_votes(string $gov): void {
  * @param string $gov Government code
  */
 function fi_rewrite_handle_single_vote(int $vote_id, string $gov): void {
-	fi_rewrite_log('handle_single_vote: vote_id=' . $vote_id . ', gov=' . $gov);
 	
 	global $fi_gov, $fi_vote_id;
 	$fi_gov = $gov;
@@ -394,7 +473,6 @@ function fi_rewrite_load_template(string $template): void {
 	$theme_template = get_template_directory() . '/freedom-index/' . $template . '.php';
 	
 	if (file_exists($theme_template)) {
-		fi_rewrite_log('Loading theme template: ' . $theme_template);
 		include $theme_template;
 		exit;
 	}
@@ -403,12 +481,10 @@ function fi_rewrite_load_template(string $template): void {
 	$plugin_template = FI_DIR . 'public/templates/' . $template . '.php';
 	
 	if (file_exists($plugin_template)) {
-		fi_rewrite_log('Loading plugin template: ' . $plugin_template);
 		include $plugin_template;
 		exit;
 	}
 	
-	fi_rewrite_log('Template not found: ' . $template);
 	fi_rewrite_handle_404();
 }
 
@@ -430,36 +506,3 @@ function fi_rewrite_prevent_canonical_redirect($redirect_url, $requested_url) {
 	return $redirect_url;
 }
 
-/**
- * Logging helper
- * 
- * @param string $message Log message
- */
-function fi_rewrite_log(string $message): void {
-	if (defined('FI_DEBUG') && FI_DEBUG) {
-		$log_file = FI_DIR . 'assets/cache/log/freedom-index.log';
-		$date = date('Y-m-d H:i:s');
-		@file_put_contents($log_file, "[{$date}] [rewrite] {$message}\n", FILE_APPEND | LOCK_EX);
-	}
-}
-
-// Backward compatibility - class methods as function wrappers
-if (!class_exists('FI\Public\Rewrite')) {
-	class Rewrite {
-		public static function get_legislator_url(int $legislator_id, ?string $gov = null): string {
-			return fi_get_legislator_url($legislator_id, $gov);
-		}
-		
-		public static function get_legislator_short_url(int $legislator_id): string {
-			return fi_get_legislator_short_url($legislator_id);
-		}
-		
-		public static function url_report(int $report_id, ?string $gov = null, array $args = []): string {
-			return fi_get_report_url($report_id, $gov, $args);
-		}
-		
-		public static function flush_rules(): void {
-			update_option('fi_flush_rewrite_rules', true);
-		}
-	}
-}

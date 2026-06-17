@@ -29,7 +29,8 @@ wp-config.php
 
 # THEMES
 !/assets/themes
-/assets/themes/bootscore/*
+/assets/themes/*
+!/assets/themes/votetruth
 
 # *DEV*
 *COPY*

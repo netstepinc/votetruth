@@ -90,50 +90,46 @@ $nav_links[] = [
 	'url' => $account_url,
 	'class' => 'fi-nav-cta',
 ];
+
+//	<img src="<?php //echo esc_url( $img_logo ); ?>" alt="<?php //echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
 ?>
 <header class="fi-header sticky-top" role="banner">
 	<nav class="navbar navbar-expand-lg fi-navbar" aria-label="Main navigation">
-		<div class="container-xl">
+		<div class="container-xl d-flex justify-content-between">
 			<a class="navbar-brand" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
-<!--
-			<img src="<?php //echo esc_url( $img_logo ); ?>" alt="<?php //echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
- -->
-<div class="text-logo"><span class="text-amber">Votes</span><span class="text-white">Tellthe</span><span class="text-amber">Truth</span></div>
+				<div class="text-logo"><span class="text-amber">Vote</span><span class="text-white">Truth</span></div>
 			</a>
 
-<!-- Inline Search (Desktop) from old template. Must make work with new template -->
-<?php if(!is_front_page()): ?>
-<div class="d-none d-lg-block top-search-form">
-	<form id="header-legislator-search-form" class="d-flex mb-0" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
-		<div class="input-group position-relative">
-			<input id="header-legislator-search-input" class="form-control search-box" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
-			<div id="header-search-suggestions" class="position-absolute top-100 start-0 w-100 bg-white border rounded shadow-lg d-none" style="z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
-			<button id="header-search-clear-btn" class="btn btn-warning p-2 d-none" type="button" aria-label="Clear search" title="Clear search">
-				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
-			</button>
-			<button class="btn btn-outline-light p-2" type="submit" aria-label="Search">
-				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="11" cy="11" r="8"></circle>
-					<path d="m21 21-4.35-4.35"></path>
-				</svg>
-			</button>
-		</div>
-	</form>
-</div>
-<?php endif; ?>
+			<!-- Inline Search (Desktop) -->
+			<div class="d-none d-lg-block top-search-form">
+				<form id="header-legislator-search-form" class="d-flex mb-0" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
+					<div class="input-group position-relative">
+						<input id="header-legislator-search-input" class="form-control search-box" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
+						<div id="header-search-suggestions" class="position-absolute top-100 start-0 w-100 bg-white border rounded shadow-lg d-none" style="z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
+						<button id="header-search-clear-btn" class="btn btn-warning p-2 d-none" type="button" aria-label="Clear search" title="Clear search">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+						<button class="btn btn-outline-light p-2" type="submit" aria-label="Search">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="11" cy="11" r="8"></circle>
+								<path d="m21 21-4.35-4.35"></path>
+							</svg>
+						</button>
+					</div>
+				</form>
+			</div>
 
 			<!-- Search Icon (Mobile) -->
-			<?php if ( ! is_front_page() ):?>
 			<button class="btn btn-link text-white me-2 navbar-toggler p-2 d-lg-none flex-shrink-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSearch" aria-controls="mobileSearch" aria-expanded="false" aria-label="Toggle search">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 					<circle cx="11" cy="11" r="8"></circle>
 					<path d="m21 21-4.35-4.35"></path>
 				</svg>
 			</button>
-			<?php endif; ?>
+
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
 					data-bs-target="#fiNavMain" aria-controls="fiNavMain"
 					aria-expanded="false" aria-label="Toggle navigation">
