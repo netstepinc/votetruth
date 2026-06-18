@@ -706,12 +706,20 @@ function fi_district_name(int $id): string {
 	if (!isset($names[$id])) {
 		global $wpdb;
 		$rows  = $wpdb->get_results(
-			"SELECT id, name FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy = 'district'",
+			"SELECT id, gov, name FROM {$wpdb->prefix}fi_taxonomy WHERE taxonomy = 'district'",
 			ARRAY_A
 		) ?: [];
 		$names = [];
 		foreach ($rows as $row) {
-			$names[(int) $row['id']] = $row['name'];
+			$display = $row['name'];
+			if (strtoupper((string) $row['gov']) === 'US'
+				&& preg_match('/^([A-Z]{2}) (.+)$/', $display, $m)
+				&& defined('FI_GOVERNMENTS')
+				&& isset(FI_GOVERNMENTS[$m[1]])
+			) {
+				$display = FI_GOVERNMENTS[$m[1]] . ' ' . $m[2] . ' District';
+			}
+			$names[(int) $row['id']] = $display;
 		}
 		fi_cache($cache_key, $names, DAY_IN_SECONDS);
 	}

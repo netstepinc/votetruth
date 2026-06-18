@@ -6,7 +6,7 @@ STATS
 [Rollcalls counted] Roll Calls Verified
 */
 
-$stats = function_exists('fi_content_stats') ? fi_content_stats() : array('tracked' => '0', 'scored' => '0', 'counted' => '0');
+$stats = function_exists('fi_content_stats') ? fi_content_stats() : ['tracked' => '0', 'scored' => '0', 'counted' => '0'];
 ?>
 <div id="home-stats" class="container-fluid bg-light p-0 d-none d-md-block border-bottom">
 	<div class="container py-3">

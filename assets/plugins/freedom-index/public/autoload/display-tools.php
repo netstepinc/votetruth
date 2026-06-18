@@ -233,7 +233,7 @@ function fi_legislator_modal(array $args = array()) {
 function fi_content_stats(): array {
 	return [
 		'tracked' => number_format(fi_legislators_count_all()),
-		'scored'  => number_format((int) fi_votes_query(['count' => true, 'status' => 'publish'])),
+		'scored'  => number_format((int) fi_votes_get(['count' => true, 'status' => 'publish'])),
 		'counted' => number_format((int) fi_rollcalls_query(['count' => true])),
 	];
 }

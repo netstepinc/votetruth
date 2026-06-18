@@ -56,16 +56,16 @@ $nav_links = [];
 
 if ( ! is_front_page() ) {
 	$nav_links[] = [
-		'label' => 'Select Federal',
+		'label' => 'U.S. Congress',
 		'url' => '#',
-		'attrs' => 'data-bs-toggle="modal" data-bs-target="#fi-modal-federal"',
+		'attrs' => 'data-bs-toggle="bottom-sheet" data-content="federal"',
 		'class' => 'btn btn-link fw-bold nav-link',
 	];
-	
+
 	$nav_links[] = [
 		'label' => 'Select State',
 		'url' => '#',
-		'attrs' => 'data-bs-toggle="modal" data-bs-target="#fi-modal-state"',
+		'attrs' => 'data-bs-toggle="bottom-sheet" data-content="state"',
 		'class' => 'btn btn-link fw-bold nav-link',
 	];
 }
@@ -91,17 +91,16 @@ $nav_links[] = [
 	'class' => 'fi-nav-cta',
 ];
 
-//	<img src="<?php //echo esc_url( $img_logo ); ?>" alt="<?php //echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
 ?>
 <header class="fi-header sticky-top" role="banner">
 	<nav class="navbar navbar-expand-lg fi-navbar" aria-label="Main navigation">
 		<div class="container-xl d-flex justify-content-between">
-			<a class="navbar-brand" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
+			<a class="navbar-brand flex-shrink-0" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
 				<div class="text-logo"><span class="text-amber">Vote</span><span class="text-white">Truth</span></div>
 			</a>
 
 			<!-- Inline Search (Desktop) -->
-			<div class="d-none d-lg-block top-search-form">
+			<div class="d-none d-lg-flex flex-grow-1 justify-content-center align-items-center ps-5 top-search-form">
 				<form id="header-legislator-search-form" class="d-flex mb-0" method="#" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
 					<div class="input-group position-relative">
 						<input id="header-legislator-search-input" class="form-control search-box" name="fi_search" type="search" placeholder="<?= FI_SEARCH_PLACEHOLDER;?>" value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? $_GET['fi_search'] : '' ); ?>" aria-label="Search" autocomplete="off" minlength="3">
@@ -136,7 +135,7 @@ $nav_links[] = [
 				<span class="navbar-toggler-icon"></span>
 			</button>
 
-			<div class="collapse navbar-collapse justify-content-end" id="fiNavMain">
+			<div class="collapse navbar-collapse justify-content-end flex-shrink-0" id="fiNavMain">
 				<ul class="navbar-nav align-items-lg-center">
 				<?php foreach ( $nav_links as $link ){
 					$li_class = '';
@@ -182,6 +181,8 @@ $nav_links[] = [
  * window.FI_PWA.isStandalone (the App tab specifically; full bar still
  * visible to give thumb-friendly nav on phones).
  */
+
+/* REMOVE FOR NOW - CONSIDERING DELETION
 ?>
 <nav id="fi-bottom-nav" class="d-lg-none" aria-label="Mobile primary">
 	<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fi-bnav-item" data-match="home">
@@ -212,9 +213,12 @@ $nav_links[] = [
 		</a>
 	<?php endif; ?>
 </nav>
+<?php
+*/
+?>
 <style>
 /* ──────────────────────────────────────────────────────────────
-   FreedomIndex — v2605 header styles
+   FreedomIndex — header styles
    Tokens are defined in the theme's main stylesheet; this file
    only adds component-specific rules. If --fi-* tokens are not
    yet defined globally, the fallbacks below keep the header

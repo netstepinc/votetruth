@@ -1187,10 +1187,6 @@ function fi_legislators_format_row(array $row): array {
 	if (!empty($district) && is_numeric($district)) {
 		$dname = fi_district_name((int) $district);
 		if ($dname !== '') {
-			// US: strip leading "STATE " prefix (e.g. "AL 4th" → "4th")
-			if ($gov === 'US' && $state) {
-				$dname = ltrim(str_replace($state . ' ', '', $dname));
-			}
 			$leg['district_name'] = $dname;
 		}
 	}

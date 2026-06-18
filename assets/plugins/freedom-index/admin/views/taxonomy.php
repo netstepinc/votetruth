@@ -137,7 +137,15 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 						<form method="get" class="d-flex align-items-center gap-2">
 							<input type="hidden" name="page" value="<?php echo esc_attr($page_slug); ?>">
 							<?php if ($taxonomy === 'district' && $gov === 'US'): ?>
-								<input type="text" name="state" value="<?php echo esc_attr($state); ?>" placeholder="State" class="form-control form-control-sm" style="width:90px;">
+								<select name="state" class="form-select form-select-sm" style="width:160px;">
+									<option value="">All States</option>
+									<?php foreach (FI_GOVERNMENTS as $gov_code => $gov_label): ?>
+										<?php if ($gov_code === 'US') continue; ?>
+										<option value="<?php echo esc_attr($gov_code); ?>" <?php selected($state, $gov_code); ?>>
+											<?php echo esc_html($gov_label); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							<?php endif; ?>
 							<input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search name" class="form-control form-control-sm">
 							<button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
