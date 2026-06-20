@@ -8,7 +8,7 @@ CT,DE,MA,MD,NH,NJ,RI,VT
 //Switch between federal and state links based on template args.
 if(isset($args['type']) && $args['type'] === 'federal') {
 	$type = 'federal';
-	echo '<a href="' . esc_url(home_url('/us/legislators/')) . '" class="btn btn-sm btn-amber fs-7 fw-bold w-100 rounded-3 mb-4 shadow">View All Congressional Legislators</a>';
+	echo '<a href="' . esc_url(home_url('/us/legislators/')) . '" class="btn btn-sm btn-action fs-7 fw-bold w-100 rounded-3 mb-4 shadow">View All Congressional Legislators</a>';
 	echo '<p class="text-center">Select a state to view U.S. Congressional legislators representing that state.</p>';
 } else {
 	$type = 'state';

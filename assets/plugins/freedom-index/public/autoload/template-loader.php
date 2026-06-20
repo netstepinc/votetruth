@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) exit;
 /**
  * Normalize a public template name to a safe relative template path without extension.
  *
- * Allows nested template names such as legislator-card-sm while preventing traversal.
+ * Allows nested template names such as partials/my-partial while preventing traversal.
  *
  * @param string $template_name Template name without .php extension.
  * @return string Safe relative template name.

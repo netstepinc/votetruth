@@ -285,6 +285,14 @@ function fi_legislator_filters(array $args = []): string {
 				</div>
 			</div>
 			<?php endif; ?>
+
+		<div class="col-6 col-md-4 col-lg-1 px-md-1 py-1 py-lg-0">
+			<div class="form-group">
+				<button type="button" id="fi-reset-filters" class="form-control form-control-sm btn btn-outline-secondary fi-filter-reset invisible" title="Clear all filters" aria-label="Clear all filters">
+					<i class="bi bi-x-circle"></i> Reset
+				</button>
+			</div>
+		</div>
 		</div>
 	</form>
 
@@ -292,7 +300,8 @@ function fi_legislator_filters(array $args = []): string {
 	(function() {
 		var formId  = '<?php echo esc_js($args['form_id']); ?>';
 		var gov     = '<?php echo esc_js(strtolower($gov)); ?>';
-		var baseUrl = '<?php echo esc_js(home_url('/')); ?>' + gov + '/legislators/';
+		var baseUrl          = '<?php echo esc_js(home_url('/')); ?>' + gov + '/legislators/';
+		var defaultSessionId = '<?php echo esc_js((string) $current_session_id); ?>';
 
 		function q(id) { return document.getElementById(id); }
 
@@ -362,6 +371,34 @@ function fi_legislator_filters(array $args = []): string {
 					}, 500);
 				});
 			}
+
+			function hasActiveFilters() {
+				return (
+					((q('fi-search')  || {}).value || '') !== '' ||
+					((q('fi-state')   || {}).value || '') !== '' ||
+					((q('fi-chamber') || {}).value || '') !== '' ||
+					((q('fi-party')   || {}).value || '') !== '' ||
+					((q('fi-sort')    || {}).value || 'na') !== 'na' ||
+					((q('fi-session') || {}).value || '') !== defaultSessionId
+				);
+			}
+
+			function updateResetBtn() {
+				var btn = q('fi-reset-filters');
+				if (btn) btn.classList.toggle('invisible', !hasActiveFilters());
+			}
+
+			var resetBtn = q('fi-reset-filters');
+			if (resetBtn) {
+				resetBtn.addEventListener('click', function() {
+					var resetUrl = baseUrl + (defaultSessionId ? 'session/' + defaultSessionId + '/' : '');
+					window.location.href = resetUrl;
+				});
+			}
+
+			updateResetBtn();
+			form.addEventListener('change', updateResetBtn);
+			form.addEventListener('input',  updateResetBtn);
 		});
 	})();
 	</script>

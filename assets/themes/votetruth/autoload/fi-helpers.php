@@ -25,7 +25,7 @@ function fi_grade($args){
 		}
 	}
 	$str = '<div class="fi-grade-'.$type.'" ';
-	$str .= 'style="background:var(--fi-g-'.strtolower($grade).'); width:'.$size.'; height:'.$size.'; font-size:'.$font_size.';">';
+	$str .= 'style="background:var(--vt-g-'.strtolower($grade).'); width:'.$size.'; height:'.$size.'; font-size:'.$font_size.';">';
 	$str .= $grade.'</div>';
 
 	return $str;

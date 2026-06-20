@@ -561,7 +561,7 @@ function fi_score_grade_class_text(string $grade): string {
  * @return string CSS variable name.
  */
 function fi_score_grade_css_var(string $grade): string {
-	return '--fi-color-' . strtolower($grade);
+	return '--vt-' . strtolower($grade);
 }
 
 /**

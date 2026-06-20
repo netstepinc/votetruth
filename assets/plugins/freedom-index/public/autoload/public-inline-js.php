@@ -419,7 +419,7 @@ FI.initMapFromContent = function(content, contentType) {
             var label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             label.setAttribute('x', cx);
             label.setAttribute('y', cy);
-            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('text-brand', 'middle');
             label.setAttribute('dominant-baseline', 'central');
             label.setAttribute('fill', '#fff');
             label.setAttribute('font-size', '20');

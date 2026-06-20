@@ -94,7 +94,7 @@ $nav_links[] = [
 	<nav class="navbar navbar-expand-lg navbar-dark py-0 fi-navbar" aria-label="Main navigation">
 		<div class="container-xl d-flex justify-content-between">
 			<a class="navbar-brand flex-shrink-0 p-0" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
-				<div class="text-logo"><span class="text-amber">Vote</span><span class="text-white">Truth</span></div>
+				<div class="text-logo"><span class="text-action">Vote</span><span class="text-white">Truth</span></div>
 			</a>
 
 
@@ -125,7 +125,7 @@ $nav_links[] = [
 	</nav>
 
 	<!-- Primary site action: always-visible legislator search -->
-	<div class="fi-header-search bg-light border-bottom py-2">
+	<div class="fi-header-search bg-action-light border-bottom border-dark py-2">
 		<div class="container-xl">
 			<form id="header-legislator-search-form"
 				  class="fi-header-search-form d-flex align-items-center gap-3 mx-auto"
@@ -139,7 +139,7 @@ $nav_links[] = [
 
 				<div class="input-group position-relative flex-grow-1">
 					<input id="header-legislator-search-input"
-						   class="form-control search-box"
+						   class="form-control search-box bg-warm"
 						   name="fi_search"
 						   type="search"
 						   placeholder="<?php echo esc_attr( FI_SEARCH_PLACEHOLDER ); ?>"
@@ -180,7 +180,7 @@ $nav_links[] = [
  * visible to give thumb-friendly nav on phones).
  */
 
-/* REMOVE FOR NOW - CONSIDERING DELETION
+/* HIDE FOR NOW - CONSIDERING DELETION
 ?>
 <nav id="fi-bottom-nav" class="d-lg-none" aria-label="Mobile primary">
 	<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fi-bnav-item" data-match="home">

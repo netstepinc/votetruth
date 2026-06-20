@@ -17,26 +17,71 @@ function vt_customizer_styles() {
 	--bs-font-secondary: var(--bs-font-primary);
 	--bs-font-sans-serif: var(--bs-font-primary);
 
+/* V1 */
+	--vt-brand: #02275D;
+	--vt-brand-rgb: 2, 39, 93;
+	--vt-brand-secondary: #0055a4;
+	--vt-brand-secondary-rgb: 0, 85, 164;
+	--vt-action: #E8934A;
+	--vt-action-rgb: 232, 147, 74;
+	--vt-action-light: #F5C87A;
+	--vt-action-light-rgb: 245, 200, 122;
+	--vt-surface-warm: #F8F5F0;
+	--vt-surface-warm-rgb: 248, 245, 240;
+/* V2 
+	--vt-brand: #0B2F6B;
+	--vt-brand-rgb: 11, 47, 107;
+	--vt-brand-secondary: #1F5FAF;
+	--vt-brand-secondary-rgb: 31, 95, 175;
+	--vt-action: #B22234;
+	--vt-action-rgb: 178, 34, 52;
+	--vt-action-light: #e04254;
+	--vt-action-light-rgb: 224, 66, 84;
+	--vt-surface-warm: #F8F7F3;
+	--vt-surface-warm-rgb: 248, 245, 240;
+*/
+	--vt-heading: var(--vt-brand);
+	--vt-link: var(--vt-brand-secondary);
+	--vt-link-hover: var(--vt-brand);
+	--vt-cta-bg: var(--vt-action);
+	--vt-cta-text: #111827;
+	--vt-dark-bg: var(--vt-brand);
+	--vt-dark-text: #FFFFFF;
+	--vt-card-bg: #FFFFFF;
+	--vt-navy: #02275D; /*  #002b62; */
+
+	/* Grade scale — functional, not brand */
+	--vt-g-a: #1D7A45;
+	--vt-g-b: #3F8F52;
+	--vt-g-c: #9A7200;
+	--vt-g-d: #B8522E;
+	--vt-g-f: #A61E2A;
+
+	--map-bg: #3F8F52;
+	--map-bg-hover: #1D7A45;
+	--map-bg-active: #1D7A45;
+	--map-text-hover: #F8F5F0;
+	--map-text: #333;
+	--map-border: #333;
+
 	--bs-text-color:#111111;
 	--bs-red: #c41425;
     --bs-red-rgb: 196, 20, 37;
     --bs-reddk: #761318;
     --bs-reddk-rgb: 118, 19, 24;
-    --bs-blue: #0055a4;	/* Primary blue #0055a4 */
-    --bs-blue-rgb: 0, 85, 164;
-    --bs-bluedk: #02275D;	/* Anchor */
-    --bs-bluedk-rgb: 2, 39, 93;
+	--bs-blue: #1F5FAF;	/* Primary blue #0055a4 */
+	--bs-blue-rgb: 0, 85, 164;
+	--bs-bluedk: #0B2F6B;	/* Anchor */
+	--bs-bluedk-rgb: 2, 39, 93;
 	--bs-green: #146c43;
 	--bs-green-rgb: 20, 108, 67;
-	--bs-greendk:#157347;
+	--bs-greendk: #157347;
 	--bs-greendk-rgb: 21, 115, 71;
 	--bs-orange: #E8934A;	/* Amber accent #E8934A */
 	--bs-orange-rgb: 232, 147, 74;
-    --bs-yellow: #F5C87A;	/* Amber light #F5C87A */
-    --bs-yellow-rgb: 245, 200, 122;
-	--bs-warm: #F8F5F0;		/* Warm white #F8F5F0 */
-	--bs-warm-rgb: 248, 245, 240;
-    --bs-primary: #0055a4;	/* Primary blue #0055a4 */
+	--bs-yellow: #F5C87A;	/* Amber light #F5C87A */
+	--bs-yellow-rgb: 245, 200, 122;
+	--bs-primary: #1F5FAF;	/* Primary blue #0055a4 */
     --bs-primary-rgb: 0, 85, 164;
     --bs-secondary: #666666;
     --bs-secondary-rgb: 102, 102, 102;
@@ -57,7 +102,6 @@ function vt_customizer_styles() {
     --bs-light-text: var(--bs-secondary);
     --bs-dark-text: var(--bs-dark);
 	
-
     --bs-footer-custom: rgb(var(--bs-bluedk-rgb));
     --bs-nav-custom: var(--bs-blue);
 	--bs-navlink-color: var(--bs-blue);
@@ -92,22 +136,6 @@ function vt_customizer_styles() {
 	--bs-post-color: var(--bs-text-color);;
 	--bs-post-color-hover: var(--bs-gray-700); 
 	--bs-card-spacer: 1rem;
-
-	/* Grade scale — functional, not brand */
-	--fi-g-a: #1d7a45;
-	--fi-g-b: #5aab6b;
-	--fi-g-c: #D4B000;
-	--fi-g-d: #c95e1a;
-	--fi-g-f: #bf2b2b;
-
-	--fi-navy: #02275D; /*  #002b62; */
-
-	--map-bg: #F5C87A;
-	--map-bg-hover: #E8934A;
-	--map-bg-active: #D6813D;
-	--map-text-hover: #F8F5F0;
-	--map-text: #333;
-	--map-border: #333;
 }
 <?php
 //Load Customizer Styles

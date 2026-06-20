@@ -18,10 +18,26 @@ if (!empty($address) && !empty($address['postcode'])) {
 	ob_start();
 	echo '<div class="mt-3">';
 	if ( isset($data['officials']) && !empty($data['officials']) && is_array($data['officials'])) {
-		echo '<div class="row">';
+		echo '<div class="row g-2">';
 		foreach ($data['officials'] as $official) {
-			$official['class_col'] = 'col-12 pb-2';
-			fi_get_template('legislator-card-sm', $official);
+			$leg_id = $official['legislator']['id'] ?? ($official['id'] ?? 0);
+			$gov    = $official['gov'] ?? 'US';
+			$leg_array = [
+				'id'           => (int) $leg_id,
+				'display_name' => $official['name'] ?? trim(($official['first_name'] ?? '') . ' ' . ($official['last_name'] ?? '')),
+				'image_id'     => $official['image_id'] ?? null,
+				'image_url'    => $official['photo_url'] ?? '',
+				'score'        => $official['score'] ?? ($official['freedom_score'] ?? null),
+				'party'        => $official['party'] ?? '',
+				'party_name'   => $official['party_name'] ?? '',
+				'chamber'      => $official['chamber'] ?? '',
+				'state'        => $official['state'] ?? '',
+				'state_name'   => $official['state_name'] ?? '',
+				'gov'          => $gov,
+			];
+			echo '<div class="col-12">';
+			fi_get_public_template('legislators-card', ['legislator' => $leg_array, 'gov' => $gov]);
+			echo '</div>';
 		}
 		echo '</div>';
 	} else {

@@ -65,6 +65,7 @@ if ($show_govnav) {
 }
 
 //Legislator Search
+/* MAYBE DELETE LATER: USE FILTER only on legislators page
 if ($args['filter_enabled']):
 	$gov = $args['gov'] ?? $fi_gov;
 	$gov_name = $args['gov_name'];
@@ -116,10 +117,10 @@ if ($args['filter_enabled']):
 	}
 })();
 </script>
-<?php endif; ?>
+<?php endif; */ ?>
 <div id="content" class="bg-light ps-lg-4 pb-5">
 	<div id="<?= $args['id'];?>" class="<?= $args['class'];?>">
-		<div class="container-xl mb-3">
+		<div class="container-xl">
 			<div class="row">
 				<div class="col-12 pt-2">
 					<?php echo fi_breadcrumbs($breadcrumbs, $breadcrumbs_args); ?>
@@ -155,6 +156,7 @@ if ($args['filter_enabled']):
 						<div class="col-12 col-lg-4 col-xl-3 text-center text-lg-end pt-3">
 <?php
 // If not US: provide links to this state's US legislators because this page only shows the state legislators
+/* Hide...probably delete later
 if(!in_array($args['id'], $account_pages)){
 	if ($gov !== 'US'){
 		echo '<a href="' . home_url('/us/legislators/state/') . $gov_slug . '/" class="btn btn-outline-danger fw-bold py-2 w-100"><span class="d-none d-xl-inline">View U.S. </span>Congressional Legislators</a>';
@@ -162,6 +164,7 @@ if(!in_array($args['id'], $account_pages)){
 		echo '<a href="' . esc_url($args['pdf_url']) . '" class="btn btn-lg btn-danger d-none d-lg-inline ms-auto fw-bold py-2"><i class="fas fa-file-pdf me-2"></i>Download PDF</a>';
 	}
 }
+*/
 ?>
 						</div>
 					</div>

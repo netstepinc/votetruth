@@ -47,7 +47,7 @@ All JavaScript moved to public-inline-js.php for unified handling
 							placeholder="Search legislators or enter ZIP code..."
 							autocomplete="off"
 						>
-						<button class="btn btn-amber" type="submit">Search</button>
+						<button class="btn btn-action" type="submit">Search</button>
 					</div>
 				</form>
 			</div>

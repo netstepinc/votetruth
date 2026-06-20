@@ -59,6 +59,7 @@ small, .small {font-size: .875em !important;}
 .fs-6 {font-size: 2rem !important;}
 .fs-7 {font-size: 1.5rem !important;}
 .fs-8 {font-size: 1.25rem !important;}
+.fs-sub {font-size: .8125rem !important;}
 @media (max-width: 1200px) {
 	.fs-1 {font-size: 5.75rem !important;}
 	.fs-2 {font-size: 3.5rem !important;}

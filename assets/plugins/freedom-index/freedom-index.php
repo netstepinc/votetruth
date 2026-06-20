@@ -332,6 +332,9 @@ function fi_enqueue_public_assets() {
 	//Enqueue Freedom Index inline JavaScript
 	fi_public_inline_js();
 
+	//dump query vars and exit
+	//global $wp_query; echo '<pre>'; var_dump($wp_query->query_vars); echo '</pre>';
+
 	// Check if this is a Freedom Index page
 	if (get_query_var('fi_view') || get_query_var('fi_gov') || get_query_var('fi_entity')) {
 		$css_ver = filemtime(FI_DIR . 'assets/css/public.css');
@@ -340,10 +343,8 @@ function fi_enqueue_public_assets() {
 		// Enqueue jQuery if not already enqueued
 		wp_enqueue_script('jquery');
 		
-		// PDF contact delete/save is inlined in public-inline-js.php (only on legislator/account personalize/dashboard)
-		
 		// Conditionally enqueue Swiper.js for government page
-		if (get_query_var('fi_entity') === 'government') {
+		if (get_query_var('fi_entity') == 'government') {
 			wp_enqueue_style(
 				'swiper-bundle-css',
 				'https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.css',

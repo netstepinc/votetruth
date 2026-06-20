@@ -96,7 +96,7 @@ $nav_links[] = [
 	<nav class="navbar navbar-expand-lg fi-navbar" aria-label="Main navigation">
 		<div class="container-xl d-flex justify-content-between">
 			<a class="navbar-brand flex-shrink-0" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
-				<div class="text-logo"><span class="text-amber">Vote</span><span class="text-white">Truth</span></div>
+				<div class="text-logo"><span class="text-action">Vote</span><span class="text-white">Truth</span></div>
 			</a>
 
 			<!-- Inline Search (Desktop) -->
@@ -220,21 +220,21 @@ $nav_links[] = [
 /* ──────────────────────────────────────────────────────────────
    FreedomIndex — header styles
    Tokens are defined in the theme's main stylesheet; this file
-   only adds component-specific rules. If --fi-* tokens are not
+   only adds component-specific rules. If --vt-* tokens are not
    yet defined globally, the fallbacks below keep the header
    on-brand standalone.
    ────────────────────────────────────────────────────────────── */
 :root {
-	--fi-blue:      #0055a4;
-	--fi-blue-mid:  #00408a;
-	--fi-navy:      #002b62;
-	--fi-navy-deep: #001840;
-	--fi-r-sm:      6px;
+	--vt-blue:      #0055a4;
+	--vt-blue-mid:  #00408a;
+	--vt-navy:      #002b62;
+	--vt-navy-deep: #001840;
+	--vt-r-sm:      6px;
 }
 
 /* ── Navbar ── */
 .fi-navbar {
-	background: var(--fi-navy);
+	background: var(--vt-navy);
 	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 	min-height: 54px;
 	padding-top: 0;
@@ -261,7 +261,7 @@ $nav_links[] = [
 	font-size: 1rem;
 	font-weight: 500;
 	padding: 7px 12px !important;
-	border-radius: var(--fi-r-sm);
+	border-radius: var(--vt-r-sm);
 	transition: color 0.12s, background 0.12s;
 	white-space: nowrap;
 }
@@ -271,7 +271,7 @@ $nav_links[] = [
 	background: rgba(255, 255, 255, 0.09);
 }
 .fi-navbar .fi-nav-cta {
-	background: var(--fi-blue);
+	background: var(--vt-blue);
 	color: #fff !important;
 	margin-left: 6px;
 	padding: 7px 16px !important;
@@ -296,7 +296,7 @@ $nav_links[] = [
 	bottom: 0; left: 0; right: 0;
 	z-index: 1040;
 	display: flex;
-	background: var(--fi-navy);
+	background: var(--vt-navy);
 	border-top: 1px solid rgba(255, 255, 255, 0.15);
 	height: 60px;
 	padding-bottom: env(safe-area-inset-bottom, 0px);

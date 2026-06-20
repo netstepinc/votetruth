@@ -8,24 +8,20 @@
  */
 if (!defined('ABSPATH')) exit;
 
+echo "\n<!-- \n"; print_r($legislator); echo "\n-->";
+
 $name = $legislator['display_name'] ?? trim(($legislator['first_name'] ?? '') . ' ' . ($legislator['last_name'] ?? ''));
 
-$image_html = '';
-$image_id = ($legislator['session_image_id'] ?? null) ?: ($legislator['image_id'] ?? null);
-if ($image_id) {
-	$image_html = fi_legislator_image(
-		(int) $image_id,
-		null,
-		[
-			'size'  => [80, 100],
-			'crop'  => true,
-			'alt'   => $name,
-			'class' => '',
-		]
-	);
-} elseif (!empty($legislator['image_url'])) {
-	$image_html = '<img src="' . esc_url($legislator['image_url']) . '" width="80" height="100" class="" alt="' . esc_attr($name) . '">';
-}
+$image_html = fi_legislator_image(
+	$legislator['image_id'] ?? null,
+	$legislator['session_image_id'] ?? null,
+	[
+		'size'  => [80, 100],
+		'crop'  => 'face',
+		'alt'   => $name,
+		'class' => 'img-fluid img-id-'.$legislator['image_id'],
+	]
+);
 
 $score = $legislator['score'] ?? null;
 

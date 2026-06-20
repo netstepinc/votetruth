@@ -418,7 +418,7 @@ function fi_list_create(string $name, array $legislator_ids = []): array {
 }
 
 /**
- * Render legislator cards for a user list using the existing legislator-card-sm template.
+ * Render legislator cards for a user list.
  *
  * @param array $legislators Legislator objects/arrays from fi_legislators_get_by_ids().
  * @param int $list_id List ID for remove functionality.
@@ -436,79 +436,59 @@ function fi_list_render_legislators(array $legislators, int $list_id, string $cl
 
 	ob_start();
 	?>
-	<div class="row">
+	<div class="row g-2">
 		<?php foreach ($legislators as $legislator): ?>
 			<?php
 			$leg_id = (int) ($legislator['id'] ?? 0);
-			$name   = $legislator['display_name'] ?? '';
-			$party  = $legislator['party'] ?? '';
+			$name   = $legislator['display_name'] ?? trim(($legislator['first_name'] ?? '') . ' ' . ($legislator['last_name'] ?? ''));
 			$gov    = $legislator['gov'] ?? '';
-			$party = $party_list[$party]['name'] ?? $party;
 
-			$chamber = '';
+			$chamber  = '';
 			$district = '';
-			$state = '';
-
+			$state    = '';
 			if (!empty($legislator['sessions'])) {
-				$latest_session = end($legislator['sessions']);
-				$chamber  = $latest_session['chamber']  ?? '';
-				$district = $latest_session['district'] ?? '';
-				$state    = $latest_session['state']    ?? '';
+				$latest   = end($legislator['sessions']);
+				$chamber  = $latest['chamber']  ?? '';
+				$district = $latest['district'] ?? '';
+				$state    = $latest['state']    ?? '';
 			} else {
 				$chamber  = $legislator['chamber']  ?? '';
 				$district = $legislator['district'] ?? '';
 				$state    = $legislator['state']    ?? '';
 			}
 
-			$gov_name = '';
-			if ($gov) {
-				$chamber = defined('FI_CHAMBERS') ? (FI_CHAMBERS[$gov][$chamber]['title'] ?? $chamber) : $chamber;
-				$gov_name = ($gov === 'US') ? 'United States Congress' : (defined('FI_GOVERNMENTS') ? (FI_GOVERNMENTS[$gov] ?? $gov) : $gov);
+			$freedom_score = $legislator['freedom_score'] ?? null;
+			if (is_array($freedom_score)) {
+				$freedom_score = $freedom_score['score'] ?? null;
 			}
 
-			$chamber_display = $chamber;
-			if ($district && $state) {
-				$chamber_display .= ' - ' . $state . ' ' . $district;
-			} elseif ($state) {
-				$chamber_display .= ' - ' . $state;
-			}
-
-			$legislator_url = function_exists('fi_get_legislator_url') ? fi_legislator_get_url($leg_id) : '#';
-
-			$image_id = is_object($legislator) ? ($legislator['image_id'] ?? 0) : ($legislator['image_id'] ?? 0);
-			$photo_url = !empty($image_id) ? wp_get_attachment_image_url((int) $image_id, 'thumbnail') : '';
-
-			$freedom_score = null;
-			if (is_object($legislator) && isset($legislator['freedom_score'])) {
-				$freedom_score = is_array($legislator['freedom_score']) ? ($legislator['freedom_score']['score'] ?? null) : $legislator['freedom_score'];
-			} elseif (is_array($legislator) && isset($legislator['freedom_score'])) {
-				$freedom_score = is_array($legislator['freedom_score']) ? ($legislator['freedom_score']['score'] ?? null) : $legislator['freedom_score'];
-			}
-
-			$card_args = [
-				'name'        => $name,
-				'party'       => $party,
-				'gov'         => $gov,
-				'gov_name'    => $gov_name,
-				'chamber'     => $chamber_display,
-				'photo_url'   => $photo_url,
-				'score'       => $freedom_score,
-				'score_label' => 'Freedom Score',
-				'legislator'  => [
-					'id'  => $leg_id,
-					'url' => $legislator_url,
-				],
-				'class_col'   => $class_col,
+			$leg_array = [
+				'id'               => $leg_id,
+				'display_name'     => $name,
+				'party'            => $legislator['party'] ?? '',
+				'gov'              => $gov,
+				'chamber'          => $chamber,
+				'state'            => $state,
+				'state_name'       => $legislator['state_name'] ?? '',
+				'district'         => $district,
+				'district_name'    => $legislator['district_name'] ?? '',
+				'image_id'         => $legislator['image_id'] ?? null,
+				'session_image_id' => $legislator['session_image_id'] ?? null,
+				'score'            => $freedom_score,
 			];
-
-			if ($can_edit) {
-				$card_args['list_id'] = $list_id;
-			}
-
-			if (function_exists('fi_get_template')) {
-				fi_get_public_template('partials/legislator-card-sm', $card_args);
-			}
 			?>
+			<div class="<?php echo esc_attr($class_col); ?> position-relative">
+				<?php if ($can_edit && $leg_id): ?>
+					<button type="button"
+						class="btn btn-sm btn-outline-danger p-1 bg-white position-absolute top-0 start-0 m-1"
+						style="z-index:1;"
+						onclick="if(confirm('Remove <?php echo esc_js($name); ?> from this list?')) { FI.removeLegislatorFromList(<?php echo (int) $list_id; ?>, <?php echo $leg_id; ?>); }"
+						title="Remove from list">
+						<i class="bi bi-x-lg"></i>
+					</button>
+				<?php endif; ?>
+				<?php fi_get_public_template('legislators-card', ['legislator' => $leg_array, 'gov' => $gov]); ?>
+			</div>
 		<?php endforeach; ?>
 	</div>
 	<?php

@@ -1,10 +1,10 @@
 <?php if ( ! defined( 'ABSPATH' ) ) { exit; }?>
 <div id="home-score-scale" class="card rounded-4 mx-auto">
-	<div class="card-header rounded-top-4 bg-anchor">
+	<div class="card-header rounded-top-4 bg-brand">
 		<div class="fs-7 fw-bold text-uppercase text-fade">Freedom Score</div>
 	</div>
 	<div class="card-body">
-		<ul class="list-unstyled list-flush">
+		<ul class="list-unstyled list-flush mb-0">
 		<?php
 		foreach(FI_GRADES as $grade => $data) {
 			echo '<li class="d-flex align-items-center gap-3 pb-2">
