@@ -276,7 +276,7 @@ function fi_render_representatives(array $officials, string $address, bool $has_
                 ];
 
                 echo '<div class="col-12 col-md-6">';
-                fi_get_public_template('legislators-card', ['legislator' => $leg, 'gov' => $leg['gov']]);
+                fi_get_template('legislators-card', ['legislator' => $leg, 'gov' => $leg['gov']]);
                 echo '</div>';
             }
             echo '</div>';
@@ -315,7 +315,7 @@ function fi_search_legislators(string $query) {
             if (empty($leg['gov'])) continue;
             $count++;
             echo '<div class="col-12 col-md-6">';
-            fi_get_public_template('legislators-card', ['legislator' => $leg, 'gov' => $leg['gov']]);
+            fi_get_template('legislators-card', ['legislator' => $leg, 'gov' => $leg['gov']]);
             echo '</div>';
         }
     }

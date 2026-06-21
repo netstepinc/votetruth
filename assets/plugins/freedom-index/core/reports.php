@@ -93,16 +93,6 @@ function fi_report_payload_normalize($payload): array {
 }
 
 /**
- * Backward-compatible alias used by older report helpers.
- *
- * @param mixed $payload_json JSON string, array, object, or null.
- * @return array Normalized payload array.
- */
-function fi_report_decode_payload($payload_json): array {
-	return fi_report_payload_normalize($payload_json);
-}
-
-/**
  * Build report payload from form submission data.
  *
  * @param array $submitted_data Form submission data.
@@ -368,23 +358,20 @@ function fi_reports_query(array $args = []): array|int {
  * @return array|int Array of report objects or count if count=true.
  */
 function fi_reports_get(array $args = []): array|int {
-	$cacheKey = function_exists('fi_cache_key') ? fi_cache_key('reports/get', $args) : '';
+	$cacheKey = fi_cache_key('reports/get', $args);
 
-	if ($cacheKey && function_exists('fi_cache')) {
-		$results = fi_cache($cacheKey);
-		if ($results !== false && $results !== null) {
+	if ($cacheKey) {
+		$results = fi_cache($cacheKey,'',DAY_IN_SECONDS);
+		if ($results){
 			return $results;
 		}
 	}
 
 	$results = fi_reports_query($args);
-
-	if ($cacheKey && function_exists('fi_cache')) {
-		fi_cache($cacheKey, $results);
-	}
-
+	fi_cache($cacheKey, $results);
 	return $results;
 }
+
 /** Get a single report by ID. */
 function fi_report_get(int $report_id): ?array {
 	$report_id = absint($report_id);
@@ -506,6 +493,53 @@ function fi_reports_get_by_session(int $session_id, array $filters = []): array 
 	$results = fi_reports_get($args);
 
 	return is_array($results) ? $results : [];
+}
+
+/**
+ * Fetch published reports for multiple sessions in one WHERE IN query.
+ * Returns array keyed by session_id; each value is an array of report rows.
+ * payload_json decoded via fi_report_payload_normalize(); raw JSON dropped.
+ *
+ * @param array  $session_ids  List of session IDs.
+ * @param string $status       Report status filter (default 'publish').
+ * @return array<int, array[]> [ session_id => [ report, ... ] ]
+ */
+function fi_reports_get_by_session_ids(array $session_ids, string $status = 'publish'): array {
+	global $wpdb;
+	if (empty($session_ids)) return [];
+
+	$session_ids  = array_values(array_unique(array_filter(array_map('absint', $session_ids))));
+	$placeholders = implode(',', array_fill(0, count($session_ids), '%d'));
+
+	$params = $session_ids;
+	$extra  = '';
+	if ($status !== '') {
+		$extra   = ' AND r.status = %s AND (r.date_publish IS NULL OR r.date_publish <= %s)';
+		$params[] = $status;
+		$params[] = current_time('mysql');
+	}
+
+	$sql = $wpdb->prepare(
+		"SELECT r.id, r.session_id, r.gov, r.title, r.title_menu, r.slug, r.format,
+		        r.status, r.date_publish, r.payload_json, r.score, r.score_data
+		 FROM {$wpdb->prefix}fi_reports r
+		 WHERE r.session_id IN ($placeholders){$extra}
+		 ORDER BY r.date_publish DESC",
+		...$params
+	);
+
+	$rows = $wpdb->get_results($sql, ARRAY_A);
+	if (!is_array($rows)) return [];
+
+	$out = [];
+	foreach ($rows as $r) {
+		$sid             = (int) $r['session_id'];
+		$r['payload']    = fi_report_payload_normalize($r['payload_json'] ?? '');
+		$r['score_data'] = !empty($r['score_data']) ? (json_decode($r['score_data'], true) ?: []) : [];
+		unset($r['payload_json']);
+		$out[$sid][] = $r;
+	}
+	return $out;
 }
 
 /** Get the most recent published report for a government/jurisdiction. */

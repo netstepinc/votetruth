@@ -487,7 +487,7 @@ function fi_list_render_legislators(array $legislators, int $list_id, string $cl
 						<i class="bi bi-x-lg"></i>
 					</button>
 				<?php endif; ?>
-				<?php fi_get_public_template('legislators-card', ['legislator' => $leg_array, 'gov' => $gov]); ?>
+				<?php fi_get_template('legislators-card', ['legislator' => $leg_array, 'gov' => $gov]); ?>
 			</div>
 		<?php endforeach; ?>
 	</div>

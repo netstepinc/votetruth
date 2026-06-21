@@ -25,7 +25,7 @@ const LEGISLATORS_LIMIT = 600;
  * @param bool $with_sessions Include session history. Default false.
  * @return array|null
  */
-function fi_legislator_get(int $id, bool $with_sessions = false): ?array {
+function fi_legislator_query(int $id, bool $with_sessions = false): ?array {
 	global $wpdb;
 
 	$legislator = $wpdb->get_row($wpdb->prepare(
@@ -57,6 +57,19 @@ function fi_legislator_get(int $id, bool $with_sessions = false): ?array {
 	}
 
 	return $legislator;
+}
+
+
+//Frotn end wrapper for fi_legislator_query including fi_cache similar to fi_legislators_get
+function fi_legislator_get(int $id, bool $with_sessions = false): ?array {
+	$cache_key = 'legislator/' . $id; //dedicated directory for legislator payloads
+	$data = fi_cache($cache_key,'',DAY_IN_SECONDS);
+	if($data){
+		return $data;
+	}
+	$data = fi_legislator_query($id, $with_sessions);
+	fi_cache($cache_key, $data);
+	return $data;
 }
 
 /**
@@ -203,19 +216,14 @@ function fi_legislators_query(array $args): array {
 function fi_legislators_get(array $args): array {
 	$cache_key = _fi_legislators_build_cache_key($args);
 
-	$cached = fi_cache($cache_key);
-	if ($cached !== null && $cached !== '' && $cached !== false) {
-		if (is_string($cached)) {
-			$cached = maybe_unserialize($cached);
-		}
-		if (is_array($cached)) {
-			return $cached;
-		}
+	$data = fi_cache($cache_key,'',DAY_IN_SECONDS);
+	if ($data){
+		return $data;
 	}
 
-	$results = fi_legislators_query($args);
-	fi_cache($cache_key, $results, HOUR_IN_SECONDS);
-	return $results;
+	$data	 = fi_legislators_query($args);
+	fi_cache($cache_key, $data);
+	return $data;
 }
 
 /**
@@ -431,6 +439,7 @@ function fi_legislator_sync_cached_session(int $legislator_id): bool {
 		INNER JOIN {$wpdb->prefix}fi_sessions s
 			ON s.id = ls.session_id
 			AND s.parent_id IS NULL
+			AND s.status = 'publish'
 		WHERE ls.legislator_id = %d
 		ORDER BY
 			COALESCE(s.date_start, '9999-12-31') DESC,
@@ -499,6 +508,7 @@ function fi_legislators_sync_cached_sessions(?string $gov = null): int {
 		INNER JOIN {$wpdb->prefix}fi_sessions s
 			ON s.id = ls.session_id
 			AND s.parent_id IS NULL
+			AND s.status = 'publish'
 		INNER JOIN (
 			SELECT
 				ls2.legislator_id,
@@ -512,6 +522,7 @@ function fi_legislators_sync_cached_sessions(?string $gov = null): int {
 			INNER JOIN {$wpdb->prefix}fi_sessions s2
 				ON s2.id = ls2.session_id
 				AND s2.parent_id IS NULL
+				AND s2.status = 'publish'
 			GROUP BY ls2.legislator_id
 		) ranked
 			ON ranked.legislator_id = ls.legislator_id

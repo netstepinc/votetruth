@@ -34,7 +34,7 @@ $instructions = '<h4>How does this work?</h4>
 <p class="mb-0">We will add more list features as soon as possible including PDF printing.</p>';
 ?>
 <div class="row">
-	<?php fi_get_public_template('account-nav', ['current_page' => 'lists']); ?>
+	<?php fi_get_template('account-nav', ['current_page' => 'lists']); ?>
 	<div id="fi-list-content" class="col-12 col-md-9">
 		<div class="row g-3">
 			<div class="col-12 col-md-6 col-lg-4">

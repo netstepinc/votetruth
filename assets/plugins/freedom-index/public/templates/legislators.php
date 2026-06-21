@@ -30,7 +30,7 @@ fi_seo_tags([
 
 get_header();
 
-fi_get_public_template('template-header', [
+fi_get_template('template-header', [
 	'title'           => $page_title,
 	'gov'             => $gov,
 	'gov_name'        => $gov_name,
@@ -54,7 +54,7 @@ fi_get_public_template('template-header', [
 		<span class="text-muted small ms-1">Loading...</span>
 	</div>
 	<div id="fi-legislators-results">
-		<?php fi_get_public_template('legislators-grid', [
+		<?php fi_get_template('legislators-grid', [
 			'fi_legislators' => $fi_legislators ?? [],
 			'fi_gov'         => $gov,
 			'fi_total_count' => $fi_total_count ?? 0,
@@ -62,7 +62,7 @@ fi_get_public_template('template-header', [
 	</div>
 </div>
 <?php
-fi_get_public_template('template-footer');
+fi_get_template('template-footer');
 
 add_action('wp_footer', function() {
 	?>

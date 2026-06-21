@@ -58,19 +58,19 @@ $header_args = [
 	],
 	'filter_enabled' => false,
 ];
-fi_get_public_template('template-header', $header_args);
+fi_get_template('template-header', $header_args);
 ?>
 <div class="row g-3 align-items-stretch mb-4">
 	<div class="col-12 mb-1">
-		<?php fi_get_public_template('gov-averages', ['legislators' => $legislators, 'gov' => $gov]);?>
+		<?php fi_get_template('gov-averages', ['legislators' => $legislators, 'gov' => $gov]);?>
 	</div>
 	<div class="col-12 my-1">
 		<h2 class="h3 mb-0">Best 20 Legislators</h2>
-		<?php fi_get_public_template('gov-leader-list', ['type' => 'best','gov' => $gov,'legislators' => $legislators]); ?>
+		<?php fi_get_template('gov-leader-list', ['type' => 'best','gov' => $gov,'legislators' => $legislators]); ?>
 	</div>
 	<div class="col-12 my-1">
 		<h2 class="h3 mb-0">Worst 20 Legislators</h2>
-		<?php fi_get_public_template('gov-leader-list', ['type' => 'worst','gov' => $gov,'legislators' => $legislators]); ?>
+		<?php fi_get_template('gov-leader-list', ['type' => 'worst','gov' => $gov,'legislators' => $legislators]); ?>
 	</div>
 	<div class="col-12 my-1 text-center">
 		<a href="<?= home_url('/' . $gov_slug . '/legislators/'); ?>" class="btn fw-bold btn-success shadow fs-5 px-5">View All <?= $gov;?> Legislators</a>
@@ -86,16 +86,16 @@ fi_get_public_template('template-header', $header_args);
 
 <div class="row g-4 mt-3">
 	<div class="col-12 col-md-6 col-lg-4 pb-4">
-		<?php fi_get_public_template('gov-sessions', ['sessions' => $fi_sessions, 'gov' => $gov,'height' => FI_GOV_CARD_HEIGHT]); ?>
+		<?php fi_get_template('gov-sessions', ['sessions' => $fi_sessions, 'gov' => $gov,'height' => FI_GOV_CARD_HEIGHT]); ?>
 	</div>
 	<div class="col-12 col-md-6 col-lg-4 pb-4">
-		<?php fi_get_public_template('gov-alerts', ['gov' => $gov,'height' => FI_GOV_CARD_HEIGHT]);	?>
+		<?php fi_get_template('gov-alerts', ['gov' => $gov,'height' => FI_GOV_CARD_HEIGHT]);	?>
 	</div>
 
 	<div class="col-12 col-lg-4 pb-4">
-		<?php fi_get_public_template('gov-votes-recent', ['gov' => $gov,'height' => FI_GOV_CARD_HEIGHT]); ?>
+		<?php fi_get_template('gov-votes-recent', ['gov' => $gov,'height' => FI_GOV_CARD_HEIGHT]); ?>
 	</div>
 </div>
 <?php 
-fi_get_public_template('template-footer');
+fi_get_template('template-footer');
 get_footer();

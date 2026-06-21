@@ -133,7 +133,7 @@ $header_args = [
 	],
 ];
 
-fi_get_public_template('template-header', $header_args);
+fi_get_template('template-header', $header_args);
 
 $all_votes = empty($tag_slug) && empty($chamber);
 ?>
@@ -279,7 +279,7 @@ $all_votes = empty($tag_slug) && empty($chamber);
 
 					// Wrap vote card in a container that can be hidden
 					echo '<div class="fi-vote-wrapper' . esc_attr($hidden_class) . '">';
-					fi_get_public_template('vote-card', $vote_data);
+					fi_get_template('vote-card', $vote_data);
 					echo '</div>';
 				endforeach;
 			endif;
@@ -415,5 +415,5 @@ jQuery(document).ready(function($) {
 });
 </script>
 <?php 
-fi_get_public_template('template-footer');
+fi_get_template('template-footer');
 get_footer();

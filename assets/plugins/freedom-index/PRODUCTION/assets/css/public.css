@@ -1,0 +1,239 @@
+/**
+ * Freedom Index Public Styles
+ * 
+ * @author Sam Mittelstaedt <smittelstaedt@jbs.org>
+ */
+
+/* Custom scrollbar styling for reports navigation */
+/* Override Bootstrap flexbox to allow horizontal scrolling */
+#fi-reports-nav-collapse {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.fi-reports-nav-scroll {
+	overflow-x: auto;
+	overflow-y: hidden;
+	white-space: nowrap;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none; /* Hide by default */
+	-ms-overflow-style: none; /* IE/Edge */
+	background-color: inherit;
+	display: flex !important;
+	flex-wrap: nowrap !important;
+	width: 100%;
+	max-width: 100%;
+	padding-bottom: 8px;
+}
+
+.fi-reports-nav-scroll .nav-item {
+	white-space: nowrap;
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+/* Hide scrollbar by default (WebKit) */
+.fi-reports-nav-scroll::-webkit-scrollbar {
+	height: 8px;
+	background: transparent;
+	border-radius: 4px;
+	display: none; /* Hide by default */
+}
+
+.fi-reports-nav-scroll::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 4px;
+	transition: background .2s ease;
+	min-width: 20px;
+}
+
+.fi-reports-nav-scroll::-webkit-scrollbar-thumb:hover {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.fi-reports-nav-scroll::-webkit-scrollbar-track {
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 4px;
+}
+
+/* Show scrollbar on hover (desktop only) */
+@media (min-width: 992px) {
+	.fi-reports-nav-scroll:hover {
+		scrollbar-width: thin; /* Show on hover */
+		scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.05);
+	}
+	
+	.fi-reports-nav-scroll:hover::-webkit-scrollbar {
+		display: block; /* Show on hover */
+		background: rgba(0, 0, 0, 0.05);
+	}
+}
+
+/* Hide scrollbar on mobile */
+@media (max-width: 991.98px) {
+	.fi-reports-nav-scroll {
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+	.fi-reports-nav-scroll::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+/* Responsive grid for legislator cards - override Bootstrap col-12 */
+.col-12.fi-legislator-card { flex: 0 0 50% !important; max-width: 50% !important; width: 50% !important; }
+/*
+@media (min-width: 380px) { .col-12.fi-legislator-card { flex: 0 0 50% !important; max-width: 50% !important; width: 50% !important; } }
+@media (min-width: 576px) { .col-12.fi-legislator-card { flex: 0 0 50% !important; max-width: 50% !important; width: 50% !important; } }
+*/
+@media (min-width: 640px) { .col-12.fi-legislator-card { flex: 0 0 33.333333% !important; max-width: 33.333333% !important; width: 33.333333% !important; } } /* 3 columns */
+@media (min-width: 720px) { .col-12.fi-legislator-card { flex: 0 0 25% !important; max-width: 25% !important; width: 25% !important; } } /* 4 columns */
+/*
+@media (min-width: 768px) { .col-12.fi-legislator-card { flex: 0 0 25% !important; max-width: 25% !important; width: 25% !important; } }
+@media (min-width: 880px) { .col-12.fi-legislator-card { flex: 0 0 25% !important; max-width: 25% !important; width: 25% !important; } }
+*/
+@media (min-width: 992px) { .col-12.fi-legislator-card { flex: 0 0 20% !important; max-width: 20% !important; width: 20% !important; } } /* 5 columns */
+@media (min-width: 1200px) { .col-12.fi-legislator-card { flex: 0 0 16.666666% !important; max-width: 16.666666% !important; width: 16.666666% !important; } } /* 6 columns */
+/* @media (min-width: 1400px) { .col-12.fi-legislator-card { flex: 0 0 12.5% !important; max-width: 12.5% !important; width: 12.5% !important; } }*/  /* 8 columns */
+
+.fi-legislator-card .card:hover {
+	box-shadow: var(--bs-box-shadow) !important;
+	background-color: var(--bs-gray-100) !important;
+	border-color: var(--bs-green) !important;
+}
+
+
+/* Force filter bar to show on desktop (768px = Bootstrap md breakpoint) */
+@media (min-width: 992px) { #fi-filters-collapse { display: block !important; visibility: visible !important; height: auto !important; overflow: visible !important; } }
+
+/* Make all form field borders color primary inside this div and background light yellow */
+#fi-gov-filters .form-control{border-color: var(--bs-primary); background-color: #fffef0;}
+#fi-gov-filters .form-select{border-color: var(--bs-primary); background-color: #fffef0;}
+#fi-gov-filters .form-control:focus{border-color: var(--bs-primary); background-color: #fffef0; box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);}
+#fi-gov-filters .form-select:focus{border-color: var(--bs-primary); box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);}
+#fi-gov-filters .form-control:focus-visible{border-color: var(--bs-primary); background-color: #fffef0; box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);}
+#fi-gov-filters .form-select:focus-visible{border-color: var(--bs-primary); background-color: #fffef0; box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);}
+#fi-gov-filters .form-control:focus-within{border-color: var(--bs-primary); background-color: #fffef0; box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);}
+#fi-gov-filters .form-select:focus-within{border-color: var(--bs-primary); background-color: #fffef0; box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);}
+
+#fi-gov-filters .fi-filter-submit{background-color: var(--bs-green); color: #fff; border-color: var(--bs-green); border-radius: 0.25rem; border-width: 1px; border-style: solid; border-color: var(--bs-green); padding: 0.25rem 1rem !important; font-weight: 600; font-size: .875rem; line-height: 1;}
+#fi-gov-filters .fi-filter-submit:hover{background-color: var(--bs-greendk);}
+
+.fi-gov-votes-recent p{margin-bottom:0 !important;}
+
+
+.bg-party-d, .party-Democrat{background:#0015BC !important; color:#fff;}
+.bg-party-dl, .party-Democrat-Liberal{background:#0015BC !important; color:#fff;}
+.bg-party-r, .party-Republican{background:#E9141D !important; color:#fff;}
+.bg-party-rc, .party-Republican-Conservative{background:#E9141D !important; color:#fff;}
+.bg-party-l, .party-Libertarian{background:#FFDF00 !important; color:#000;}
+.bg-party-i, .party-Independent{background:#666 !important; color:#fff;}
+.bg-party-o, .party-Other{background:#888 !important; color:#fff;}
+
+.fi-party-d{color:#0015BC;}
+.fi-party-dl{color:#0015BC;}
+.fi-party-r{color:#E9141D;}
+.fi-party-rc{color:#E9141D;}
+.fi-party-l{color:#FFDF00;}
+.fi-party-i{color:#666;}
+.fi-party-o{color:#888;}
+/*
+.fi-score-bg-f{background:#f00; color:#fff;}
+.fi-score-bg-d{background:#ff0; color:#000;}
+.fi-score-bg-c{background:#0ff; color:#000;}
+.fi-score-bg-b{background:#00f; color:#fff;}
+.fi-score-bg-a{background:#0f0; color:#000;}
+*/
+
+
+.navbar-brand{font-family: var(--bs-font-headings);}
+.ordsfx{font-size: 1rem; font-weight: 500; color: var(--bs-gray-600); padding-bottom: 0.25rem;}
+.legislator-card-image{object-fit: cover; object-position: top;}
+#fi-vote-cards-container p{margin-bottom:0.5rem !important;}
+
+.accordion-button.caret-tight::after {margin-left: 1rem !important;}
+.accordion-button:not(.collapsed) {color: #fff; font-weight: 600; background-color: var(--bs-primary);}
+.accordion-button:not(.collapsed) .badge.bg-primary {color: var(--bs-primary);} /*background-color: #fff !important;*/
+.accordion-button:not(.collapsed)::after {background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e")}
+
+#accordionVoteNav .list-group-item.active {
+	background-color: #fff;
+	border-color: #000;
+	color: #000;
+	border-radius: 0.25rem;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000;
+	border-radius: 0.25rem;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000;
+}
+
+
+/* Custom scrollbar styling for leader/loser lists */
+.fi-leader-list-scroll {scrollbar-width: thin;scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.05);}
+.fi-leader-list-scroll::-webkit-scrollbar {width: 8px;}
+.fi-leader-list-scroll::-webkit-scrollbar-thumb {background-color: rgba(0, 0, 0, 0.3);border-radius: 4px;}
+.fi-leader-list-scroll::-webkit-scrollbar-thumb:hover {background-color: rgba(0, 0, 0, 0.5);}
+.fi-leader-list-scroll::-webkit-scrollbar-track {background-color: rgba(0, 0, 0, 0.05);border-radius: 4px;}
+
+
+/* changed to donut score
+#fi-legislator .freedom-score{font-size: 6rem; font-weight: 600; line-height: 1; color: var(--bs-blue); margin-top: .5rem; margin-bottom: .5rem; }
+#fi-legislator .freedom-score-label{font-size: 1.5rem; font-weight: 500; color: var(--bs-gray-600); margin-bottom: 1rem;}
+*/
+
+.bold-icon {
+  -webkit-text-stroke-width: 1px; /* Adjust the pixel value as needed */
+  -webkit-text-stroke-color: currentColor; /* Matches the icon color */
+}
+
+.fi_donut_score{font-size: 6rem; font-weight: 700; line-height: 1; color: var(--bs-blue); margin-top: 0; margin-bottom: 0; }
+.fi_donut_score_subtext{font-size: 1rem; font-weight: 600; color: var(--bs-gray-600); margin-bottom:0; line-height: 1;}
+
+.card .fi_donut_score{font-size: 2.5rem;}
+.card .fi_donut_score_subtext{font-size: .875rem; font-weight: 500;}
+
+.fi-vote-card-cast.text-white .text-muted{color:#fff !important;}
+.fi-vote-card-cast {border-bottom-right-radius: 1rem !important;}
+
+#fi-vote-rollcall{max-height:800px; overflow-y:auto;}
+@media (max-width: 1399px) {
+	.fi_donut_score{font-size: 4rem;}
+}
+@media (max-width: 992px) {
+	#fi-legislator .freedom-score{font-size: 4rem;}
+	#fi-legislator .freedom-score-label{font-size: 1rem;}
+	.fi_donut_score{font-size: 3rem;}
+	.fi_donut_score_subtext{font-size: .875rem;}
+	#fi-vote-rollcall{max-height:680px;}
+/*
+	#fi-gov-filters .col-12{
+		border: 1px solid var(--bs-primary);
+		border-radius: 0.5rem;
+		padding: 1rem;
+		padding-top: 0.5rem;
+		background-color: #fff;
+		box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+		transition: all 0.3s ease;
+		transition-property: border-color, box-shadow;
+	}
+*/
+}
+@media (max-width: 767.99px) {
+	#fi-legislator .freedom-score{font-size: 3rem;}
+	#fi-legislator .freedom-score-label{font-size: 1rem;}
+	.fi_donut_score{font-size: 2.75rem;}
+	.fi_donut_score_subtext{font-size: .875rem;}
+	#fi-vote-rollcall{max-height:560px;}
+}
+@media (max-width: 576px) {
+	#fi-legislator .freedom-score{font-size: 2rem;}
+	#fi-legislator .freedom-score-label{font-size: .875rem;}
+	.fi_donut_score{font-size: 2.5rem;}
+	.fi_donut_score_subtext{font-size: .875rem;}
+	#fi-votes-filters{max-height:240px; overflow-y:auto;}
+}

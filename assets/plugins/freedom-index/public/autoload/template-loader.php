@@ -59,7 +59,7 @@ function fi_template_path(string $template_name): string|false {
  * @param array $args Arguments to extract for template scope.
  * @return void
  */
-function fi_get_public_template($template_name, $args = []): void {
+function fi_get_template($template_name, $args = []): void {
 	$template_name = (string) $template_name;
 	$args = is_array($args) ? $args : [];
 	$template_file = fi_template_path($template_name);
@@ -84,7 +84,7 @@ function fi_get_public_template($template_name, $args = []): void {
  */
 function fi_get_template_html(string $template_name, array $args = []): string {
 	ob_start();
-	fi_get_public_template($template_name, $args);
+	fi_get_template($template_name, $args);
 	return ob_get_clean();
 }
 
@@ -271,7 +271,7 @@ function fi_get_personalize_form_html(array $args = []): string {
  * @return void
  */
 function fi_legislators_find_mine(array $args = []): void {
-	fi_get_public_template('legislators-find-mine', $args);
+	fi_get_template('legislators-find-mine', $args);
 }
 
 /**
@@ -305,19 +305,12 @@ function fi_public_get_legislator_session_id(): ?int {
 }
 
 /**
- * Public helper: get requested report slug from query string or rewrite var.
- *
- * Kept for legacy/non-legislator report contexts that still use report slugs.
+ * Public helper: get requested report from query string or rewrite var.
  * Legislator report URLs should use fi_public_get_legislator_report_id().
  *
- * @return string|null Report slug.
+ * @return string|null Report ID.
  */
 function fi_public_get_report_id(): ?string {
-	$report_slug = get_query_var('fi_report_slug');
-	if ($report_slug) {
-		return sanitize_title((string) $report_slug);
-	}
-
 	if (isset($_GET['report']) && $_GET['report'] !== '') {
 		return sanitize_title(wp_unslash($_GET['report']));
 	}

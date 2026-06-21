@@ -92,7 +92,7 @@ if ($gov) {
 			?? ($session_lookup[(int)($report['session_id'] ?? 0)]['name'] ?? '—');
 		
 		// Decode payload_json to get vote counts
-		$payload = fi_report_decode_payload($report['payload_json'] ?? null);
+		$payload = fi_report_payload_normalize($report['payload_json'] ?? null);
 		$votes_s = $payload['votes_s'] ?? [];
 		$votes_h = $payload['votes_h'] ?? [];
 

@@ -16,14 +16,14 @@ $height = $args['height'] ?? FI_GOV_CARD_HEIGHT;
 		$rss_url = '';
 		if ($gov === 'US') {
 			$rss_url = 'https://jbs.org/alerts/federal/feed/';
-			fi_get_public_template('gov-alerts-feed', ['url' => $rss_url]);
+			fi_get_template('gov-alerts-feed', ['url' => $rss_url]);
 		} else {
 			$state_slug = str_replace(' ', '-', strtolower(FI_GOVERNMENTS[$gov]));
 			$rss_url = 'https://jbs.org/alerts/' . $state_slug . '/feed/';
-			fi_get_public_template('gov-alerts-feed', ['url' => $rss_url]);
+			fi_get_template('gov-alerts-feed', ['url' => $rss_url]);
 
 			$rss_url_all_states = 'https://jbs.org/alerts/state/feed/';
-			fi_get_public_template('gov-alerts-feed', ['url' => $rss_url_all_states]);
+			fi_get_template('gov-alerts-feed', ['url' => $rss_url_all_states]);
 		}
 		fi_scrollbar_css();
 		?>

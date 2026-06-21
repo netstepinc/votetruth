@@ -40,7 +40,7 @@ if ($type == 'worst') {
 <div class="fi-leader-list-scroll" data-scrollbar>
 	<?php foreach ($leaders as $leg): ?>
 		<div class="fi-leader-card">
-			<?php fi_get_public_template('legislators-card', ['legislator' => $leg, 'gov' => $gov]); ?>
+			<?php fi_get_template('legislators-card', ['legislator' => $leg, 'gov' => $gov]); ?>
 		</div>
 	<?php endforeach; ?>
 </div>

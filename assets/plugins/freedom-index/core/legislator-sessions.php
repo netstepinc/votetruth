@@ -184,6 +184,7 @@ function fi_legislator_sessions_get_history(int $legislator_id): array {
 		LEFT  JOIN {$wpdb->prefix}fi_taxonomy td ON td.id = ls.district AND td.taxonomy = 'district'
 		WHERE ls.legislator_id = %d
 			AND s.parent_id IS NULL
+			AND s.status = 'publish'
 		ORDER BY
 			COALESCE(s.date_start, '9999-12-31') DESC,
 			s.id DESC",

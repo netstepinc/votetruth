@@ -190,7 +190,7 @@ if ($current_session_id) {
             
             <!-- Votes Container Wrapper (HTMX target) -->
             <div id="fi-votes-container-wrapper">
-                <?php fi_get_public_template('legislator-votes-list'); ?>
+                <?php fi_get_template('legislator-votes-list'); ?>
             </div>
         </div>
     </div>

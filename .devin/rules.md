@@ -290,6 +290,11 @@ Before marking work complete:
 
 ## 11. AI Agent Workflow Rules
 
+### Read Before Writing
+- **Before writing any new template or replacing an existing one:** read the file being replaced AND any TEMP/z.* reference file for it. List the features found. Do not write a single line until that inventory is confirmed complete.
+- **Never write a replacement from assumptions.** If the reference exists, use it. If it doesn't, ask where the source of truth is.
+- **Explicitly confirm scope with the user:** "I found X, Y, Z in the reference. Should all of it be ported?" Wait for the answer.
+
 ### Diagnose Before Coding
 - **State the problem and the proposed fix first.** Do not write any code until the approach is confirmed.
 - **Show your reasoning** in one or two sentences: what is broken, why, and what the fix is.
@@ -317,6 +322,14 @@ Before marking work complete:
 - **Ask one concise question, wait for the answer** before proceeding when scope is unclear.
 - **Token discipline.** A confident wrong answer is worse than a brief honest question.
 - **Do not refactor healthy code** while fixing something else.
+
+### Diagnosis Hard Stop
+- **2-step rule:** If you cannot identify the root cause after reading 2 files or running 2 searches, STOP and ask the user a diagnostic question. Do not keep searching.
+- **"Was it working before?"** is always the first question for a regression. The answer immediately narrows scope to what changed.
+- **Ask for the console error.** The user's browser console is faster and cheaper than reading 10 files looking for a JS conflict.
+- **Ask for the URL/page context** before investigating rendering or template issues — the user can often confirm in one sentence what takes 20 file reads to infer.
+- **Never investigate more than 3 possible causes** before stopping to ask. State the candidates and ask the user to confirm which matches what they see.
+- **If the feature was working before:** only look at files changed since it worked. Do not audit the entire stack.
 
 ---
 

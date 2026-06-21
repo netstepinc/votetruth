@@ -279,7 +279,8 @@ function fi_legislator_votes_format_vote(array $vote, ?array $session_cache = nu
  * @param string $chamber Legislator chamber H or S.
  * @return array Structured vote data.
  */
-function fi_legislator_votes_get(int $legislator_id, string $chamber): array {
+/** @deprecated 0 active callers — superseded by fi_session_votes_cache_get() + controller-level accumulation */
+function x_fi_legislator_votes_get(int $legislator_id, string $chamber): array {
 	$legislator_id = absint($legislator_id);
 	$chamber = strtoupper($chamber);
 
@@ -639,7 +640,8 @@ function fi_session_votes_cache_invalidate_all(): int {
  * @param string $chamber Legislator chamber H or S.
  * @return array Tag objects with vote_count.
  */
-function fi_legislator_tags_get(int $legislator_id, string $chamber): array {
+/** @deprecated 0 active callers — superseded by career JOIN query in legislator.php controller */
+function x_fi_legislator_tags_get(int $legislator_id, string $chamber): array {
 	$legislator_id = absint($legislator_id);
 	$chamber = strtoupper($chamber);
 

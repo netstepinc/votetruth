@@ -381,7 +381,7 @@ function fi_rewrite_handle_legislators_list(string $gov): void {
 
 	// HTMX partial request — return only the grid, not the full page
 	if (!empty($_SERVER['HTTP_HX_REQUEST'])) {
-		fi_get_public_template('legislators-grid', [
+		fi_get_template('legislators-grid', [
 			'fi_legislators' => $fi_legislators,
 			'fi_gov'         => $fi_gov,
 			'fi_total_count' => $fi_total_count,

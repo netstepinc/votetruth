@@ -63,7 +63,7 @@ function fi_public_ajax_handle_legislator_vote_history(): void {
 		wp_send_json_error('Invalid parameters');
 	}
 
-	$gov = fi_public_ajax_vote_history_get_gov($session_id);
+	$gov = fi_public_ajax_vote_history_get_gov($session_id) ?: 'US';
 	$chambers = function_exists('fi_chamber_options') ? fi_chamber_options($gov) : [];
 
 	$result = fi_public_ajax_vote_history_fetch_result([
@@ -242,8 +242,8 @@ function fi_public_ajax_vote_history_render_html(array $result, array $context =
 	echo '<div class="row g-3" id="fi-vote-cards-container">';
 
 	foreach ($result['votes'] as $vote) {
-		$vote = is_array($vote) ? (object) $vote : $vote;
-		if (!is_object($vote)) {
+		$vote = is_object($vote) ? (array) $vote : $vote;
+		if (!is_array($vote)) {
 			continue;
 		}
 
@@ -254,7 +254,7 @@ function fi_public_ajax_vote_history_render_html(array $result, array $context =
 		]);
 
 		if (function_exists('fi_get_public_template')) {
-			fi_get_public_template('vote-card', $vote_data);
+			fi_get_template('vote-card', $vote_data);
 		} else {
 			fi_public_ajax_vote_history_render_fallback_vote_card($vote_data);
 		}
@@ -272,7 +272,7 @@ function fi_public_ajax_vote_history_render_html(array $result, array $context =
  * @param array $context Render context.
  * @return array Vote-card data.
  */
-function fi_public_ajax_vote_history_prepare_vote_card_data(object $vote, array $context = []): array {
+function fi_public_ajax_vote_history_prepare_vote_card_data(array $vote, array $context = []): array {
 	$gov = $context['gov'] ?? ($vote['gov'] ?? '');
 	$chambers = is_array($context['chambers'] ?? null) ? $context['chambers'] : [];
 	$report_format = $context['report_format'] ?? 'scorecard';
@@ -281,28 +281,21 @@ function fi_public_ajax_vote_history_prepare_vote_card_data(object $vote, array 
 		? fi_vote_decode_meta($vote)
 		: fi_public_ajax_vote_history_decode_meta($vote['meta'] ?? null);
 
-	$description = function_exists('fi_vote_get_description')
-		? fi_vote_get_description($vote_meta, 'small')
-		: ($vote_meta['description_short'] ?? '');
+	// fi_vote_get_description() returns ['text' => '...'] — extract the string
+	$desc_arr    = function_exists('fi_vote_get_description') ? fi_vote_get_description($vote_meta, 'scorecard') : [];
+	$description = $desc_arr['text'] ?? ($vote_meta['description_short'] ?? '');
 
-	$text_more = function_exists('fi_vote_get_description')
-		? fi_vote_get_description($vote_meta, 'freedomindex')
-		: ($vote_meta['description_long'] ?? '');
+	$more_arr  = function_exists('fi_vote_get_description') ? fi_vote_get_description($vote_meta, 'freedomindex') : [];
+	$text_more = $more_arr['text'] ?? ($vote_meta['description_long'] ?? '');
 
 	$formatted_date = fi_public_ajax_vote_history_format_date((string) ($vote['date_voted'] ?? ''));
 
 	$cast = (string) ($vote['cast'] ?? 'X');
-	$vote_format = function_exists('fi_vote_format')
-		? fi_vote_format([
-			'cast'           => $cast,
-			'constitutional' => $vote['constitutional'] ?? '',
-			'format'         => 'full',
-		])
-		: [
-			'cast_text'       => $cast,
-			'cast_class'      => '',
-			'cast_class_icon' => '',
-		];
+	$vote_format = fi_vote_format([
+		'cast'           => $cast,
+		'constitutional' => $vote['constitutional'] ?? '',
+		'format'         => 'full',
+	]);
 
 	$cost_html = '';
 	$cost_value = $vote_meta['cost'] ?? '';

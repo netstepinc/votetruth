@@ -36,7 +36,7 @@ if (!empty($address) && !empty($address['postcode'])) {
 				'gov'          => $gov,
 			];
 			echo '<div class="col-12">';
-			fi_get_public_template('legislators-card', ['legislator' => $leg_array, 'gov' => $gov]);
+			fi_get_template('legislators-card', ['legislator' => $leg_array, 'gov' => $gov]);
 			echo '</div>';
 		}
 		echo '</div>';

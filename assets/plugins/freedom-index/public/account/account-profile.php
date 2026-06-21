@@ -27,7 +27,7 @@ $edit_address = isset($_GET['edit_address']) || !$has_address;
 
 ?>
 <div class="row">
-	<?php fi_get_public_template('account-nav', ['current_page' => 'profile']); ?>
+	<?php fi_get_template('account-nav', ['current_page' => 'profile']); ?>
 	<div class="col-12 col-md-9">
 		<?php if (isset($_GET['updated']) && $_GET['updated'] === '1'): ?>
 			<div class="alert alert-success alert-dismissible fade show" role="alert">

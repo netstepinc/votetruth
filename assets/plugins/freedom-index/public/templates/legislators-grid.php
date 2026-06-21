@@ -35,7 +35,7 @@ $has_more = count($all_legislators) > $limit && !$is_bot;
             $is_hidden = $index >= $limit && !$is_bot ? ' d-none fi-legislator-hidden' : '';
         ?>
             <div class="col-12 col-md-6 col-lg-4 col-xl-3 fi-legislator-card-wrapper<?php echo $is_hidden; ?>" data-index="<?php echo $index; ?>">
-                <?php fi_get_public_template('legislators-card', [
+                <?php fi_get_template('legislators-card', [
                     'legislator' => $legislator,
                     'gov' => $gov,
                 ]); ?>
