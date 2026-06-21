@@ -456,6 +456,9 @@ function fi_report_save(array $data, ?int $report_id = null): int|false {
 			['%d']
 		);
 
+		if ($result !== false) {
+			do_action('fi_report_saved', $report_id, $db_data);
+		}
 		return $result !== false ? $report_id : false;
 	}
 
@@ -465,7 +468,12 @@ function fi_report_save(array $data, ?int $report_id = null): int|false {
 		$formats
 	);
 
-	return $result !== false ? (int) $wpdb->insert_id : false;
+	$new_id = $result !== false ? (int) $wpdb->insert_id : false;
+	if ($new_id) {
+		do_action('fi_report_saved', $new_id, $db_data);
+	}
+
+	return $new_id;
 }
 
 /** Update report. */

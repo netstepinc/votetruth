@@ -133,35 +133,34 @@ $toolbar_buttons = [
 
 <?php if (!empty($tag_scores)): ?>
 <!-- =====================================================================
-     ISSUE SCORES — hidden when no tags exist
+     ISSUE SCORES — horizontal ribbon, nowrap cells
      ===================================================================== -->
-<section class="fi-issue-scores bg-light border-bottom py-3" aria-label="Issue scores">
+<section class="bg-light border-bottom py-3" aria-label="Issue scores">
 	<div class="container">
 
 		<h2 class="h6 text-muted mb-2">Issue Scores</h2>
 
-		<div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-8 g-2">
-
+		<div class="fi-scroll-rail mx-n3 px-3 py-1" id="fi-issue-rail" role="list" aria-label="Issue score filters">
 			<?php foreach ($tag_scores as $tag): ?>
-			<div class="col">
-				<div class="fi-issue-tile d-flex align-items-center gap-2 bg-white border rounded p-2 h-100">
+			<button type="button"
+				class="btn fi-scroll-rail-item fi-issue-tile-filter d-inline-flex align-items-center gap-2 bg-white border rounded p-2 text-start"
+				data-tag-id="<?php echo (int) $tag['id']; ?>"
+				title="View <?php echo esc_attr($tag['name']); ?> Votes"
+				role="listitem">
 
-					<?php echo fi_score_badge($tag['score']); ?>
+				<span class="flex-shrink-0"><?php echo fi_score_badge($tag['score']); ?></span>
 
-					<div class="lh-sm min-w-0">
-						<div class="small fw-semibold text-truncate" title="<?php echo esc_attr($tag['name']); ?>">
-							<?php echo esc_html($tag['name']); ?>
-						</div>
-						<div class="text-muted" style="font-size:.7rem;">
-							<?php echo (int) $tag['vote_count']; ?> vote<?php echo $tag['vote_count'] === 1 ? '' : 's'; ?>
-						</div>
-					</div>
+				<span class="lh-sm text-nowrap">
+					<span class="small fw-semibold d-block"><?php echo esc_html($tag['name']); ?></span>
+					<span class="text-muted d-block" style="font-size:.7rem;">
+						<?php echo (int) $tag['vote_count']; ?> vote<?php echo $tag['vote_count'] === 1 ? '' : 's'; ?>
+					</span>
+				</span>
 
-				</div>
-			</div>
+			</button>
 			<?php endforeach; ?>
-
 		</div>
+
 	</div>
 </section>
 <?php endif; ?>

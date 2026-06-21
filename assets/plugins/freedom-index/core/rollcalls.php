@@ -405,6 +405,9 @@ function fi_rollcall_save(array $data, ?int $vote_id = null, ?int $legislator_id
 			['%d', '%d']
 		);
 
+		if ($result !== false) {
+			do_action('fi_rollcall_saved', (int) ($existing['id'] ?? 0), $db_data);
+		}
 		return $result !== false ? (int) ($existing['id'] ?? 0) : false;
 	}
 
@@ -413,6 +416,10 @@ function fi_rollcall_save(array $data, ?int $vote_id = null, ?int $legislator_id
 		$db_data,
 		['%d', '%d', '%s', '%d']
 	);
+
+	if ($result !== false) {
+		do_action('fi_rollcall_saved', (int) $wpdb->insert_id, $db_data);
+	}
 
 	return $result !== false ? (int) $wpdb->insert_id : false;
 }

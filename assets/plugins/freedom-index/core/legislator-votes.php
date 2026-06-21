@@ -47,11 +47,50 @@ function fi_legislator_votes_tags_request_cache(?string $key = null, $value = nu
 function fi_legislator_votes_init(): void {
 	add_action('fi_vote_saved', 'fi_legislator_votes_on_vote_saved', 10, 2);
 	add_action('fi_rollcall_saved', 'fi_legislator_votes_on_rollcall_saved', 10, 2);
+	add_action('fi_report_saved', 'fi_legislator_votes_on_report_saved', 10, 2);
 }
 add_action('init', 'fi_legislator_votes_init', 10);
 
 /**
- * Handle vote saved and invalidate session cache.
+ * Dump legislator-level vote cache.
+ *
+ * @param int $legislator_id Legislator ID.
+ * @return void
+ */
+function fi_legislator_votes_cache_invalidate(int $legislator_id): void {
+	$legislator_id = absint($legislator_id);
+	if ($legislator_id <= 0) {
+		return;
+	}
+	fi_cache('legislator/' . $legislator_id . '-votes', 'DUMP');
+}
+
+/**
+ * Invalidate legislator vote caches for every legislator in a session.
+ *
+ * @param int $session_id Session ID.
+ * @return void
+ */
+function fi_legislator_votes_invalidate_session_legislators(int $session_id): void {
+	global $wpdb;
+
+	$session_id = absint($session_id);
+	if ($session_id <= 0) {
+		return;
+	}
+
+	$legislator_ids = $wpdb->get_col($wpdb->prepare(
+		"SELECT DISTINCT legislator_id FROM {$wpdb->prefix}fi_legislator_sessions WHERE session_id = %d",
+		$session_id
+	));
+
+	foreach ((array) $legislator_ids as $legislator_id) {
+		fi_legislator_votes_cache_invalidate((int) $legislator_id);
+	}
+}
+
+/**
+ * Handle vote saved and invalidate session + legislator caches.
  *
  * @param int $vote_id Vote ID.
  * @param array $data Vote data.
@@ -61,10 +100,19 @@ function fi_legislator_votes_on_vote_saved(int $vote_id, array $data): void {
 	if (!empty($data['session_id'])) {
 		fi_session_votes_cache_invalidate((int) $data['session_id']);
 	}
+
+	global $wpdb;
+	$legislator_ids = $wpdb->get_col($wpdb->prepare(
+		"SELECT DISTINCT legislator_id FROM {$wpdb->prefix}fi_voterc WHERE vote_id = %d",
+		$vote_id
+	));
+	foreach ((array) $legislator_ids as $legislator_id) {
+		fi_legislator_votes_cache_invalidate((int) $legislator_id);
+	}
 }
 
 /**
- * Handle rollcall saved and invalidate session cache.
+ * Handle rollcall saved and invalidate session + legislator caches.
  *
  * @param int $rollcall_id Rollcall ID.
  * @param array $data Rollcall data.
@@ -79,6 +127,23 @@ function fi_legislator_votes_on_rollcall_saved(int $rollcall_id, array $data): v
 	$vote_session_id = (int) ($vote['session_id'] ?? 0);
 	if ($vote_session_id > 0) {
 		fi_session_votes_cache_invalidate($vote_session_id);
+	}
+
+	if (!empty($data['legislator_id'])) {
+		fi_legislator_votes_cache_invalidate((int) $data['legislator_id']);
+	}
+}
+
+/**
+ * Handle report saved and invalidate legislator caches for the session.
+ *
+ * @param int $report_id Report ID.
+ * @param array $data Report data.
+ * @return void
+ */
+function fi_legislator_votes_on_report_saved(int $report_id, array $data): void {
+	if (!empty($data['session_id'])) {
+		fi_legislator_votes_invalidate_session_legislators((int) $data['session_id']);
 	}
 }
 
@@ -839,4 +904,631 @@ function fi_legislator_votes_get_by_tag(int $legislator_id, string $chamber, int
 	}
 
 	return $formatted_votes;
+}
+
+/**
+ * Normalize legislator cast to Y, N, or X.
+ *
+ * @param string $cast Raw cast value.
+ * @return string
+ */
+function fi_legislator_votes_normalize_cast(string $cast): string {
+	$cast = strtoupper(trim($cast));
+	return in_array($cast, ['Y', 'N'], true) ? $cast : 'X';
+}
+
+/**
+ * Published child + parent session IDs for vote queries.
+ *
+ * @param int $parent_session_id Parent session ID.
+ * @return array
+ */
+function fi_legislator_votes_child_session_ids(int $parent_session_id): array {
+	global $wpdb;
+
+	$parent_session_id = absint($parent_session_id);
+	if ($parent_session_id <= 0) {
+		return [];
+	}
+
+	$children = $wpdb->get_col($wpdb->prepare(
+		"SELECT id FROM {$wpdb->prefix}fi_sessions WHERE parent_id = %d AND status = 'publish'",
+		$parent_session_id
+	));
+
+	$ids = array_map('intval', (array) $children);
+	$ids[] = $parent_session_id;
+
+	return array_values(array_unique($ids));
+}
+
+/**
+ * Score a batch of vote IDs using precomputed matched/counted flags.
+ *
+ * @param array $scoring_map vote_id => scoring fields.
+ * @param array $vote_ids Vote IDs to score.
+ * @return array
+ */
+function fi_legislator_votes_calc_score(array $scoring_map, array $vote_ids): array {
+	$vote_ids = array_values(array_unique(array_map('intval', $vote_ids)));
+	$total = count($vote_ids);
+	$counted = 0;
+	$matched = 0;
+
+	foreach ($vote_ids as $vote_id) {
+		if (empty($scoring_map[$vote_id]['counted'])) {
+			continue;
+		}
+		$counted++;
+		if (!empty($scoring_map[$vote_id]['matched'])) {
+			$matched++;
+		}
+	}
+
+	if ($counted === 0) {
+		return ['total' => $total, 'counted' => 0, 'matched' => 0, 'score' => 'NA'];
+	}
+
+	$half = (int) round($total / 2, 0);
+	$score = ($counted < $half) ? 'NA' : (int) round(($matched / $counted) * 100, 0);
+
+	return [
+		'total'   => $total,
+		'counted' => $counted,
+		'matched' => $matched,
+		'score'   => $score,
+	];
+}
+
+/**
+ * Format vote date for card display.
+ *
+ * @param string $date_voted Raw datetime.
+ * @return string
+ */
+function fi_legislator_votes_format_date(string $date_voted): string {
+	if ($date_voted === '') {
+		return '';
+	}
+	$timestamp = strtotime($date_voted);
+	return $timestamp !== false ? date('n/j/Y', $timestamp) : $date_voted;
+}
+
+/**
+ * Extract ordered report vote IDs for a chamber.
+ *
+ * @param array $payload Report payload.
+ * @param string $chamber Legislator chamber H or S.
+ * @return array
+ */
+function fi_legislator_votes_extract_report_vote_ids(array $payload, string $chamber): array {
+	$chamber = strtoupper($chamber);
+
+	if ($chamber === 'S') {
+		if (!empty($payload['votes_s_order']) && is_array($payload['votes_s_order'])) {
+			return array_values(array_filter(array_map('intval', $payload['votes_s_order'])));
+		}
+		if (!empty($payload['votes_s']) && is_array($payload['votes_s'])) {
+			return array_values(array_filter(array_map('intval', $payload['votes_s'])));
+		}
+	} elseif ($chamber === 'H') {
+		if (!empty($payload['votes_h_order']) && is_array($payload['votes_h_order'])) {
+			return array_values(array_filter(array_map('intval', $payload['votes_h_order'])));
+		}
+		if (!empty($payload['votes_h']) && is_array($payload['votes_h'])) {
+			return array_values(array_filter(array_map('intval', $payload['votes_h'])));
+		}
+	}
+
+	return [];
+}
+
+/**
+ * Build vote-card template args from a compiled vote row.
+ *
+ * @param array $vote Compiled vote row.
+ * @param array $context Render context.
+ * @return array
+ */
+function fi_legislator_votes_prepare_card_data(array $vote, array $context = []): array {
+	$gov = (string) ($context['gov'] ?? ($vote['gov'] ?? 'US'));
+	$report_format = (string) ($context['report_format'] ?? 'scorecard');
+	$meta = fi_legislator_votes_decode_array($vote['meta'] ?? []);
+
+	$desc_arr = fi_vote_get_description($meta, 'scorecard');
+	$description = $desc_arr['text'] ?? ($meta['description_short'] ?? '');
+
+	$more_arr = fi_vote_get_description($meta, 'freedomindex');
+	$text_more = $more_arr['text'] ?? ($meta['description_long'] ?? '');
+
+	$cast = (string) ($vote['cast'] ?? 'X');
+	$vote_format = fi_vote_format([
+		'cast'           => $cast,
+		'constitutional' => $vote['constitutional'] ?? '',
+		'format'         => 'full',
+	]);
+
+	$cost_html = '';
+	$cost_sentence = '';
+	$cost_value = (string) ($meta['cost'] ?? '');
+	if ($cost_value !== '') {
+		$cost = function_exists('fi_vote_cost_format') ? fi_vote_cost_format($cost_value) : fi_vote_format_cost($cost_value);
+		$cost_html = is_array($cost) ? (string) ($cost['html'] ?? '') : '';
+		$cost_sentence = is_array($cost) ? (string) ($cost['sentence'] ?? '') : '';
+	}
+
+	$vote_id = (int) ($vote['id'] ?? ($vote['vote_id'] ?? 0));
+	$url_vote = function_exists('fi_url_vote')
+		? fi_url_vote($gov, $vote_id)
+		: home_url('/' . strtolower($gov) . '/vote/' . $vote_id . '/');
+
+	$vote_chamber = (string) ($vote['chamber'] ?? '');
+	$chamber_label = (string) ($vote['chamber_label'] ?? '');
+	if ($chamber_label === '' && function_exists('fi_chamber_label')) {
+		$chamber_label = fi_chamber_label($gov, $vote_chamber);
+	}
+
+	$tags = $vote['tags'] ?? [];
+	if (!is_array($tags)) {
+		$tags = [];
+	}
+
+	$search_text = (string) ($vote['search_text'] ?? '');
+	if ($search_text === '') {
+		$search_text = strtolower(
+			(string) ($vote['title'] ?? '') . ' ' .
+			(string) ($vote['bill_number'] ?? '') . ' ' .
+			wp_strip_all_tags((string) $description)
+		);
+	}
+
+	return [
+		'id'              => $vote_id,
+		'gov'             => $gov,
+		'title'           => (string) ($vote['title'] ?? ''),
+		'text'            => (string) $description,
+		'text_more'       => (string) $text_more,
+		'tags'            => $tags,
+		'bill_number'     => (string) ($vote['bill_number'] ?? ''),
+		'bill_url'        => (string) ($meta['url_bill'] ?? ''),
+		'constitutional'  => (string) ($vote['constitutional'] ?? ''),
+		'date_voted'      => (string) ($vote['date_voted'] ?? ''),
+		'date_formatted'  => (string) ($vote['date_formatted'] ?? fi_legislator_votes_format_date((string) ($vote['date_voted'] ?? ''))),
+		'vote_format'     => $vote_format,
+		'cost_html'       => $cost_html,
+		'cost_sentence'   => $cost_sentence,
+		'url_vote'        => $url_vote,
+		'search_text'     => $search_text,
+		'report_format'   => $report_format,
+		'chamber_title'   => true,
+		'chamber_label'   => $chamber_label,
+		'show_cast'       => true,
+		'cast'            => $cast,
+		'modal_mode'      => 'page',
+	];
+}
+
+/**
+ * Build vote_groups navigation payload for client-side filtering.
+ *
+ * @param array $compiled Compiled legislator votes payload.
+ * @param int $legislator_id Legislator ID.
+ * @param mixed $freedom_score Legislator freedom score.
+ * @return array
+ */
+function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_id, $freedom_score): array {
+	$votes = $compiled['votes'] ?? [];
+	$votes_cast = $compiled['votes_cast'] ?? [];
+	$sessions_meta = $compiled['sessions_meta'] ?? [];
+	$tag_rows = $compiled['tag_rows'] ?? [];
+
+	$all_vote_ids = array_keys($votes_cast);
+	usort($all_vote_ids, static function ($a, $b) use ($votes) {
+		$da = strtotime((string) ($votes[$a]['date_voted'] ?? '')) ?: 0;
+		$db = strtotime((string) ($votes[$b]['date_voted'] ?? '')) ?: 0;
+		return $db <=> $da;
+	});
+
+	$scoring = function_exists('fi_score_format') ? fi_score_format($freedom_score) : ['score' => $freedom_score, 'text' => '', 'badge' => '', 'button' => ''];
+	$vote_groups = [
+		'all' => [
+			'menu'        => 'All Votes',
+			'title'       => 'Complete Vote History',
+			'subtitle'    => '',
+			'content'     => null,
+			'actions'     => ['search' => true],
+			'count'       => count($all_vote_ids),
+			'score'       => $scoring['score'] ?? null,
+			'score_text'  => $scoring['text'] ?? '',
+			'score_badge' => $scoring['badge'] ?? '',
+			'votes'       => $all_vote_ids,
+		],
+		'tags'     => [],
+		'sessions' => [],
+	];
+
+	foreach ($tag_rows as $tag) {
+		$tag_id = (int) ($tag['id'] ?? 0);
+		if ($tag_id <= 0) {
+			continue;
+		}
+		$tag_scoring = function_exists('fi_score_format') ? fi_score_format($tag['score'] ?? null) : ['score' => null, 'text' => '', 'badge' => '', 'button' => ''];
+		$vote_groups['tags'][$tag_id] = [
+			'menu'         => (string) ($tag['name'] ?? ''),
+			'title'        => 'Voting on ' . (string) ($tag['name'] ?? ''),
+			'subtitle'     => null,
+			'content'      => null,
+			'actions'      => [
+				'share' => true,
+				'score' => $tag_scoring['button'] ?? '',
+			],
+			'count'        => (int) ($tag['vote_count'] ?? 0),
+			'score'        => $tag_scoring['score'] ?? null,
+			'score_text'   => $tag_scoring['text'] ?? '',
+			'score_badge'  => $tag_scoring['badge'] ?? '',
+			'votes'        => array_values(array_map('intval', (array) ($tag['votes'] ?? []))),
+		];
+	}
+
+	foreach ($sessions_meta as $session_id => $session) {
+		$session_id = (int) $session_id;
+		$session_scoring = function_exists('fi_score_format') ? fi_score_format($session['score'] ?? null) : ['score' => null, 'text' => '', 'badge' => '', 'button' => ''];
+		$reports = [];
+
+		foreach (($session['reports'] ?? []) as $report) {
+			$report_id = (int) ($report['id'] ?? 0);
+			if ($report_id <= 0) {
+				continue;
+			}
+			$report_scoring = function_exists('fi_score_format') ? fi_score_format($report['score'] ?? null) : ['score' => null, 'text' => '', 'badge' => '', 'button' => ''];
+			$actions = ['share' => true, 'score' => $report_scoring['button'] ?? ''];
+
+			$payload = fi_legislator_votes_decode_array($report['payload'] ?? []);
+			if (!empty($payload['report_pdf_url'])) {
+				$actions['pdf'] = (string) $payload['report_pdf_url'];
+			} else {
+				$actions['pdfa'] = home_url('/legislator/' . $legislator_id . '/session/' . $session_id . '/report/' . $report_id . '/pdf/sca/');
+				$actions['pdfb'] = home_url('/legislator/' . $legislator_id . '/session/' . $session_id . '/report/' . $report_id . '/pdf/scb/');
+			}
+
+			$content = null;
+			if (!empty($report['content'])) {
+				$content = wp_kses_post(wpautop((string) $report['content']));
+			}
+
+			$menu_title = !empty($report['title_menu']) ? (string) $report['title_menu'] : (string) ($report['title'] ?? '');
+			$report_title = fi_report_title_reformat((string) ($session['gov'] ?? 'US'), (string) ($report['title'] ?? ''));
+
+			$reports[] = [
+				'id'          => $report_id,
+				'menu'        => $menu_title,
+				'title'       => $report_title,
+				'subtitle'    => trim((string) ($session['gov'] ?? '') . ' ' . (string) ($session['chamber_label'] ?? '')),
+				'content'     => $content,
+				'format'      => (string) ($report['format'] ?? 'scorecard'),
+				'actions'     => $actions,
+				'score'       => $report_scoring['score'] ?? null,
+				'score_text'  => $report_scoring['text'] ?? '',
+				'score_badge' => $report_scoring['badge'] ?? '',
+				'votes'       => array_values(array_map('intval', (array) ($report['votes'] ?? []))),
+			];
+		}
+
+		$vote_groups['sessions'][$session_id] = [
+			'menu'        => (string) ($session['session_name'] ?? ''),
+			'title'       => (string) ($session['session_name'] ?? ''),
+			'subtitle'    => trim((string) ($session['gov'] ?? '') . ' ' . (string) ($session['chamber_label'] ?? '') . ' ' . (string) ($session['chamber_title'] ?? '')),
+			'content'     => null,
+			'actions'     => [
+				'share' => true,
+				'score' => $session_scoring['button'] ?? '',
+			],
+			'score'       => $session_scoring['score'] ?? null,
+			'score_text'  => $session_scoring['text'] ?? '',
+			'score_badge' => $session_scoring['badge'] ?? '',
+			'votes'       => array_values(array_map('intval', (array) ($session['votes'] ?? []))),
+			'reports'     => $reports,
+		];
+	}
+
+	return $vote_groups;
+}
+
+/**
+ * Compile full legislator vote payload for page load + client filtering.
+ *
+ * @param int $legislator_id Legislator ID.
+ * @return array
+ */
+function fi_legislator_votes_query(int $legislator_id): array {
+	global $wpdb;
+
+	$legislator_id = absint($legislator_id);
+	$empty = [
+		'votes'         => [],
+		'votes_cast'    => [],
+		'vote_groups'   => ['all' => ['votes' => [], 'title' => 'Complete Vote History', 'actions' => ['search' => true]], 'tags' => [], 'sessions' => []],
+		'sessions_meta' => [],
+		'tag_rows'      => [],
+		'all_tags'      => [],
+		'tag_scores'    => [],
+	];
+
+	if ($legislator_id <= 0) {
+		return $empty;
+	}
+
+	$legislator = fi_legislator_get($legislator_id);
+	$sessions = fi_legislator_sessions_get_history($legislator_id);
+	if (empty($sessions)) {
+		return $empty;
+	}
+
+	$rollcall_rows = $wpdb->get_results($wpdb->prepare(
+		"SELECT vote_id, `cast` FROM {$wpdb->prefix}fi_voterc WHERE legislator_id = %d",
+		$legislator_id
+	), ARRAY_A) ?: [];
+
+	$votes_cast = [];
+	foreach ($rollcall_rows as $row) {
+		$vote_id = (int) ($row['vote_id'] ?? 0);
+		if ($vote_id <= 0) {
+			continue;
+		}
+		$votes_cast[$vote_id] = fi_legislator_votes_normalize_cast((string) ($row['cast'] ?? ''));
+	}
+
+	$votes_cast_ids = array_keys($votes_cast);
+	if (empty($votes_cast_ids)) {
+		return $empty;
+	}
+
+	$placeholders = implode(',', array_fill(0, count($votes_cast_ids), '%d'));
+	$vote_rows = $wpdb->get_results($wpdb->prepare(
+		"SELECT v.*, s.name AS session_name
+		 FROM {$wpdb->prefix}fi_votes v
+		 LEFT JOIN {$wpdb->prefix}fi_sessions s ON v.session_id = s.id
+		 WHERE v.id IN ($placeholders)
+		   AND v.status = 'publish'
+		 ORDER BY v.date_voted DESC, v.id DESC",
+		...$votes_cast_ids
+	), ARRAY_A) ?: [];
+
+	$tags_by_vote = [];
+	foreach (fi_legislator_votes_get_tags_by_vote_ids($votes_cast_ids) as $tag_row) {
+		$tag_row = is_object($tag_row) ? (array) $tag_row : $tag_row;
+		$vote_id = (int) ($tag_row['vote_id'] ?? 0);
+		if ($vote_id <= 0) {
+			continue;
+		}
+		$tags_by_vote[$vote_id][] = [
+			'id'   => (int) ($tag_row['tag_id'] ?? 0),
+			'name' => (string) ($tag_row['tag_name'] ?? ''),
+		];
+	}
+
+	$votes = [];
+	$scoring_map = [];
+
+	foreach ($vote_rows as $vote_row) {
+		$vote_id = (int) ($vote_row['id'] ?? 0);
+		if ($vote_id <= 0) {
+			continue;
+		}
+
+		$meta = fi_legislator_votes_decode_array($vote_row['meta'] ?? []);
+		unset($meta['legacy'], $meta['legiscan'], $meta['legiscan_rollcall_audit'], $meta['legiscan_session_id']);
+
+		$cast = $votes_cast[$vote_id] ?? 'X';
+		$constitutional = (string) ($vote_row['constitutional'] ?? '');
+		$counted = null;
+		$matched = null;
+		if ($cast !== 'X' && in_array($constitutional, ['Y', 'N'], true)) {
+			$counted = true;
+			$matched = ($cast === $constitutional);
+		}
+
+		$gov = (string) ($vote_row['gov'] ?? 'US');
+		$chamber = (string) ($vote_row['chamber'] ?? '');
+		$desc_arr = fi_vote_get_description($meta, 'scorecard');
+		$description = $desc_arr['text'] ?? ($meta['description_short'] ?? '');
+		$more_arr = fi_vote_get_description($meta, 'freedomindex');
+		$search_description = $more_arr['text'] ?? ($meta['description_long'] ?? $description);
+
+		$vote_entry = [
+			'id'             => $vote_id,
+			'vote_id'        => $vote_id,
+			'session_id'     => (int) ($vote_row['session_id'] ?? 0),
+			'session_name'   => (string) ($vote_row['session_name'] ?? ''),
+			'gov'            => $gov,
+			'chamber'        => $chamber,
+			'chamber_label'  => function_exists('fi_chamber_label') ? fi_chamber_label($gov, $chamber) : $chamber,
+			'title'          => (string) ($vote_row['title'] ?? ''),
+			'bill_number'    => (string) ($vote_row['bill_number'] ?? ''),
+			'constitutional' => $constitutional,
+			'date_voted'     => (string) ($vote_row['date_voted'] ?? ''),
+			'date_formatted' => fi_legislator_votes_format_date((string) ($vote_row['date_voted'] ?? '')),
+			'meta'           => $meta,
+			'tags'           => $tags_by_vote[$vote_id] ?? [],
+			'cast'           => $cast,
+			'matched'        => $matched,
+			'counted'        => $counted,
+			'search_text'    => strtolower(
+				(string) ($vote_row['title'] ?? '') . ' ' .
+				(string) ($vote_row['bill_number'] ?? '') . ' ' .
+				wp_strip_all_tags((string) $search_description)
+			),
+		];
+
+		$votes[$vote_id] = $vote_entry;
+		$scoring_map[$vote_id] = [
+			'cast'           => $cast,
+			'matched'        => $matched,
+			'counted'        => $counted,
+			'constitutional' => $constitutional,
+		];
+	}
+
+	$sessions_meta = [];
+	foreach ($sessions as $session) {
+		$session_id = (int) ($session['session_id'] ?? 0);
+		$chamber = (string) ($session['chamber'] ?? '');
+		if ($session_id <= 0 || $chamber === '') {
+			continue;
+		}
+
+		$query_session_ids = fi_legislator_votes_child_session_ids($session_id);
+		$session_vote_ids = [];
+		foreach ($votes as $vote_id => $vote_entry) {
+			if (in_array((int) $vote_entry['session_id'], $query_session_ids, true) && ($vote_entry['chamber'] ?? '') === $chamber) {
+				$session_vote_ids[] = $vote_id;
+			}
+		}
+
+		usort($session_vote_ids, static function ($a, $b) use ($votes) {
+			$da = strtotime((string) ($votes[$a]['date_voted'] ?? '')) ?: 0;
+			$db = strtotime((string) ($votes[$b]['date_voted'] ?? '')) ?: 0;
+			return $db <=> $da;
+		});
+
+		$session_score = fi_legislator_votes_calc_score($scoring_map, $session_vote_ids);
+		$session_name = (string) ($session['session_name'] ?? '');
+		if ($session_name !== '' && strtoupper((string) ($session['gov'] ?? '')) === 'US' && stripos($session_name, 'Congress') === false) {
+			$session_name .= ' Congress';
+		}
+
+		$reports_raw = fi_reports_get([
+			'session_id' => $session_id,
+			'status'     => 'publish',
+		]);
+		$reports_raw = is_array($reports_raw) ? fi_reports_sort_by_format((string) ($session['gov'] ?? 'US'), $reports_raw) : [];
+		$compiled_reports = [];
+
+		foreach ($reports_raw as $report) {
+			$report = is_object($report) ? (array) $report : $report;
+			$payload = fi_legislator_votes_decode_array($report['payload_json'] ?? '{}');
+			$report_vote_ids = fi_legislator_votes_extract_report_vote_ids($payload, $chamber);
+			$report_score = fi_legislator_votes_calc_score($scoring_map, $report_vote_ids);
+
+			$compiled_reports[] = [
+				'id'         => (int) ($report['id'] ?? 0),
+				'title'      => (string) ($report['title'] ?? ''),
+				'title_menu' => (string) ($report['title_menu'] ?? ''),
+				'format'     => (string) ($report['format'] ?? 'scorecard'),
+				'content'    => (string) ($payload['content'] ?? ''),
+				'payload'    => $payload,
+				'score'      => $report_score['score'],
+				'score_data' => $report_score,
+				'votes'      => $report_vote_ids,
+			];
+		}
+
+		$sessions_meta[$session_id] = array_merge($session, [
+			'session_name' => $session_name,
+			'votes'        => $session_vote_ids,
+			'score'        => $session_score['score'],
+			'score_data'   => $session_score,
+			'reports'      => $compiled_reports,
+		]);
+	}
+
+	$tag_rows = [];
+	if (!empty($votes_cast_ids)) {
+		$tag_placeholders = implode(',', array_fill(0, count($votes_cast_ids), '%d'));
+		$tag_rows = $wpdb->get_results($wpdb->prepare(
+			"SELECT t.id, t.name, COUNT(DISTINCT vt.vote_id) AS vote_count
+			 FROM {$wpdb->prefix}fi_taxonomy t
+			 INNER JOIN {$wpdb->prefix}fi_vote_tags vt ON t.id = vt.tag_id
+			 WHERE vt.vote_id IN ($tag_placeholders)
+			   AND t.taxonomy = 'tag'
+			 GROUP BY t.id, t.name
+			 ORDER BY t.name ASC",
+			...$votes_cast_ids
+		), ARRAY_A) ?: [];
+
+		$link_rows = $wpdb->get_results($wpdb->prepare(
+			"SELECT tag_id, vote_id
+			 FROM {$wpdb->prefix}fi_vote_tags
+			 WHERE vote_id IN ($tag_placeholders)
+			 ORDER BY tag_id ASC, vote_id ASC",
+			...$votes_cast_ids
+		), ARRAY_A) ?: [];
+
+		$tag_votes_map = [];
+		foreach ($link_rows as $link) {
+			$tag_id = (int) ($link['tag_id'] ?? 0);
+			$tag_votes_map[$tag_id][] = (int) ($link['vote_id'] ?? 0);
+		}
+
+		foreach ($tag_rows as &$tag_row) {
+			$tag_id = (int) ($tag_row['id'] ?? 0);
+			$tag_vote_ids = $tag_votes_map[$tag_id] ?? [];
+			$tag_score = fi_legislator_votes_calc_score($scoring_map, $tag_vote_ids);
+			$tag_row['votes'] = $tag_vote_ids;
+			$tag_row['score'] = $tag_score['score'];
+			$tag_row['score_data'] = $tag_score;
+			$tag_row['grade'] = is_numeric($tag_score['score']) && function_exists('fi_score_calculate_grade')
+				? fi_score_calculate_grade((int) $tag_score['score'])
+				: null;
+		}
+		unset($tag_row);
+	}
+
+	$all_tags = array_map(static function ($tag) {
+		return [
+			'id'         => (int) ($tag['id'] ?? 0),
+			'name'       => (string) ($tag['name'] ?? ''),
+			'vote_count' => (int) ($tag['vote_count'] ?? 0),
+			'score'      => $tag['score'] ?? null,
+			'grade'      => $tag['grade'] ?? null,
+			'scored'     => (int) ($tag['score_data']['counted'] ?? 0),
+		];
+	}, $tag_rows);
+
+	usort($all_tags, static fn($a, $b) => $b['vote_count'] <=> $a['vote_count']);
+	$tag_scores = array_slice($all_tags, 0, 8);
+
+	$compiled = [
+		'votes'         => $votes,
+		'votes_cast'    => $votes_cast,
+		'sessions_meta' => $sessions_meta,
+		'tag_rows'      => $tag_rows,
+		'all_tags'      => $all_tags,
+		'tag_scores'    => $tag_scores,
+	];
+
+	$compiled['vote_groups'] = fi_legislator_votes_build_vote_groups(
+		$compiled,
+		$legislator_id,
+		$legislator['score'] ?? null
+	);
+
+	return $compiled;
+}
+
+/**
+ * Get cached legislator vote payload (30-day file cache).
+ *
+ * @param int $legislator_id Legislator ID.
+ * @return array
+ */
+function fi_legislator_votes_cache_get(int $legislator_id): array {
+	$legislator_id = absint($legislator_id);
+	if ($legislator_id <= 0) {
+		return [];
+	}
+
+	$cache_key = 'legislator/' . $legislator_id . '-votes';
+	$cached = fi_cache($cache_key, '', 30);
+	if ($cached !== false && is_array($cached)) {
+		return $cached;
+	}
+
+	$data = fi_legislator_votes_query($legislator_id);
+
+	if (!defined('FI_DEV') || !FI_DEV) {
+		fi_cache($cache_key, $data, 30);
+	}
+
+	return $data;
 }

@@ -75,6 +75,9 @@ function fi_vote_save(array $data, ?int $vote_id = null): int|false {
 			$formats,
 			['%d']
 		);
+		if ($result !== false) {
+			do_action('fi_vote_saved', $vote_id, array_merge($base_fields, ['id' => $vote_id]));
+		}
 		return $result !== false ? $vote_id : false;
 	} else {
 		// Insert
@@ -83,7 +86,11 @@ function fi_vote_save(array $data, ?int $vote_id = null): int|false {
 			$fields,
 			$formats
 		);
-		return $result ? (int) $wpdb->insert_id : false;
+		$new_id = $result ? (int) $wpdb->insert_id : false;
+		if ($new_id) {
+			do_action('fi_vote_saved', $new_id, array_merge($base_fields, ['id' => $new_id]));
+		}
+		return $new_id;
 	}
 }
 

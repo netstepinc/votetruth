@@ -71,7 +71,7 @@ get_header();
 	</div>
 </div>
 
-<div id="home-agitate" class="container-fluid py-5 border-bottom bg-action-light-1">
+<div id="home-agitate" class="container-fluid py-5 border-bottom bg-white">
 	<div class="container">
 		<div class="row">
 			<div class="col-12">
@@ -83,24 +83,26 @@ get_header();
 	</div>
 </div>
 
-<div id="home-empathy" class="container-fluid py-5 bg-black">
-	<div class="container">
-		<div class="mx-auto col-12 col-md-11 col-lg-10 col-xl-9 col-xxl-8">
-			<p class="fs-4 fw-6 mb-5 text-white text-center">Promises are easy. <span class="text-nowrap">Votes are proof.</span></p>
-		</div>
-		<p class="fs-3 fw-6 text-center text-white">That's why we created</p>
-		<p class="fs-3 fw-7 ff-h lh-1 text-center text-action">The Freedom Score</p>
+<div id="home-empathy" class="container-fluid py-5">
+	<div class="container py-4">
+		<p class="fs-5 text-white text-center mb-4">
+			<span class="text-nowrap">We know it's frustrating </span>
+			<span class="text-nowrap">to be ignored by the people </span> 
+			<span class="text-nowrap">elected to represent us.</span>
+		</p>
+		<p class="fs-4 fw-6 text-center text-white">That's why we created</p>
+		<p class="fs-2 fw-7 ff-h lh-1 text-center text-action">The Freedom Score</p>
 	</div>
 </div>
 
 <div id="home-answer" class="container-fluid p-0 py-lg-5 border-bottom bg-action-light-1">
 	<div class="container py-3">
 		<div class="row g-0">
-			<div class="col-12 col-md-6 pb-4 pb-md-0">
-				<p class="text-uppercase text-brand fs-6 text-center text-lg-start">One number tells a story</p>
-				<p class="fs-6 fw-5 text-center text-lg-start">The Freedom Score shows whether your legislators voted to keep government small and your life big.</p>
+			<div class="col-12 col-md-6">
+				<p class="text-uppercase text-brand fs-6 text-center text-lg-start">Promises are easy. <span class="text-nowrap">Votes are proof.</span></p>
+				<p class="fs-6 fw-5 text-center text-lg-start mb-0">The <b>Freedom Score</b> shows whether your legislators voted to keep government small and your life big.</p>
 
-				<div class="row g-0">
+				<div class="row g-0 py-4">
 					<div class="col-4 p-2">
 						<div class="fs-5 ff-h fw-7 lh-1 text-center text-brand"><?= $stats['tracked']; ?></div>
 						<div class="fs-sub mt-1 text-secondary text-center text-uppercase">Legislators<span class="d-none d-lg-inline"> Scored</span></div>
@@ -116,7 +118,7 @@ get_header();
 				</div>
 
 			</div>
-			<div class="col-12 col-md-6 pb-4 pb-md-0">
+			<div class="col-12 col-md-6 pb-md-0">
 				<div id="home-score-scale" class="card rounded-4 mx-auto">
 					<div class="card-header rounded-top-4 bg-brand">
 						<div class="fs-7 fw-bold text-uppercase text-fade">Freedom Score</div>

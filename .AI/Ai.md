@@ -1,8 +1,8 @@
 # AI Instructions - Freedom Index / Vote Scorecard
 
-**Primary Rules File:** `.devin/rules.md`
+**Primary Rules File:** `.AI/rules.md`
 
-All AI agents must read `.devin/rules.md` before beginning work on this project.
+All AI agents must read `.AI/rules.md` before beginning work on this project.
 
 **Quick Reference:**
 - **ZERO BLOAT** - No backward compatibility, delete before adding
@@ -22,4 +22,4 @@ All AI agents must read `.devin/rules.md` before beginning work on this project.
 - This is a purpose built WordPress site with paired plugin (freedom-index) and theme (votetruth). This is not for distribution.
 ---
 
-See `.devin/rules.md` for complete guidelines.
+See `.AI/rules.md` for complete guidelines.

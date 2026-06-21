@@ -1046,3 +1046,35 @@ function fi_score_ajax_get_score_stats(): void {
 
 	wp_send_json_success(fi_score_get_stats($gov ?: null, $session_id ?: null));
 }
+
+/**
+ * Format score for badge/button display.
+ *
+ * @param mixed $score Numeric score or NA.
+ * @return array
+ */
+function fi_score_format($score): array {
+	if ($score === 0 || ($score !== null && $score !== false && $score !== '')) {
+		if (is_numeric($score)) {
+			$score = (int) $score;
+			$text = esc_html((string) $score) . '%';
+			$class = ($score >= 90 ? 'bg-success text-white' : 'bg-primary text-white');
+		} else {
+			$text = 'N/A';
+			$class = 'bg-secondary text-white';
+		}
+		$badge = '<span class="badge ' . $class . ' fs-7">' . $text . '</span>';
+		$button = '<span id="fi-vote-score-btn" class="btn btn-sm ' . $class . ' fs-7 fw-bold rounded-start-0 flex-fill" style="pointer-events:none;cursor:default;">Score: ' . $text . '</span>';
+	} else {
+		$text = '';
+		$badge = '';
+		$button = '';
+	}
+
+	return [
+		'score'  => $score,
+		'text'   => $text,
+		'badge'  => $badge,
+		'button' => $button,
+	];
+}
