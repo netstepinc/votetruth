@@ -9,6 +9,7 @@ All AI agents must read `.AI/rules.md` before beginning work on this project.
 - **Procedural code only** - Functions, not classes
 - **Arrays over objects** - `$data['key']` not `$obj->property`
 - **Naming:** `fi_{noun}_{verb}()`
+- **Bootstrap 5:** Use utilities whenever possible for layout/responsive behavior
 - **Always verify** function exists before calling
 
 **Location:** `/var/www/html/votetruth/`

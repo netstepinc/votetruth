@@ -33,6 +33,7 @@ foreach ($votes_map as $vote_id => $vote) {
 		'bill_number'   => $card['bill_number'],
 		'bill_url'      => $card['bill_url'],
 		'constitutional'=> $card['constitutional'],
+		'date_voted'    => $card['date_voted'],
 		'cast'          => $card['cast'],
 		'chamber_label' => $card['chamber_label'],
 		'url_vote'      => $card['url_vote'],
@@ -44,29 +45,22 @@ foreach ($votes_map as $vote_id => $vote) {
 }
 ?>
 
-<style>
-/* Session rail — cell sizing + active ring (scroll behavior in theme .fi-scroll-rail) */
-.fi-vh-session-cell { min-width:140px; max-width:180px; }
-.fi-vh-session-cell.active { border-color:#000 !important; background-color:#fff !important; box-shadow:0 0 0 1px #000; }
-.fi-line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-</style>
-
 <section id="fi-legislator-vote-history" class="bg-white border-bottom py-3" aria-label="Voting record">
 	<div class="container">
 
 		<div class="d-flex align-items-baseline flex-wrap mb-3">
 			<h2 class="h5 mb-0">Voting Record</h2>
 			<button type="button"
-				class="btn btn-sm btn-outline-secondary ms-5 fw-semibold fi-nav-item<?php echo ($default_view === 'all') ? ' d-none' : ''; ?>"
+				class="btn btn-sm btn-link text-decoration-none p-0 ms-5 fw-semibold fi-nav-item<?php echo ($default_view === 'all') ? ' d-none' : ''; ?>"
 				id="fi-view-all-votes"
 				data-view="all"
 				data-session-id="">
-				View all Votes
+				View/Search all Votes
 			</button>
 		</div>
 
 		<div class="mb-2">
-			<div class="text-muted small text-uppercase fw-bold mb-2">Sessions</div>
+			<div class="text-muted small text-uppercase fw-bold mb-0">Sessions</div>
 			<div class="fi-scroll-rail mx-n3 px-3 py-1" id="fi-session-rail" role="tablist" aria-label="Sessions">
 				<?php foreach ($sessions as $session):
 					$sid = (int) ($session['session_id'] ?? 0);
@@ -74,11 +68,14 @@ foreach ($votes_map as $vote_id => $vote) {
 					$sname = (string) ($smeta['session_name'] ?? ($session['session_name'] ?? 'Session'));
 					$sscore = $smeta['score'] ?? null;
 				?>
+				<?php
+					$session_chip_active = ($sid === $active_session_id && $default_view !== 'all' && $default_view !== 'tag');
+				?>
 				<button type="button"
-					class="btn fi-scroll-rail-item fi-vh-session-cell fi-nav-item border rounded-3 py-2 px-3 text-start bg-light<?php echo ($sid === $active_session_id && $default_view !== 'all' && $default_view !== 'tag') ? ' active' : ''; ?>"
+					class="btn fi-scroll-rail-item fi-vh-session-cell fi-nav-item border rounded-3 py-2 px-3 text-start fw-semibold<?php echo $session_chip_active ? ' btn-primary border-primary' : ' btn-light'; ?>"
 					data-view="session"
 					data-session-id="<?php echo $sid; ?>">
-					<div class="small fw-bold lh-sm fi-line-clamp-2"><?php echo esc_html($sname); ?></div>
+					<div class="small fw-bold lh-sm text-nowrap"><?php echo esc_html($sname); ?></div>
 					<div class="fs-5 fw-bolder"><?php echo is_numeric($sscore) ? (int) $sscore . '%' : 'N/A'; ?></div>
 				</button>
 				<?php endforeach; ?>
@@ -86,7 +83,7 @@ foreach ($votes_map as $vote_id => $vote) {
 		</div>
 
 		<div id="fi-report-chips-wrap" class="mb-2"<?php echo ($default_view === 'all' || $default_view === 'tag') ? ' style="display:none;"' : ''; ?>>
-			<div class="text-muted small text-uppercase fw-bold mb-2">Report</div>
+			<div class="text-muted small text-uppercase fw-bold mb-1">Reports</div>
 			<div class="fi-scroll-rail mx-n3 px-3 pb-1" id="fi-report-chips" role="tablist" aria-label="Reports"></div>
 		</div>
 
@@ -283,8 +280,23 @@ foreach ($votes_map as $vote_id => $vote) {
 			'</div></div></div>';
 	}
 
+	function sortVoteIdsByDate(ids) {
+		return ids.slice().sort(function(a, b) {
+			var va = votesData[a] || {};
+			var vb = votesData[b] || {};
+			var da = va.date_voted ? Date.parse(va.date_voted) : 0;
+			var db = vb.date_voted ? Date.parse(vb.date_voted) : 0;
+			if (db !== da) return db - da;
+			return b - a;
+		});
+	}
+
 	function getFilteredVoteIds(group) {
 		var ids = (group && group.votes) ? group.votes.map(Number) : [];
+		// Report views keep admin-defined vote order; all other views sort by date.
+		if (state.view !== 'report') {
+			ids = sortVoteIdsByDate(ids);
+		}
 		var term = (state.view === 'all') ? String($search.val() || '').toLowerCase().trim() : '';
 		if (!term) return ids;
 		return ids.filter(function(id) {
@@ -331,6 +343,11 @@ foreach ($votes_map as $vote_id => $vote) {
 		}
 	}
 
+	function sessionChipClass(isActive) {
+		return 'btn fi-scroll-rail-item fi-vh-session-cell fi-nav-item border rounded-3 py-2 px-3 text-start fw-semibold' +
+			(isActive ? ' btn-primary border-primary' : ' btn-light');
+	}
+
 	function chipBtnClass(isActive) {
 		return 'btn btn-sm rounded-pill border fw-semibold fi-scroll-rail-item fi-nav-item' +
 			(isActive ? ' btn-primary border-primary' : ' btn-light');
@@ -353,12 +370,15 @@ foreach ($votes_map as $vote_id => $vote) {
 	}
 
 	function highlightNav() {
-		$('.fi-vh-session-cell').removeClass('active');
+		$('.fi-vh-session-cell').each(function() {
+			var $cell = $(this);
+			var isActive = !!(state.sessionId && state.view !== 'all' && state.view !== 'tag' &&
+				Number($cell.attr('data-session-id')) === Number(state.sessionId));
+			$cell.attr('class', sessionChipClass(isActive));
+		});
 		$('#fi-view-all-votes').removeClass('fw-bold text-decoration-underline');
 		if (state.view === 'all') {
 			$('#fi-view-all-votes').addClass('fw-bold text-decoration-underline');
-		} else if (state.sessionId) {
-			$('.fi-vh-session-cell[data-session-id="' + state.sessionId + '"]').addClass('active');
 		}
 	}
 
@@ -428,7 +448,6 @@ foreach ($votes_map as $vote_id => $vote) {
 		visibleLimit = PAGE_SIZE;
 		pushStateFromSelection();
 		syncUi();
-		document.getElementById('fi-legislator-vote-history').scrollIntoView({ behavior: 'smooth' });
 	});
 
 	$search.on('input', function() {

@@ -981,6 +981,26 @@ function fi_legislator_votes_calc_score(array $scoring_map, array $vote_ids): ar
 }
 
 /**
+ * Sort vote IDs by date_voted DESC (newest first), then id DESC.
+ *
+ * @param array $vote_ids Vote IDs to sort.
+ * @param array $votes    Compiled votes map keyed by vote ID.
+ * @return array
+ */
+function fi_legislator_votes_sort_ids_by_date(array $vote_ids, array $votes): array {
+	$vote_ids = array_values(array_unique(array_map('intval', $vote_ids)));
+	usort($vote_ids, static function ($a, $b) use ($votes) {
+		$da = strtotime((string) ($votes[$a]['date_voted'] ?? '')) ?: 0;
+		$db = strtotime((string) ($votes[$b]['date_voted'] ?? '')) ?: 0;
+		if ($db !== $da) {
+			return $db <=> $da;
+		}
+		return $b <=> $a;
+	});
+	return $vote_ids;
+}
+
+/**
  * Format vote date for card display.
  *
  * @param string $date_voted Raw datetime.
@@ -1122,12 +1142,7 @@ function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_
 	$sessions_meta = $compiled['sessions_meta'] ?? [];
 	$tag_rows = $compiled['tag_rows'] ?? [];
 
-	$all_vote_ids = array_keys($votes_cast);
-	usort($all_vote_ids, static function ($a, $b) use ($votes) {
-		$da = strtotime((string) ($votes[$a]['date_voted'] ?? '')) ?: 0;
-		$db = strtotime((string) ($votes[$b]['date_voted'] ?? '')) ?: 0;
-		return $db <=> $da;
-	});
+	$all_vote_ids = fi_legislator_votes_sort_ids_by_date(array_keys($votes_cast), $votes);
 
 	$scoring = function_exists('fi_score_format') ? fi_score_format($freedom_score) : ['score' => $freedom_score, 'text' => '', 'badge' => '', 'button' => ''];
 	$vote_groups = [
@@ -1166,7 +1181,7 @@ function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_
 			'score'        => $tag_scoring['score'] ?? null,
 			'score_text'   => $tag_scoring['text'] ?? '',
 			'score_badge'  => $tag_scoring['badge'] ?? '',
-			'votes'        => array_values(array_map('intval', (array) ($tag['votes'] ?? []))),
+			'votes'        => fi_legislator_votes_sort_ids_by_date((array) ($tag['votes'] ?? []), $votes),
 		];
 	}
 
@@ -1226,7 +1241,7 @@ function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_
 			'score'       => $session_scoring['score'] ?? null,
 			'score_text'  => $session_scoring['text'] ?? '',
 			'score_badge' => $session_scoring['badge'] ?? '',
-			'votes'       => array_values(array_map('intval', (array) ($session['votes'] ?? []))),
+			'votes'       => fi_legislator_votes_sort_ids_by_date((array) ($session['votes'] ?? []), $votes),
 			'reports'     => $reports,
 		];
 	}
@@ -1385,11 +1400,7 @@ function fi_legislator_votes_query(int $legislator_id): array {
 			}
 		}
 
-		usort($session_vote_ids, static function ($a, $b) use ($votes) {
-			$da = strtotime((string) ($votes[$a]['date_voted'] ?? '')) ?: 0;
-			$db = strtotime((string) ($votes[$b]['date_voted'] ?? '')) ?: 0;
-			return $db <=> $da;
-		});
+		$session_vote_ids = fi_legislator_votes_sort_ids_by_date($session_vote_ids, $votes);
 
 		$session_score = fi_legislator_votes_calc_score($scoring_map, $session_vote_ids);
 		$session_name = (string) ($session['session_name'] ?? '');
@@ -1462,7 +1473,7 @@ function fi_legislator_votes_query(int $legislator_id): array {
 
 		foreach ($tag_rows as &$tag_row) {
 			$tag_id = (int) ($tag_row['id'] ?? 0);
-			$tag_vote_ids = $tag_votes_map[$tag_id] ?? [];
+			$tag_vote_ids = fi_legislator_votes_sort_ids_by_date($tag_votes_map[$tag_id] ?? [], $votes);
 			$tag_score = fi_legislator_votes_calc_score($scoring_map, $tag_vote_ids);
 			$tag_row['votes'] = $tag_vote_ids;
 			$tag_row['score'] = $tag_score['score'];

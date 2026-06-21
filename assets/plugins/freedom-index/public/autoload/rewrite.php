@@ -15,6 +15,7 @@ if (!defined('ABSPATH')) exit;
 // =============================================================================
 
 add_action('init', 'fi_rewrite_add_rules');
+add_action('init', 'fi_rewrite_maybe_flush', 99);
 add_filter('query_vars', 'fi_rewrite_add_query_vars');
 add_action('template_redirect', 'fi_rewrite_handle_requests', 1);
 
@@ -115,14 +116,51 @@ function fi_legislators_get_url(?string $gov = null, array $args = []): string {
  * Add all rewrite rules
  */
 function fi_rewrite_add_rules(): void {
-	
-	// Legislator routes (stable URLs, no gov prefix)
+
+	// Legislator filter URLs — most specific first (stable IDs, no gov prefix)
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/session/([0-9]+)/report/([0-9]+)/pdf/([a-z0-9]+)/([0-9]+_[0-9\-]*)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_session=$matches[2]&fi_report_id=$matches[3]&fi_pdf=$matches[4]&fi_pdf_pers=$matches[5]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/session/([0-9]+)/report/([0-9]+)/pdf/([a-z0-9]+)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_session=$matches[2]&fi_report_id=$matches[3]&fi_pdf=$matches[4]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/session/([0-9]+)/report/([0-9]+)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_session=$matches[2]&fi_report_id=$matches[3]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/session/([0-9]+)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_session=$matches[2]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/issue/([0-9]+)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_tag_id=$matches[2]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/report/([0-9]+)/pdf/([a-z0-9]+)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_report_id=$matches[2]&fi_pdf=$matches[3]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^legislator/([0-9]+)/report/([0-9]+)/?$',
+		'index.php?fi_legislator_id=$matches[1]&fi_report_id=$matches[2]',
+		'top'
+	);
+
+	// Base legislator profile
 	add_rewrite_rule(
 		'^legislator/([0-9]+)/?$',
 		'index.php?fi_legislator_id=$matches[1]',
 		'top'
 	);
-	
+
 	add_rewrite_rule(
 		'^legislator/([0-9]+)/report/([^/]+)/?$',
 		'index.php?fi_legislator_id=$matches[1]&fi_report_slug=$matches[2]',
@@ -181,6 +219,18 @@ function fi_rewrite_add_rules(): void {
 }
 
 /**
+ * Flush rewrite rules once when legislator filter routes change.
+ */
+function fi_rewrite_maybe_flush(): void {
+	$version = '20250621-legislator-filters';
+	if (get_option('fi_rewrite_version') === $version) {
+		return;
+	}
+	flush_rewrite_rules(false);
+	update_option('fi_rewrite_version', $version, false);
+}
+
+/**
  * Add custom query vars
  * 
  * @param array $vars Existing query vars
@@ -194,7 +244,11 @@ function fi_rewrite_add_query_vars(array $vars): array {
 	$vars[] = 'fi_entity';
 	$vars[] = 'fi_report_id';
 	$vars[] = 'fi_vote_id';
+	$vars[] = 'fi_session';
 	$vars[] = 'fi_session_id';
+	$vars[] = 'fi_tag_id';
+	$vars[] = 'fi_pdf';
+	$vars[] = 'fi_pdf_pers';
 	$vars[] = 'fi_chamber';
 	$vars[] = 'fi_party';
 	$vars[] = 'fi_state';

@@ -25,9 +25,9 @@ $chamber_title  = $current_session['chamber_title'] ?? ($legislator['chamber_tit
 $district_name  = $current_session['district_name'] ?? '';
 $gov_name       = $current_session['gov_name']      ?? ($legislator['gov_name']      ?? '');
 $session_name   = $current_session['session_name']  ?? '';
-$career_score   = $legislator['score'];
-$career_grade   = ($career_score !== null && function_exists('fi_score_calculate_grade'))
-	? fi_score_calculate_grade((int) $career_score)
+$freedom_score   = $legislator['score'];
+$freedom_grade   = ($freedom_score !== null && function_exists('fi_score_calculate_grade'))
+	? fi_score_calculate_grade((int) $freedom_score)
 	: null;
 $image_id       = (int) ($legislator['image_id'] ?? 0);
 $session_img_id = (int) ($current_session['image_id'] ?? 0);
@@ -65,14 +65,14 @@ $district_str   = $district_name ? ', ' . $district_name : '';
 					<?php echo esc_html($district_str); ?>
 				</p>
 
-			<?php if ($career_score !== null && $career_grade !== null): ?>
+			<?php if ($freedom_score !== null && $freedom_grade !== null): ?>
 			<div class="d-flex align-items-center gap-3 mt-1">
 				<!-- Big grade badge — same format as the legislator card, scaled up -->
-				<?php $grade_key = strtolower($career_grade); ?>
+				<?php $grade_key = strtolower($freedom_grade); ?>
 				<div class="fi-grade fi-grade--<?php echo esc_attr($grade_key); ?>"
 				     style="min-width:72px; padding:10px 14px; border-radius:8px;">
-					<span class="fi-gl" style="font-size:2.2rem;"><?php echo esc_html($career_grade); ?></span>
-					<span class="fi-gs" style="font-size:1.2rem; margin-top:4px;"><?php echo (int) $career_score; ?>%</span>
+					<span class="fi-gl" style="font-size:2.2rem;"><?php echo esc_html($freedom_grade); ?></span>
+					<span class="fi-gs" style="font-size:1.2rem; margin-top:4px;"><?php echo (int) $freedom_score; ?>%</span>
 				</div>
 				<div class="lh-sm text-white">
 					<div class="fw-bold fs-5">Freedom Score</div>
@@ -100,32 +100,22 @@ $toolbar_buttons = [
 <div class="fi-action-toolbar bg-white border-bottom">
 	<div class="container py-2">
 
-		<!-- Desktop: back link left, buttons right -->
-		<div class="d-none d-md-flex align-items-center justify-content-between gap-2">
-			<a href="<?php echo esc_url($back_url); ?>" class="btn btn-sm btn-outline-secondary text-nowrap">
-				&larr; All Legislators
-			</a>
-			<div class="d-flex flex-wrap gap-2 justify-content-end">
-				<?php foreach ($toolbar_buttons as $b): ?>
-				<button type="button" class="btn btn-sm btn-outline-primary"
+		<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-auto g-2 justify-content-lg-end">
+			<div class="col order-first order-lg-first me-lg-auto">
+				<a href="<?php echo esc_url($back_url); ?>"
+					class="btn btn-sm btn-outline-secondary text-nowrap w-100">
+					&larr; All Legislators
+				</a>
+			</div>
+			<?php foreach ($toolbar_buttons as $b): ?>
+			<div class="col">
+				<button type="button"
+					class="btn btn-sm btn-outline-primary w-100"
 					data-bs-toggle="modal" data-bs-target="<?php echo esc_attr($b['target']); ?>">
 					<i class="bi <?php echo esc_attr($b['icon']); ?> me-1" aria-hidden="true"></i><?php echo esc_html($b['label']); ?>
 				</button>
-				<?php endforeach; ?>
 			</div>
-		</div>
-
-		<!-- Mobile: buttons stacked full-width, back link at bottom -->
-		<div class="d-flex d-md-none flex-column gap-2">
-			<?php foreach ($toolbar_buttons as $b): ?>
-			<button type="button" class="btn btn-sm btn-outline-primary w-100"
-				data-bs-toggle="modal" data-bs-target="<?php echo esc_attr($b['target']); ?>">
-				<i class="bi <?php echo esc_attr($b['icon']); ?> me-1" aria-hidden="true"></i><?php echo esc_html($b['label']); ?>
-			</button>
 			<?php endforeach; ?>
-			<a href="<?php echo esc_url($back_url); ?>" class="btn btn-sm btn-outline-secondary w-100">
-				&larr; All Legislators
-			</a>
 		</div>
 
 	</div>
@@ -138,7 +128,7 @@ $toolbar_buttons = [
 <section class="bg-light border-bottom py-3" aria-label="Issue scores">
 	<div class="container">
 
-		<h2 class="h6 text-muted mb-2">Issue Scores</h2>
+		<h2 class="h6 text-muted mb-0">Issue Scores</h2>
 
 		<div class="fi-scroll-rail mx-n3 px-3 py-1" id="fi-issue-rail" role="list" aria-label="Issue score filters">
 			<?php foreach ($tag_scores as $tag): ?>

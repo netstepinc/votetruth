@@ -83,6 +83,9 @@ if ($default_view === 'tag' && $active_tag_id && !empty($vote_groups['tags'][$ac
 }
 
 $initial_vote_ids = array_values(array_map('intval', (array) ($initial_group['votes'] ?? [])));
+if ($default_view !== 'report') {
+	$initial_vote_ids = fi_legislator_votes_sort_ids_by_date($initial_vote_ids, $votes_map);
+}
 $initial_limit    = ($default_view === 'all') ? 25 : count($initial_vote_ids);
 $display_votes    = [];
 

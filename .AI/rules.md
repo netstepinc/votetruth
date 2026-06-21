@@ -113,6 +113,11 @@ fi_get_template('legislator-card', ['legislator' => $leg, 'gov' => $gov]);
 <?php echo esc_html($legislator['name']); ?>
 ```
 
+### Frontend / Bootstrap 5
+- **Use Bootstrap 5 utilities whenever possible** for layout, spacing, sizing, and responsive behavior before writing custom CSS.
+- Prefer **one markup structure** with responsive utility classes over duplicating mobile/desktop HTML blocks.
+- Reserve custom CSS for behavior Bootstrap cannot express (scroll-snap, line-clamp, hidden scrollbars, component-specific active states).
+
 ---
 
 ## 4. Database Patterns
