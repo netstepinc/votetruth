@@ -232,3 +232,26 @@ Conversion rules for all 5:
 - `ajax-api-vote-history.php`
 - Any core function other than adding `fi_reports_get_by_session_ids()` to `core/reports.php`
 - CSS
+
+
+Step 1 — core/reports.php Added fi_reports_get_by_session_ids(): single WHERE IN query fetching all published reports for multiple sessions at once, decoded via fi_report_payload_normalize(), returned keyed by session_id.
+
+Step 2 — public/templates/legislator.php After the tag-score block, added:
+
+$contact built from decoded meta (no extra query)
+$session_reports via the new function
+$current_url for the print modal
+$current_user_id, $user_lists, $pdf_contacts, $pdf_default_idx
+Updated all three fi_get_template() calls to pass the new variables to their respective partials.
+
+Step 3 — public/templates/legislator-header.php Removed the 3-button group from inside the hero. Added a fi-action-toolbar section below the hero with:
+
+Desktop: "← All Legislators" left, 5 buttons right
+Mobile: 5 buttons stacked full-width, "← All Legislators" at bottom as a button
+Step 4 — public/templates/legislator-modals.php Ported all 5 production modal partials into one file using fi_modal_open() / fi_modal_close() helpers (no duplicate trigger buttons):
+
+Contact — uses $contact array; website/email/phone/social/offices, no missing helper functions
+Share — copy link, email, X, Facebook, LinkedIn, QR code; JS reads window.location for current URL
+Lists — array notation throughout ($fi_list['id'], $fi_list['name'], $fi_list['legislators']); AJAX create/update
+Personalize — full logged-in + guest flows; contacts list, add/edit/delete, privacy notice, links to Print modal
+Print — PDF format buttons with dynamic URL update on contact selection; logged-in and guest contact checkboxes; syncs with Personalize via fi:pdf-contacts-changed event

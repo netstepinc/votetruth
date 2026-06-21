@@ -479,7 +479,9 @@ if ($fi_is_logged && $current_user_id) {
 <div class="row">
 	<div class="col-12 col-lg-6">
 		<div id="fiPdfContactsListWrapper" class="mb-3" data-contacts="<?php echo esc_attr(wp_json_encode($pdf_contacts)); ?>">
-			<?php if (!empty($pdf_contacts)): ?>
+			<?php if (empty($pdf_contacts)): ?>
+			<p class="text-muted small">You don't have any contacts saved yet.</p>
+			<?php else: ?>
 			<label class="form-label fw-bold">Saved Contacts</label>
 			<div class="list-group list-group-flush">
 				<?php foreach ($pdf_contacts as $fi_ci => $fi_pc): ?>
@@ -593,6 +595,29 @@ if ($fi_is_logged && $current_user_id) {
 <?php fi_modal_close(); ?>
 
 <script>
+/* Global PDF-contact helpers — needed by fiModalDeleteContact below */
+(function(){
+	'use strict';
+	window.fiPdfContacts = {
+		ajaxUrl: '<?php echo esc_js(admin_url('admin-ajax.php')); ?>',
+		nonce:   '<?php echo esc_js(wp_create_nonce('fi_delete_pdf_contact')); ?>'
+	};
+	window.fiDeletePdfContact = function(index, nonce, onSuccess, onError) {
+		fetch(window.fiPdfContacts.ajaxUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: new URLSearchParams({ action: 'fi_delete_pdf_contact', index: index, nonce: nonce })
+		})
+		.then(function(r) { return r.text().then(function(t) { return { ok: r.ok, body: t }; }); })
+		.then(function(res) {
+			var data; try { data = JSON.parse(res.body); } catch(e) { data = null; }
+			if (data && data.success === true) { if (onSuccess) onSuccess(data); else location.reload(); return; }
+			if (onError) onError(data || {}); else alert('Error deleting contact: ' + (data && data.data && data.data.message ? data.data.message : 'Unknown error'));
+		})
+		.catch(function() { if (onError) onError({}); else alert('Error deleting contact. Please try again.'); });
+	};
+})();
+
 (function() {
 	var modalEl = document.querySelector('#fi-personalize-modal');
 	if (!modalEl) return;
@@ -609,7 +634,7 @@ if ($fi_is_logged && $current_user_id) {
 		if (!wrapper) return;
 		wrapper.dataset.contacts = JSON.stringify(contacts);
 		if (contacts.length === 0) {
-			wrapper.innerHTML = '';
+			wrapper.innerHTML = '<p class="text-muted small">You don\'t have any contacts saved yet.</p>';
 		} else {
 			var items = contacts.map(function(c, i) {
 				var n = escHtml(c.name||'Unnamed');

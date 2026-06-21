@@ -333,6 +333,37 @@ Before marking work complete:
 
 ---
 
+## 13. User Command Keywords
+
+The user uses ALL-CAPS keywords to set the response mode. Treat these as hard directives:
+
+| Keyword | Meaning | AI behavior |
+|---|---|---|
+| **DIAGNOSE** | Find and summarize the problem only | Read files, identify root cause, explain it clearly. **No code changes.** Wait for further instruction. |
+| **FIXIT** | Find the problem and fix it | Diagnose inline (no separate approval step needed), then implement the fix immediately. |
+| **PLAN** | Create a written plan before any code | Produce a step-by-step plan. **No code.** Wait for "execute" or explicit approval. |
+| **EXECUTE** | Implement the last approved plan | Follow the plan as written. Ask if anything is ambiguous before starting. |
+| **QUESTIONS** | Ask clarifying questions one at a time and wait for the answer before proceeding. | Ask all questions relevant to the next task, before doing anything else. |
+
+### When no keyword is used:
+- For **small, obvious, zero-risk** fixes requested in plain language: implement directly.
+- For **anything touching multiple files, architectural decisions, or unclear scope**: ask at least 3 clarifying questions before writing a single line of code.
+- **When in doubt, ask.** Questions are free. Incorrect code costs tokens and trust.
+
+### Pre-task interrogation
+- For any significant change (new feature, refactor, modal port, template rewrite), ask **at least 5–10 targeted questions** before coding, even if the task seems clear.
+- Questions should surface: scope boundaries, reference files to consult, variables already in scope, functions that already exist, and what "done" looks like.
+- **User prefers being interrogated** over receiving incorrect assumptions baked into code.
+- The user is willing to answer 10–25 questions if it prevents a token-burning wrong direction.
+
+### Plan review before execution
+- For any change touching 3+ files or involving a new architectural pattern: produce a written plan first.
+- The plan must list every file to be changed, what changes, and why.
+- **Do not write any code until the user explicitly approves the plan** (says "execute," "looks good," "go ahead," or equivalent).
+- Single-file, single-function fixes with an obvious root cause may skip the plan step.
+
+---
+
 ## 12. Tool / Workflow Expectations
 
 - **Search before editing** when scope is unclear

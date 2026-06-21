@@ -139,9 +139,9 @@ function fi_public_ajax_lists_validate_legislator_limit(array $legislator_ids): 
  *
  * @param int $list_id List ID.
  * @param int $user_id User ID.
- * @return object|null List object.
+ * @return array|null List row (ARRAY_A) or null if not found or not owned.
  */
-function fi_public_ajax_lists_get_owned_list(int $list_id, int $user_id): ?object {
+function fi_public_ajax_lists_get_owned_list(int $list_id, int $user_id): ?array {
 	$list_id = absint($list_id);
 	$user_id = absint($user_id);
 
@@ -150,7 +150,7 @@ function fi_public_ajax_lists_get_owned_list(int $list_id, int $user_id): ?objec
 	}
 
 	$list = fi_list_get_by_id($list_id);
-	if ($list && (int) ($list->user_id ?? 0) === $user_id) {
+	if (is_array($list) && (int) ($list['user_id'] ?? 0) === $user_id) {
 		return $list;
 	}
 	return null;
@@ -322,7 +322,7 @@ function fi_public_ajax_handle_update_list(): void {
 		wp_send_json_error(['message' => 'List not found']);
 	}
 
-	$legislator_ids = fi_public_ajax_lists_decode_legislators($list->legislators ?? []);
+	$legislator_ids = fi_public_ajax_lists_decode_legislators($list['legislators'] ?? []);
 
 	if ($add) {
 		if (!in_array($legislator_id, $legislator_ids, true)) {
@@ -339,9 +339,9 @@ function fi_public_ajax_handle_update_list(): void {
 
 	$result = fi_public_ajax_lists_save([
 		'user_id'     => $user_id,
-		'name'        => (string) ($list->name ?? ''),
+		'name'        => (string) ($list['name'] ?? ''),
 		'legislators' => $legislator_ids,
-		'meta'        => fi_public_ajax_lists_decode_meta($list->meta ?? null),
+		'meta'        => fi_public_ajax_lists_decode_meta($list['meta'] ?? null),
 	], $list_id);
 
 	fi_public_ajax_lists_log('update_list', [
@@ -384,8 +384,8 @@ function fi_public_ajax_handle_update_list_name(): void {
 	$result = fi_public_ajax_lists_save([
 		'user_id'     => $user_id,
 		'name'        => $name,
-		'legislators' => fi_public_ajax_lists_decode_legislators($list->legislators ?? []),
-		'meta'        => fi_public_ajax_lists_decode_meta($list->meta ?? null),
+		'legislators' => fi_public_ajax_lists_decode_legislators($list['legislators'] ?? []),
+		'meta'        => fi_public_ajax_lists_decode_meta($list['meta'] ?? null),
 	], $list_id);
 
 	fi_public_ajax_lists_log('update_list_name', [
@@ -433,7 +433,7 @@ function fi_public_ajax_handle_update_list_contact(): void {
 		}
 	}
 
-	$meta = fi_public_ajax_lists_decode_meta($list->meta ?? null);
+	$meta = fi_public_ajax_lists_decode_meta($list['meta'] ?? null);
 
 	if ($contact_index !== null) {
 		$meta['contact_index'] = $contact_index;
@@ -443,8 +443,8 @@ function fi_public_ajax_handle_update_list_contact(): void {
 
 	$result = fi_public_ajax_lists_save([
 		'user_id'     => $user_id,
-		'name'        => (string) ($list->name ?? ''),
-		'legislators' => fi_public_ajax_lists_decode_legislators($list->legislators ?? []),
+		'name'        => (string) ($list['name'] ?? ''),
+		'legislators' => fi_public_ajax_lists_decode_legislators($list['legislators'] ?? []),
 		'meta'        => $meta,
 	], $list_id);
 
