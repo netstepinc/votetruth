@@ -70,7 +70,7 @@ fi_get_template('partials/template-header', $header_args);
 	<?php else: ?>
 		<?php foreach ($reports as $report): 
 			// Decode payload to get report content and votes
-			$payload = fi_report_payload_normalize($report->payload_json ?? null);
+			$payload = fi_report_decode_payload($report->payload_json ?? null);
 			$description = $payload['content'] ?? '';
 			$pdf_url = $payload['report_pdf_url'] ?? '';
 

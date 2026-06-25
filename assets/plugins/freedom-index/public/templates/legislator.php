@@ -87,16 +87,12 @@ if ($default_view !== 'report') {
 	$initial_vote_ids = fi_legislator_votes_sort_ids_by_date($initial_vote_ids, $votes_map);
 }
 $initial_limit    = ($default_view === 'all') ? 25 : count($initial_vote_ids);
-$display_votes    = [];
-
+// Card HTML is pre-rendered in compile pass; no per-request formatting calls needed.
+$display_votes = [];
 foreach (array_slice($initial_vote_ids, 0, $initial_limit) as $vote_id) {
-	if (empty($votes_map[$vote_id])) {
-		continue;
+	if (!empty($votes_map[$vote_id]['card_html'])) {
+		$display_votes[] = $votes_map[$vote_id]['card_html'];
 	}
-	$display_votes[] = fi_legislator_votes_prepare_card_data($votes_map[$vote_id], [
-		'gov'           => $gov,
-		'report_format' => (string) ($initial_group['format'] ?? 'scorecard'),
-	]);
 }
 
 // Print modal default report base (latest scorecard on current session)
@@ -113,6 +109,8 @@ foreach ($sessions as $session) {
 		}
 	}
 }
+
+$base_url = home_url("/legislator/{$legislator_id}/");
 
 $meta    = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
 $contact = [
@@ -139,7 +137,6 @@ $pdf_contacts    = $current_user_id ? fi_pdf_contacts_get($current_user_id) : []
 $pdf_default_idx = $current_user_id ? fi_pdf_contacts_default_index_get($current_user_id) : null;
 
 // SEO — canonical always base URL; og:url matches active variant
-$base_url   = home_url("/legislator/{$legislator_id}/");
 $score      = $legislator['score'];
 $page_title = ($legislator['display_name'] ?? 'Legislator') . ' | Freedom Index';
 $description = sprintf(
@@ -218,7 +215,7 @@ fi_get_template('legislator-header', [
 	'legislator'      => $legislator,
 	'sessions'        => $sessions,
 	'current_session' => $current_session,
-	'tag_scores'      => $tag_scores,
+	'tag_scores'      => $all_tags,
 	'base_url'        => $base_url,
 	'legislator_id'   => $legislator_id,
 	'gov'             => $gov,

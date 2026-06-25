@@ -117,14 +117,32 @@ function fi_vote_cost_format(string $cost): array {
 }
 
 /**
+ * Compact cost badge for vote list cards.
+ * + = benefit to household = good (green); - = cost to household = bad (red).
+ *
+ * @param string $cost Raw cost meta value.
+ * @return array{badge: string, class: string}
+ */
+function fi_vote_cost_compact_badge(string $cost): array {
+	if ($cost === '') {
+		return ['badge' => '', 'class' => ''];
+	}
+	$formatted = fi_vote_format_cost($cost);
+	if (empty($formatted['formatted'])) {
+		return ['badge' => '', 'class' => ''];
+	}
+	$indicator = (string) ($formatted['indicator'] ?? '');
+	return [
+		'badge' => $indicator . $formatted['formatted'],
+		'class' => ($indicator === '+') ? 'good' : 'bad',
+	];
+}
+
+/**
  * Get status options
  * 
  * @return array Status options array
  */
 function fi_vote_get_status_options(): array {
-	return [
-		'publish' => 'Published',
-		'draft' => 'Draft',
-		'archived' => 'Archived',
-	];
+	return FI_VOTE_STATUSES;
 }

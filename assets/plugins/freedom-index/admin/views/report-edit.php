@@ -91,11 +91,11 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 					onclick="return confirm('Discard changes and return to the list?');"
 				>Cancel</a>
 				<?php if ($report_id): ?>
-					<a
-						href="<?php echo esc_url(wp_nonce_url(fi_admin_url('fi-reports', ['action' => 'delete', 'report_id' => $report_id]), 'fi_delete_report_' . $report_id)); ?>"
+					<button
+						type="button"
 						class="btn btn-sm btn-outline-danger"
-						onclick="return confirm('Are you sure you want to delete this report?');"
-					>Delete</a>
+						onclick="if (confirm('Are you sure you want to delete this report?')) { document.getElementById('fi-report-delete-form').submit(); }"
+					>Delete</button>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -106,11 +106,7 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 		Selected Votes: <span data-count-h><?php echo esc_html(count($selected_votes_h)); ?></span> House, <span data-count-s><?php echo esc_html(count($selected_votes_s)); ?></span> Senate
 	</div>
 	<?php endif; ?>
-	<?php if (!empty($_GET['updated'])): ?>
-		<div class="notice notice-success is-dismissible">
-			<p>Report saved successfully.</p>
-		</div>
-	<?php endif; ?>
+	<?php settings_errors('fi_reports'); ?>
 	
 	<form id="fi-report-form" method="post">
 		<?php wp_nonce_field('fi_save_report', 'fi_report_nonce'); ?>
@@ -792,4 +788,17 @@ $is_us_gov = (strtoupper($current_gov) === 'US');
 </div>
 <?php else: ?>
 </div>
+<?php endif; ?>
+
+<?php if ($report_id): ?>
+	<form
+		id="fi-report-delete-form"
+		method="post"
+		action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
+		style="display:none;"
+	>
+		<?php wp_nonce_field('fi_delete_report_' . $report_id, 'fi_delete_report_nonce'); ?>
+		<input type="hidden" name="action" value="fi_delete_report">
+		<input type="hidden" name="report_id" value="<?php echo esc_attr($report_id); ?>">
+	</form>
 <?php endif; ?>

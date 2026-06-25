@@ -226,8 +226,7 @@ function fi_vote_tags_get_tags_by_vote_ids(array $vote_ids): array {
 		SELECT
 			vt.vote_id,
 			t.id as tag_id,
-			t.name as tag_name,
-			t.slug as tag_slug
+			t.name as tag_name
 		FROM {$wpdb->prefix}fi_vote_tags vt
 		INNER JOIN {$wpdb->prefix}fi_taxonomy t ON vt.tag_id = t.id
 		WHERE vt.vote_id IN ($placeholders)

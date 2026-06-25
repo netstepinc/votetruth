@@ -299,6 +299,7 @@ function fi_schema_ensure(): void {
 		gov CHAR(2) NOT NULL,
 		taxonomy ENUM('tag', 'district') NOT NULL,
 		name VARCHAR(255) NOT NULL,
+		description TEXT NULL,
 		meta JSON NULL,
 		date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		date_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -44,16 +44,17 @@ function fi_admin_post_save_taxonomy_item(): void {
 		$gov = 'US';
 	}
 	$name = sanitize_text_field($_POST['name'] ?? '');
-
+	$description = sanitize_textarea_field($_POST['description'] ?? '');
 
 	if ($taxonomy === '' || $name === '' || ($taxonomy !== 'tag' && $gov === '')) {
 		wp_die('Missing required fields (taxonomy, name, gov).');
 	}
 
 	$data = [
-		'gov'      => $gov,
-		'taxonomy' => $taxonomy,
-		'name'     => $name,
+		'gov'         => $gov,
+		'taxonomy'    => $taxonomy,
+		'name'        => $name,
+		'description' => $description,
 	];
 	$saved_id = fi_taxonomy_save($data, $taxonomy_id ?: null);
 	if (!$saved_id) {

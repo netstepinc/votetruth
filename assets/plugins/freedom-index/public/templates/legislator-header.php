@@ -5,7 +5,7 @@
  * Expected variables (from legislator.php controller):
  *   $legislator      array   Full legislator row with display fields
  *   $current_session array   Active published session row
- *   $tag_scores      array   Top-8 career issue scores [{id,name,vote_count,score,grade,scored}]
+ *   $tag_scores      array   All career issue scores [{id,name,vote_count,score,grade,scored}]
  *   $base_url        string  Canonical legislator URL
  *   $legislator_id   int
  */

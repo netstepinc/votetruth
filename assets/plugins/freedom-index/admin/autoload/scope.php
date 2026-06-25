@@ -528,6 +528,28 @@ function fi_scope_content_check(string $scope_gov, string $content_gov, string $
 add_action('admin_init', 'fi_scope_handle_form_submission', 0);
 add_action('admin_post_fi_switch_scope', 'fi_scope_handle_switch_action');
 
+// Prevent browser/proxy caching on FI admin pages so saves and nonces are always fresh.
+// Priority -10 ensures this fires before save handlers exit via wp_safe_redirect(),
+// so the 302 redirect response itself carries no-store.
+add_action('admin_init', static function (): void {
+	$page = sanitize_key((string) ($_GET['page'] ?? ''));
+	if (str_starts_with($page, 'fi-')) {
+		header('Cache-Control: no-cache, no-store, must-revalidate');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+	}
+}, -10);
+
+// WordPress's nocache_headers() (called in admin-header.php during render) overwrites the
+// Cache-Control header above, dropping no-store. Re-assert at admin_head which fires after
+// admin-header.php but before any body output, so headers are still modifiable.
+add_action('admin_head', static function (): void {
+	$page = sanitize_key((string) ($_GET['page'] ?? ''));
+	if (str_starts_with($page, 'fi-') && !headers_sent()) {
+		header('Cache-Control: no-cache, no-store, must-revalidate');
+	}
+}, 1);
+
 /* -------------------------------------------------------------------------
  * Compatibility aliases.
  * ---------------------------------------------------------------------- */

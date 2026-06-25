@@ -125,10 +125,9 @@ if (!empty($vote_ids)) {
         $all_vote_ids = array_map(static fn($vote) => (int) $vote['id'], $votes);
         $tag_rows = fi_vote_tags_get_tags_by_vote_ids($all_vote_ids);
         foreach ($tag_rows as $row) {
-            $tags_by_vote[$row->vote_id][] = (object) [
-                'id' => $row->tag_id,
-                'name' => $row->tag_name,
-                'slug' => $row->tag_slug,
+            $tags_by_vote[$row['vote_id']][] = (object) [
+                'id'   => $row['tag_id'],
+                'name' => $row['tag_name'],
             ];
         }
     }

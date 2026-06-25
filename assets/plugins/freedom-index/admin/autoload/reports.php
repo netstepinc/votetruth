@@ -94,13 +94,12 @@ array(19) { ["fi_report_nonce"]=> string(10) "ab52a57a15" ["_wp_http_referer"]=>
 		wp_die('Failed to save report');
 	}
 
-	$redirect_url = fi_admin_url('fi-reports', [
+	add_settings_error('fi_reports', 'report_saved', 'Report saved successfully.', 'updated');
+
+	wp_safe_redirect(fi_admin_url('fi-reports', [
 		'action'    => 'edit',
 		'report_id' => (int) $saved_id,
-		'updated'   => '1',
-	]);
-
-	wp_safe_redirect($redirect_url);
+	]));
 	exit;
 }
 

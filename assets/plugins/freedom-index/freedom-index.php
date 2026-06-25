@@ -42,6 +42,8 @@ define('FI_DIR_PDF', FI_DIR_CACHE . 'pdf/');
 
 define('FI_FINDMY_AUTO',false);
 
+define('FI_VOTE_STATUSES', ['publish' => 'Published', 'draft' => 'Draft', 'archived' => 'Archived']);
+
 // LegiScan storage layout (keeps /legiscan clean and structured)
 // - Extracted datasets: {FI_DIR_LEGISCAN}{GOV}/{SESSION_FOLDER}/...
 // - API JSON reference cache: {FI_DIR_LEGISCAN_JSON}*.json

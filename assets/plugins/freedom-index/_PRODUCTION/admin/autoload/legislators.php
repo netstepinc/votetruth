@@ -95,18 +95,20 @@ function fi_admin_legislators_handle_save(array $scope): void {
 		return;
 	}
 
+	// Invalidate file cache so frontend/AJAX reflects the update immediately.
+	fi_cache_clear('legislators');
+
 	$return_url = '';
 	if (isset($_POST['return_url']) && is_string($_POST['return_url'])) {
 		$candidate = esc_url_raw(wp_unslash($_POST['return_url']));
 		$return_url = wp_validate_redirect($candidate, '');
 	}
 
-	// Build redirect URL using helper function
-	$redirect = fi_admin_edit_legislator_url($saved_id, [
-		'updated' => 1,
-		'return_url' => $return_url,
-	]);
-	
+	// Use transient-based notice (WP standard) so redirect URL stays clean.
+	add_settings_error('fi_legislator', 'legislator_saved', 'Legislator saved successfully.', 'updated');
+
+	$redirect = fi_admin_edit_legislator_url($saved_id, ['return_url' => $return_url]);
+
 	// Redirect after successful save (called during admin_init, so no output yet)
 	wp_safe_redirect($redirect);
 	exit;

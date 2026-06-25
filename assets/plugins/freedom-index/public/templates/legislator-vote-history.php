@@ -10,37 +10,30 @@ $current_session_id  = $current_session ? (int) $current_session['session_id'] :
 $initial_title       = (string) ($initial_group['title'] ?? 'Votes');
 $initial_score       = $initial_group['score'] ?? null;
 $initial_content     = (string) ($initial_group['content'] ?? '');
+$initial_tag_desc    = (string) ($initial_group['description'] ?? '');
 
+// Card HTML pre-rendered in compile pass — concatenate directly, no template call needed.
 $initial_votes_html = '';
 if (!empty($display_votes)) {
-	$initial_votes_html = '<div class="row g-3" id="fi-vote-cards-container">';
-	foreach ($display_votes as $card_args) {
-		$initial_votes_html .= fi_get_template_html('vote-card', $card_args);
+	$initial_votes_html = '<div class="d-flex flex-column gap-2" id="fi-vote-cards-container">';
+	foreach ($display_votes as $card_html) {
+		$initial_votes_html .= $card_html;
 	}
 	$initial_votes_html .= '</div>';
 }
 
-// Slim vote payload for JS card rebuild
+// JS payload — card_html is the pre-rendered card; modal fields kept for showVoteDetailModal().
 $votes_json = [];
 foreach ($votes_map as $vote_id => $vote) {
-	$card = fi_legislator_votes_prepare_card_data($vote, ['gov' => $gov]);
-	$vf = $card['vote_format'] ?? [];
 	$votes_json[$vote_id] = [
-		'id'            => (int) $vote_id,
-		'title'         => $card['title'],
-		'text'          => $card['text'],
-		'text_more'     => $card['text_more'],
-		'bill_number'   => $card['bill_number'],
-		'bill_url'      => $card['bill_url'],
-		'constitutional'=> $card['constitutional'],
-		'date_voted'    => $card['date_voted'],
-		'cast'          => $card['cast'],
-		'chamber_label' => $card['chamber_label'],
-		'url_vote'      => $card['url_vote'],
-		'search_text'   => $card['search_text'],
-		'cost_line'     => $card['cost_sentence'] ?: $card['cost_html'],
-		'is_match'      => (int) ($vf['is_match'] ?? 0),
-		'is_no_vote'    => (int) ($vf['is_no_vote'] ?? 0),
+		'id'             => (int) $vote_id,
+		'title'          => $vote['title'],
+		'impact_summary' => $vote['impact_summary'] ?? '',
+		'text_more'      => $vote['text_more'],
+		'bill_url'       => $vote['bill_url'],
+		'date_voted'     => $vote['date_voted'],
+		'search_text'    => $vote['search_text'],
+		'card_html'      => $vote['card_html'] ?? '',
 	];
 }
 ?>
@@ -121,6 +114,9 @@ foreach ($votes_map as $vote_id => $vote) {
 			<div id="fi-vote-list-content" class="mb-3 fs-7"<?php echo $initial_content ? '' : ' style="display:none;"'; ?>>
 				<?php echo $initial_content ? wp_kses_post($initial_content) : ''; ?>
 			</div>
+			<div id="fi-tag-description" class="mb-3 text-muted small"<?php echo $initial_tag_desc ? '' : ' style="display:none;"'; ?>>
+				<?php echo $initial_tag_desc ? esc_html($initial_tag_desc) : ''; ?>
+			</div>
 			<div id="fi-vote-list-container">
 				<?php if ($initial_votes_html): ?>
 					<?php echo $initial_votes_html; ?>
@@ -139,7 +135,7 @@ foreach ($votes_map as $vote_id => $vote) {
 	<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2 class="modal-title fs-5 fw-bold" id="fi-vote-detail-modal-label">Vote Details</h2>
+				<h2 class="modal-title fs-7 fw-bold" id="fi-vote-detail-modal-label">Vote Details</h2>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body" id="fi-vote-detail-content"></div>
@@ -179,6 +175,7 @@ foreach ($votes_map as $vote_id => $vote) {
 	var $title = $('#fi-vote-list-title');
 	var $subtitle = $('#fi-vote-list-subtitle');
 	var $content = $('#fi-vote-list-content');
+	var $tagDesc = $('#fi-tag-description');
 	var $search = $('#fi-vote-search');
 	var $searchWrap = $('#fi-vote-search-container');
 	var $scoreWrap = $('#fi-vote-score-container');
@@ -251,33 +248,29 @@ foreach ($votes_map as $vote_id => $vote) {
 		return voteGroups.all;
 	}
 
-	function buildVoteCardHtml(vote) {
-		if (!vote) return '';
-		var constRaw = String(vote.constitutional || '').toUpperCase();
-		var castRaw = String(vote.cast || '').toUpperCase();
-		var constLabel = constRaw === 'Y' ? 'YES' : (constRaw === 'N' ? 'NO' : '—');
-		var castLabel = castRaw === 'Y' ? 'YES' : (castRaw === 'N' ? 'NO' : '—');
-		var constClass = constRaw === 'Y' ? 'text-success' : (constRaw === 'N' ? 'text-danger' : 'text-muted');
-		var castClass = vote.is_no_vote ? 'text-muted' : (vote.is_match ? 'text-success' : 'text-danger');
-		var matchClass = vote.is_no_vote ? 'bg-secondary' : (vote.is_match ? 'bg-success' : 'bg-danger');
-		var titleHtml = vote.url_vote
-			? '<a href="' + escHtml(vote.url_vote) + '" class="text-body text-decoration-none">' + escHtml(vote.title) + '</a>'
-			: escHtml(vote.title);
-		var meta = [vote.bill_number, vote.chamber_label].filter(Boolean).join(' · ');
-		var readMore = vote.text_more
-			? ' <button type="button" class="badge bg-primary border-0 fi-vote-readmore ms-1" data-vote-id="' + vote.id + '">Read More</button>'
-			: '';
-
-		return '<div class="col-12 fi-vote-card" data-vote-id="' + vote.id + '" data-search-text="' + escHtml(vote.search_text) + '">' +
-			'<div class="card shadow-sm border rounded-3 overflow-hidden h-100">' +
-			'<div class="card-header bg-white py-2 px-3 border-bottom-0"><h6 class="card-title mb-0 fw-semibold lh-sm">' + titleHtml + '</h6>' +
-			(meta ? '<div class="text-muted small mt-1">' + escHtml(meta) + '</div>' : '') + '</div>' +
-			'<div class="card-body py-2 px-3">' +
-			(vote.text ? '<p class="card-text small mb-2">' + vote.text + readMore + '</p>' : (readMore ? '<p class="mb-2">' + readMore + '</p>' : '')) +
-			(vote.cost_line ? '<div class="small mb-2">' + vote.cost_line + '</div>' : '') +
-			'<div class="row g-2 fi-vote-indicators"><div class="col-12 col-md-6"><div class="small text-muted">Constitutional</div><div class="fw-bold ' + constClass + '">' + constLabel + '</div></div>' +
-			'<div class="col-12 col-md-6"><div class="small text-muted">Vote Cast</div><div class="d-flex align-items-center gap-2"><span class="fw-bold ' + castClass + '">' + castLabel + '</span><span class="badge ' + matchClass + ' rounded-pill">&nbsp;</span></div></div></div>' +
-			'</div></div></div>';
+	function showVoteDetailModal(voteId) {
+		var vote = votesData[voteId];
+		if (!vote) return;
+		var title = vote.title || 'Vote Details';
+		var body = '';
+		// Impact summary (the "why it matters") shown first when present.
+		if (vote.impact_summary) {
+			body += '<div class="fi-vote-impact-summary mb-3">' + vote.impact_summary + '</div>';
+		}
+		if (vote.text_more) {
+			body += '<div class="fi-vote-detail-text mb-3">' + vote.text_more + '</div>';
+		}
+		if (vote.bill_url) {
+			body += '<p class="mb-3"><a href="' + escHtml(vote.bill_url) + '" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">View Bill Text</a></p>';
+		}
+		if (!body) body = '<p class="text-muted">No additional details available.</p>';
+		$('#fi-vote-detail-modal-label').text(title);
+		$('#fi-vote-detail-content').html(body);
+		var el = document.getElementById('fi-vote-detail-modal');
+		if (!detailModalInst && window.bootstrap && window.bootstrap.Modal) {
+			detailModalInst = window.bootstrap.Modal.getOrCreateInstance(el);
+		}
+		detailModalInst ? detailModalInst.show() : $(el).modal('show');
 	}
 
 	function sortVoteIdsByDate(ids) {
@@ -313,10 +306,17 @@ foreach ($votes_map as $vote_id => $vote) {
 		var group = getActiveGroup();
 		var ids = getFilteredVoteIds(group);
 		var slice = ids.slice(0, visibleLimit);
-		var html = slice.length ? '<div class="row g-3" id="fi-vote-cards-container">' : '';
-		slice.forEach(function(id) { html += buildVoteCardHtml(votesData[id]); });
-		if (slice.length) html += '</div>';
-		if (!slice.length) html = '<div class="alert alert-info" id="no-votes-found">No votes found for this selection.</div>';
+		var html = '';
+		if (slice.length) {
+			html = '<div class="d-flex flex-column gap-2" id="fi-vote-cards-container">';
+			slice.forEach(function(id) {
+				var vote = votesData[id];
+				html += (vote && vote.card_html) ? vote.card_html : '';
+			});
+			html += '</div>';
+		} else {
+			html = '<div class="alert alert-info" id="no-votes-found">No votes found for this selection.</div>';
+		}
 		$container.html(html);
 		$loadMoreWrap.toggle(ids.length > visibleLimit);
 	}
@@ -326,6 +326,9 @@ foreach ($votes_map as $vote_id => $vote) {
 		$title.text(group.title || 'Votes');
 		if (group.subtitle) { $subtitle.text(group.subtitle).show(); } else { $subtitle.text('').hide(); }
 		if (group.content) { $content.html(group.content).show(); } else { $content.empty().hide(); }
+		// Tag description — shown only when a tag filter is active and the tag has a description.
+		var desc = (state.view === 'tag' && group.description) ? group.description : '';
+		if (desc) { $tagDesc.text(desc).show(); } else { $tagDesc.text('').hide(); }
 
 		var actions = group.actions || {};
 		var hasControls = !!(actions.share || actions.score || actions.pdf || actions.pdfa || actions.pdfb);
@@ -465,23 +468,20 @@ foreach ($votes_map as $vote_id => $vote) {
 	$(document).on('click', '.fi-vote-readmore', function(e) {
 		e.preventDefault();
 		var voteId = Number($(this).data('vote-id')) || Number($(this).closest('.fi-vote-card').data('vote-id'));
-		var vote = votesData[voteId];
-		var title = (vote && vote.title) || $(this).data('vote-title') || 'Vote Details';
-		var body = '';
-		if (vote && vote.text_more) {
-			body += '<div class="fi-vote-detail-text mb-3">' + vote.text_more + '</div>';
+		showVoteDetailModal(voteId);
+	});
+
+	$(document).on('click', '.fi-vote-card--interactive', function(e) {
+		if ($(e.target).closest('a.fi-vote-title-link, .fi-vote-readmore').length) return;
+		e.preventDefault();
+		showVoteDetailModal(Number($(this).data('vote-id')));
+	});
+
+	$(document).on('keydown', '.fi-vote-card--interactive', function(e) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			showVoteDetailModal(Number($(this).data('vote-id')));
 		}
-		if (vote && vote.bill_url) {
-			body += '<p class="mb-3"><a href="' + escHtml(vote.bill_url) + '" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">View Bill Text</a></p>';
-		}
-		if (!body) body = $(this).data('vote-body') || '';
-		$('#fi-vote-detail-modal-label').text(title);
-		$('#fi-vote-detail-content').html(body || '<p class="text-muted">No additional details available.</p>');
-		var el = document.getElementById('fi-vote-detail-modal');
-		if (!detailModalInst && window.bootstrap && window.bootstrap.Modal) {
-			detailModalInst = window.bootstrap.Modal.getOrCreateInstance(el);
-		}
-		detailModalInst ? detailModalInst.show() : $(el).modal('show');
 	});
 
 	window.addEventListener('popstate', function() {

@@ -31,7 +31,7 @@ $item = null;
 if ($is_edit) {
 	$item = fi_taxonomy_get($taxonomy_id);
 	// Summary: prevent cross-gov or cross-taxonomy edits when scope changes.
-	if (!$item || sanitize_key((string) ($item->taxonomy ?? '')) !== $taxonomy || (!$is_tag && strtoupper((string) ($item->gov ?? '')) !== $gov)) {
+	if (!$item || sanitize_key((string) ($item['taxonomy'] ?? '')) !== $taxonomy || (!$is_tag && strtoupper((string) ($item['gov'] ?? '')) !== $gov)) {
 		$item = null;
 		$is_edit = false;
 	}
@@ -60,7 +60,7 @@ if ($taxonomy === 'district' && $gov === 'US' && $state !== '') {
 	$vals[] = $state . ' %';
 }
 
-$sql = "SELECT id, gov, taxonomy, name, date_updated
+$sql = "SELECT id, gov, taxonomy, name, description, date_updated
 		FROM {$wpdb->prefix}fi_taxonomy
 		WHERE " . implode(' AND ', $where) . "
 		ORDER BY name ASC";
@@ -91,7 +91,7 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 	<?php endif; ?>
 
 	<div class="row g-4">
-		<div class="col-12 col-lg-4">
+		<div class="col-12 col-lg-3">
 			<div class="card shadow-sm">
 				<div class="card-header bg-white border-0">
 					<h2 class="h5 mb-0"><?php echo esc_html($is_edit ? "Edit {$title}" : "Add {$title}"); ?></h2>
@@ -113,9 +113,20 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 								id="fi-taxonomy-name"
 								type="text"
 								class="form-control"
-								value="<?php echo esc_attr((string) ($item->name ?? '')); ?>"
+								value="<?php echo esc_attr((string) ($item['name'] ?? '')); ?>"
 								required
 							>
+						</div>
+
+						<div class="mb-3">
+							<label class="form-label fw-semibold" for="fi-taxonomy-description">Description</label>
+							<textarea
+								name="description"
+								id="fi-taxonomy-description"
+								class="form-control"
+								rows="3"
+							><?php echo esc_textarea((string) ($item['description'] ?? '')); ?></textarea>
+							<div class="form-text text-muted">Shown above the vote list when this tag is active.</div>
 						</div>
 
 						<div class="d-flex gap-2">
@@ -129,7 +140,7 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 			</div>
 		</div>
 
-		<div class="col-12 col-lg-8">
+		<div class="col-12 col-lg-9">
 			<div class="card shadow-sm">
 				<div class="card-header bg-white border-0">
 					<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -158,13 +169,14 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 						<table class="table table-striped table-hover align-middle mb-0">
 							<thead>
 								<tr>
-									<th style="width:80px;">ID</th>
+									<th style="width:60px;">ID</th>
 									<?php if (!$is_tag): ?>
 										<th style="width:80px;">Gov</th>
 									<?php endif; ?>
 									<th>Name</th>
-										<th style="width:180px;">Updated</th>
-									<th style="width:120px;">Actions</th>
+									<th>Description</th>
+									<th style="width:140px;">Updated</th>
+									<th style="width:100px;">Actions</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -178,7 +190,8 @@ $rows = $wpdb->get_results($wpdb->prepare($sql, $vals));
 												<td><?php echo esc_html((string) $row->gov); ?></td>
 											<?php endif; ?>
 											<td class="fw-semibold"><?php echo esc_html((string) $row->name); ?></td>
-												<td class="text-muted small"><?php echo esc_html((string) ($row->date_updated ?? '')); ?></td>
+											<td class="fw-normal text-truncate" style="max-width:260px;" title="<?php echo esc_attr((string) ($row->description ?? '')); ?>"><?php echo esc_html((string) ($row->description ?? '')); ?></td>
+											<td class="text-muted small"><?php echo esc_html((string) ($row->date_updated ?? '')); ?></td>
 											<td>
 												<div class="d-flex align-items-center gap-2">
 													<a class="btn btn-sm btn-outline-primary" href="<?php echo esc_url(add_query_arg(['page' => $page_slug, 'action' => 'edit', 'id' => (int) $row->id], admin_url('admin.php'))); ?>">Edit</a>

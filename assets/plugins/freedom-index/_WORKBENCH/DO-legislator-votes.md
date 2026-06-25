@@ -320,20 +320,32 @@ Pass full votes payload as JSON on page load; JS filters by session/report/tag w
 
 ## Verification Checklist
 
-- [ ] `php -l` on `core/legislator-votes.php` and `public/templates/legislator.php`
+**Code-verified (no runtime needed):**
+- [x] `php -l` clean — `core/legislator-votes.php`, `legislator.php`, `legislator-vote-history.php`, `votes-stats.php`
+- [x] JSON-LD outputs Person + Issue Score ItemList — `legislator.php` L167–203
+- [x] Canonical stays base URL; og:url matches active variant — `fi_seo_tags()` call confirmed; `$base_url` ordering bug fixed
+- [x] Filter interactions update URL, share URL, PDF URL — JS `pushStateFromSelection()` + `updateOgUrl()` + `updatePrintModalReportBase()` all wired
+- [x] `fi_legislator_votes_query()` naming — no conflict (only definition + one internal call)
+- [x] Cache invalidates on vote/rollcall/report save — `do_action('fi_vote_saved')` in `votes-save.php`, `do_action('fi_rollcall_saved')` in `rollcalls.php`, `do_action('fi_report_saved')` in `reports.php` — all wired to handlers in `legislator-votes.php`
+- [x] `FI_DEV` bypasses session transient cache — `fi_session_votes_cache_get()` checks `FI_DEV`; legislator file cache bypassed via TEMP DISABLE in `cache.php`
+- [x] Deep links set initial filter from URL — controller resolves `$url_session_id / $url_report_id / $url_tag_id` → `$default_view` → `$initial_group`
+- [x] Session rail renders — PHP loop in `legislator-vote-history.php` + JS `highlightNav()` + `renderReportChips()`
+- [x] Load More (25 per click) — JS `PAGE_SIZE = 25`, `fi-vote-load-more` click handler
+- [x] Report intro content above vote cards — `$initial_content` from `$initial_group['content']`; JS `updateHeader()` sets `$content`
+- [x] Print/PDF modal sync — `updatePrintModalReportBase()` fires on every nav change
+
+**UX note — Q15 "All Sessions first in rail":** Implemented as a separate `#fi-view-all-votes` button above the rail rather than as the first rail chip. Functionally equivalent. Accept or adjust in Step 2 UX pass.
+
+**Requires runtime testing (you):**
 - [ ] `legislator/1414/` loads without error (Massie — many sessions, many votes)
-- [ ] Hero issue scores (top 8 tags) still display
-- [ ] Vote history section renders current session votes correctly
-- [ ] Tag filter in vote history still works
-- [ ] Mobile-first session rail + report chips render and filter correctly
-- [ ] "All Sessions" entry opens full session list / All Votes scope
-- [ ] Load More works on All Votes view
-- [ ] Deep links (`/session/`, `/issue/`, `/report/`) set initial filter from URL
-- [ ] JSON-LD outputs Person + Issue Score ItemList
-- [ ] Filter interactions update URL, share URL, PDF URL; canonical stays base legislator URL
-- [ ] `fi_legislator_votes_query()` naming — confirm no conflict: `grep -rn "fi_legislator_votes_query" assets/plugins/`
-- [ ] Cache invalidates when a rollcall is saved in admin
-- [ ] `FI_DEV=true` bypasses cache (verify during development)
+- [ ] Hero issue scores (top 8 tags) display in header
+- [ ] Vote history section renders current session votes on base URL
+- [ ] Tag filter switches vote list correctly
+- [ ] Report chips appear and filter correctly when a session is active
+- [ ] Search filters on All Votes view; score badge hides while searching
+- [ ] Load More adds 25 cards
+- [ ] Back/forward browser buttons restore state
+- [ ] Print/PDF buttons reflect active session/report
 
 ---
 
@@ -396,3 +408,118 @@ php -l clean on all touched files
 fi_legislator_votes_query(1414) → 250 votes, 7 sessions, 16 tags
 http://localhost/votetruth/legislator/1414/ → HTTP 200, vote cards + voteGroups JSON + JSON-LD present
 Browse /legislator/1414/ and exercise session rail, report chips, issue tiles, search, Load More, back/forward, and print/PDF buttons to confirm UX end-to-end.
+
+---
+
+## Composer 2.5 Code Review — Jun 21, 2026
+
+Sprint executed by Cursor Composer 2.5 (accidentally). Code is functional and architecturally sound, but contains style violations and unnecessary complexity. Findings below.
+
+### What's Correct
+- `fi_legislator_votes_query()` compile pass is clean: votes → cast normalization → session loop + child session IDs → report scoring → tag scoring. Logic mirrors the production approach.
+- `fi_legislator_votes_cache_get()` cache key and 30-day expiry correct. `fi_cache($key,'',30)` read is valid — passing `$expires=30` on read is required to match write expiry (fi_cache checks `time() - expires < filemtime()`; default 1-day read would expire 30-day cache early). Not a bug, just subtle.
+- Cache invalidation hooks (vote, rollcall, report) correctly added. `fi_legislator_votes_on_report_saved` → dumps all legislators in session. Clean.
+- `fi_legislator_votes_calc_score()` scoring map pattern (precomputed matched/counted) is efficient.
+- JS client-side filter: state machine, pushState, report chips, Load More, search, popstate — all correct.
+- Session rail + report chips HTML structure is reasonable.
+
+### Issues: Dead Code Cluster (LEFT BEHIND instead of deleted)
+
+Composer 2.5 added two deprecated functions with `x_` prefixes but left their entire support ecosystem in the file:
+
+| Function | Problem |
+|---|---|
+| `x_fi_legislator_votes_get()` L348 | Deprecated (x_ prefix), 0 active callers |
+| `x_fi_legislator_tags_get()` L709 | Deprecated (x_ prefix), 0 active callers |
+| `fi_legislator_votes_build_report_data()` L427 | Only called by `x_fi_legislator_votes_get()` |
+| `fi_legislator_votes_find_vote_in_cache()` L603 | Only called by `x_` cluster |
+| `fi_legislator_votes_get_legislator_rollcall()` L621 | Only called by `x_` cluster |
+| `fi_legislator_votes_calculate_score_from_votes()` L632 | Only called by `fi_legislator_votes_build_report_data()` |
+| `fi_legislator_votes_normalize_rollcall()` L292 | Never called anywhere |
+| `fi_legislator_votes_tags_request_cache()` L27 | Only used by `x_fi_legislator_tags_get()` |
+
+**Rule: delete before adding.** These ~200 lines should be removed.
+
+### Issues: API Wrapper Bloat
+
+Composer added 6 thin wrapper functions with `function_exists` guards (L176–284):
+- `fi_legislator_votes_get_votes_by_session()`
+- `fi_legislator_votes_get_votes_by_tag_public()`
+- `fi_legislator_votes_get_rollcalls_by_vote_ids()`
+- `fi_legislator_votes_get_rollcalls()`
+- `fi_legislator_votes_get_rollcall()`
+- `fi_legislator_votes_get_tags_by_vote_ids()`
+
+These are single-function wrappers that add `function_exists` guards for a purpose-built site where the functions always exist. Not distributed code — never needs this pattern. The new compile pass in `fi_legislator_votes_query()` does NOT use them (it calls `$wpdb` directly or `fi_legislator_votes_get_tags_by_vote_ids()` directly). They're only used by `fi_session_votes_cache_build()` (pre-existing function that could have called core functions directly) and the dead `x_` cluster.
+
+**Rule: NEVER wrap known-good core plugin functions in purpose-built code.**
+
+### Issues: Orphaned Function
+
+`fi_legislator_votes_get_by_tag()` (L792–907, ~115 lines) — old AJAX-style pattern (per-request DB queries + rollcall fetch). Not called anywhere in the new flow. Only reference is `_PRODUCTION/public/templates/legislator.php` which is a reference file only. Should be deprecated with `x_` prefix or deleted.
+
+### Issues: Render-Time Transform (violates "no transform pass on render")
+
+`legislator-vote-history.php` L24–48 calls `fi_legislator_votes_prepare_card_data()` on **every vote in `$votes_map`** at page render time — 250 calls for Massie. This builds the `$votes_json` JS payload.
+
+The compile pass stores `cast`, `matched`, `counted`, `chamber_label`, `date_formatted`, `search_text` but NOT `text` (description), `text_more`, `url_vote`, `cost_badge`, `cost_badge_class`, `is_match`, `is_no_vote`. So the template must call `fi_vote_get_description()`, `fi_vote_format()`, `fi_vote_cost_compact_badge()`, `fi_url_vote()`, `fi_chamber_label()` on every vote every page load.
+
+Sprint spec said: "Cache stores JS-ready structure… page request after cache hit = read file + embed JSON — no transform pass on render."
+
+**Fix: precompute these fields inside `fi_legislator_votes_query()` compile pass; strip them from `fi_legislator_votes_prepare_card_data()` scope so the template can build `$votes_json` from `$votes_map` directly.**
+
+### Issues: Logic Bug — `fi_vote_cost_compact_badge()`
+
+`votes-stats.php` L125–138. The class mapping is inverted:
+
+```php
+return ['badge' => ..., 'class' => ($indicator === '+') ? 'bad' : 'good'];
+```
+
+`+` → `'bad'` → `bg-danger-subtle text-danger` (renders RED).
+
+Sprint spec: `"+$X Annual benefit per household."` → `fw-bold text-success` (GREEN). `fi_vote_format_cost()` in the same file correctly uses `text-success` for `+`. The compact badge inverts this, causing a `+$500/year benefit` to display in red danger styling.
+
+**Fix:** `($indicator === '+') ? 'good' : 'bad'`
+
+### Issues: Minor Style
+
+- `fi_legislator_votes_format_vote()` (L311–338) exists alongside the new compile-pass vote building in `fi_legislator_votes_query()`. Used only by `fi_session_votes_cache_build()` (pre-existing, untouched function). Not harmful but creates two parallel vote-formatting code paths.
+- `fi_session_votes_cache_get()` (L476–498) still uses `get_transient` / `set_transient` directly — violates "NEVER cache to transients" rule. Pre-existing, correctly left untouched per sprint scope. Flag for future cleanup.
+
+### Verdict
+
+Core architecture is right (compile pass, cache, client-side JS). The problems are not in the solution design but in how it was executed: Composer 2.5 added code where it should have deleted, wrapped things that didn't need wrapping, and missed the pre-compute requirement for the JS payload. The cost badge logic bug is the only functional defect. The rest is cleanup.
+
+**Priority fixes:**
+1. `fi_vote_cost_compact_badge()` class inversion (bug)
+2. Precompute `text`, `text_more`, `url_vote`, `cost_badge`, `is_match`, `is_no_vote` in compile pass — remove `$votes_json` transform loop from template
+3. Delete dead code cluster (~200 lines) + `x_` prefix orphans
+4. Remove API wrapper functions (or at minimum remove `function_exists` guards)
+5. Deprecate `fi_legislator_votes_get_by_tag()` with `x_` prefix
+
+
+After Sonnet QC'd work done by Cursor Composer 2.5 it fixed a few things then did this:
+
+core/legislator-votes.php — Step 7 added to compile pass
+
+After all vote fields are built, iterates $votes and calls fi_get_template_html('vote-card', ...) once per vote, storing the result in $vote['card_html']. This is a one-time cost per 30-day cache window. vote_format is passed as ['is_match' => ..., 'is_no_vote' => ...] so the template skips calling fi_vote_format() again.
+
+legislator.php — $display_votes simplified
+
+Was: array of card arg arrays → fi_get_template_html called once per card at request time
+Now: array of pre-rendered HTML strings — no function calls, just array reads.
+
+legislator-vote-history.php — PHP and JS both simplified
+
+PHP: initial render loops over HTML strings directly, no fi_get_template_html call in the template.
+
+JS payload went from 18 fields to 7 (id, title, text_more, bill_url, date_voted, search_text, card_html). Removed fields only existed for buildVoteCardHtml(). Modal still reads vote.title, vote.text_more, vote.bill_url from votesData as before.
+
+Removed JS: voteCardVariants(), voteCardStatusBs(), voteCostBs(), buildVoteCardHtml() — ~60 lines of string-concat card HTML that had to mirror vote-card.php.
+
+renderCards() now: html += (vote && vote.card_html) ? vote.card_html : '' — one line replaces 40.
+
+vote-card.php — data-vote-body / data-vote-title stripped
+
+These were stored on the Read More button but never read by the JS modal (which reads from votesData). Removing them keeps the cached card HTML lean — matters since card_html is now embedded in the JS payload for all 250+ votes.

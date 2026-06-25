@@ -442,6 +442,11 @@ function fi_taxonomy_save(array $data, ?int $taxonomy_id = null): int|false {
 		'name'     => sanitize_text_field($data['name']),
 	];
 
+	if (array_key_exists('description', $data)) {
+		$clean = sanitize_textarea_field((string) ($data['description'] ?? ''));
+		$db_data['description'] = $clean !== '' ? $clean : null;
+	}
+
 	if (array_key_exists('meta', $data)) {
 		$db_data['meta'] = !empty($data['meta']) ? (is_array($data['meta']) ? wp_json_encode($data['meta']) : (string) $data['meta']) : null;
 	}

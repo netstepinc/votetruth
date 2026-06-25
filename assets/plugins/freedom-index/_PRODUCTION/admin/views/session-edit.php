@@ -85,11 +85,7 @@ if ($is_edit) {
 	</div>
 	<hr class="wp-header-end">
 
-	<?php if (!empty($_GET['updated'])): ?>
-		<div class="notice notice-success is-dismissible">
-			<p>Session saved successfully.</p>
-		</div>
-	<?php endif; ?>
+	<?php settings_errors('fi_sessions'); ?>
 	
 	<?php if (!empty($_GET['message'])): 
 		$message = sanitize_text_field($_GET['message']);

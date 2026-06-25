@@ -182,48 +182,27 @@ function fi_admin_votes_handle_save(array $scope): void {
 		}
 	}
 
-	try {
-		//fi_log('VOTE SAVE: About to call fi_vote_save. Data keys: ' . implode(', ', array_keys($data)), __FILE__, __LINE__);
-		//fi_log('VOTE SAVE: vote_id=' . ($vote_id ?? 'null') . ', slug=' . ($data['slug'] ?? 'MISSING'), __FILE__, __LINE__);
-		
-		$saved_id = fi_vote_save($data, $vote_id);
-		
-		//fi_log("VOTE SAVE: fi_vote_save returned: " . ($saved_id ? $saved_id : 'FALSE'), __FILE__, __LINE__);
-		
-		if (!$saved_id) {
-			global $wpdb;
-			$error_msg = 'Unable to save vote.';
-			if ($wpdb->last_error) {
-				$error_msg .= ' Database error: ' . $wpdb->last_error;
-				//fi_log('VOTE SAVE DB ERROR: ' . $wpdb->last_error, __FILE__, __LINE__);
-				//fi_log('VOTE SAVE DB QUERY: ' . $wpdb->last_query, __FILE__, __LINE__);
-			} else {
-				//fi_log('VOTE SAVE: fi_vote_save returned false without DB error', __FILE__, __LINE__);
-			}
-			add_settings_error('fi_votes', 'save_error', $error_msg, 'error');
-			// Don't return - let the page render so errors can be displayed
-			return;
+	$saved_id = fi_vote_save($data, $vote_id);
+
+	if (!$saved_id) {
+		global $wpdb;
+		$error_msg = 'Unable to save vote.';
+		if ($wpdb->last_error) {
+			$error_msg .= ' Database error: ' . $wpdb->last_error;
 		}
-
-		$tag_ids = array_map('absint', $_POST['vote_tags'] ?? []);
-		$tag_ids = array_filter($tag_ids);
-		fi_vote_tags_set_tags($saved_id, $tag_ids);
-
-		$redirect = fi_admin_edit_vote_url($saved_id, ['updated' => 1]);
-
-		wp_safe_redirect($redirect);
-		exit;
-	} catch (Exception $e) {
-		//fi_log('Vote save exception: ' . $e->getMessage(), __FILE__, __LINE__);
-		//fi_log('Vote save exception trace: ' . $e->getTraceAsString(), __FILE__, __LINE__);
-		add_settings_error('fi_votes', 'save_error', 'An error occurred while saving the vote: ' . esc_html($e->getMessage()), 'error');
-		return;
-	} catch (Error $e) {
-		//fi_log('Vote save fatal error: ' . $e->getMessage(), __FILE__, __LINE__);
-		//fi_log('Vote save fatal error trace: ' . $e->getTraceAsString(), __FILE__, __LINE__);
-		add_settings_error('fi_votes', 'save_error', 'A fatal error occurred while saving the vote: ' . esc_html($e->getMessage()), 'error');
+		add_settings_error('fi_votes', 'save_error', $error_msg, 'error');
 		return;
 	}
+
+	$tag_ids = array_map('absint', $_POST['vote_tags'] ?? []);
+	$tag_ids = array_filter($tag_ids);
+	fi_vote_tags_set_tags($saved_id, $tag_ids);
+
+	fi_cache_clear('votes');
+	add_settings_error('fi_votes', 'vote_saved', 'Vote saved successfully.', 'updated');
+
+	wp_safe_redirect(fi_admin_edit_vote_url($saved_id));
+	exit;
 }
 
 /**
@@ -282,8 +261,8 @@ add_action('admin_post_fi_votes_fix_meta_json', 'fi_admin_votes_handle_fix_meta_
 /**
  * Default vote stub
  */
-function fi_admin_votes_get_defaults(array $scope): object {
-	return (object) [
+function fi_admin_votes_get_defaults(array $scope): array {
+	return [
 		'id' => null,
 		'session_id' => $scope['session_id'] ?? null,
 		'gov' => $scope['gov'] ?? null,
@@ -316,6 +295,18 @@ function fi_admin_votes_get_meta_fields(): array {
 			'cols' => 'col-12',
 			'help' => 'Official bill description from Legiscan',
 		],
+		'vote_outcome' => [
+			'label'   => 'Vote Outcome',
+			'type'    => 'radio-group',
+			'options' => ['1' => 'Passed', '0' => 'Rejected'],
+			'cols'    => 'col-md-3',
+			'help'    => '',
+		],
+		'citation' => [
+			'label' => 'Constitutional Citation',
+			'type'  => 'multiselect',
+			'cols'  => 'col-md-5',
+		],
 		'url_bill' => [
 			'label' => 'Bill URL',
 			'type' => 'url',
@@ -337,8 +328,20 @@ function fi_admin_votes_get_meta_fields(): array {
 			'type' => 'text',
 			'cols' => 'col-md-6',
 		],
+		'impact_summary' => [
+			'label'           => 'Impact Summary',
+			'type'            => 'wysiwyg',
+			'cols'            => 'col-12',
+			'help'            => "Answer the user's question: Why should this matter to me?",
+			'editor_settings' => [
+				'textarea_rows' => 3,
+				'media_buttons' => false,
+				'teeny'         => true,
+				'tinymce'       => ['height' => 75],
+			],
+		],
 		'description_short' => [
-			'label' => 'Short Description',
+			'label' => 'Short Description (legacy)',
 			'type' => 'wysiwyg',
 			'cols' => 'col-12',
 			'help' => 'Brief summary used in cards.',
@@ -392,24 +395,20 @@ function fi_admin_votes_get_meta_fields(): array {
  */
 function fi_admin_votes_get_tag_options(?string $gov): array {
 	$options = [];
-	$tags = fi_vote_tags_get_tag_counts($gov, null);
-
-	foreach ($tags as $tag) {
-		$label = $tag->name ?? $tag->slug ?? '';
+	foreach (fi_vote_tags_get_tag_counts($gov, null) as $tag) {
+		$label = (string) ($tag['name'] ?? $tag['slug'] ?? '');
 		if ($label === '') {
 			continue;
 		}
-
-		$options[$tag->id] = sprintf('%s (%d)', $label, (int) ($tag->vote_count ?? 0));
+		$options[(int) $tag['id']] = sprintf('%s (%d)', $label, (int) ($tag['vote_count'] ?? 0));
 	}
-
 	return $options;
 }
 
 /**
  * Extra meta not surfaced in the form
  */
-function fi_admin_votes_get_extra_meta(object $vote, array $meta_fields): array {
+function fi_admin_votes_get_extra_meta(array $vote, array $meta_fields): array {
 	$meta = fi_admin_votes_decode_meta($vote);
 	if (empty($meta)) {
 		return [];
@@ -429,7 +428,7 @@ function fi_admin_votes_get_status_options(): array {
 /**
  * Decode vote meta safely
  */
-function fi_admin_votes_decode_meta(object $vote): array {
+function fi_admin_votes_decode_meta(array $vote): array {
 	return fi_vote_decode_meta($vote);
 }
 
@@ -479,6 +478,18 @@ function fi_admin_votes_build_meta_payload(?int $vote_id, array $meta_fields, ar
 					unset($meta[$meta_key]);
 				} else {
 					$meta[$meta_key] = $val;
+				}
+				continue;
+			}
+			// multiselect: validate each value against the known flat list; preserves case.
+			if (($config['type'] ?? '') === 'multiselect') {
+				$valid_keys = function_exists('fi_constitution_links_flat') ? array_keys(fi_constitution_links_flat()) : [];
+				$raw_arr    = is_array($raw) ? $raw : [];
+				$keys       = array_values(array_filter($raw_arr, fn($v) => in_array($v, $valid_keys, true)));
+				if (empty($keys)) {
+					unset($meta[$meta_key]);
+				} else {
+					$meta[$meta_key] = $keys;
 				}
 				continue;
 			}

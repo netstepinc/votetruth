@@ -42,7 +42,10 @@ function fi_admin_scripts_enqueue(string $hook): void {
 
 	// Enqueue WordPress media library (for image picker on legislator and vote edit)
 	$page = isset($_GET['page']) ? sanitize_key((string) $_GET['page']) : '';
-	$admin_deps = ['jquery', 'wp-util', 'fi-bootstrap'];
+	wp_enqueue_style('tom-select', 'https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css', ['fi-bootstrap'], '2.3.1');
+	wp_enqueue_script('tom-select', 'https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js', [], '2.3.1', true);
+
+	$admin_deps = ['jquery', 'wp-util', 'fi-bootstrap', 'tom-select'];
 	if ($page === 'fi-legislators' || $page === 'fi-votes') {
 		wp_enqueue_media();
 		$admin_deps[] = 'media-editor';

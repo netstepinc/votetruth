@@ -425,10 +425,8 @@ if (!function_exists('fi_form_field_status')) {
 	 * @return void
 	 */
 	function fi_form_field_status(string $name, array $args = []): void {
-		$status_options = function_exists('fi_votes_status_options') ? fi_votes_status_options() : [];
-
-		$args['type'] = 'select';
-		$args['options'] = $status_options;
+		$args['type']    = 'select';
+		$args['options'] = FI_VOTE_STATUSES;
 
 		fi_form_field($name, $args);
 	}

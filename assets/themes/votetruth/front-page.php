@@ -160,14 +160,14 @@ get_header();
 	</div>
 </div>
 
-<div class="container-fluid py-5 bg-action-light-2">
+<div class="container-fluid py-5 bg-black">
 	<div class="container py-5">
 		<div class="row">
 			<div class="col-12">
-				<p class="fs-6 fw-6 text-center">Knowing the score doesn't <span class="text-nowrap">just inform your vote.</span></p>
-				<p class="fs-6 fw-6 text-center">It changes what politicians <span class="text-nowrap">dare to do with theirs.</span></p>
+				<p class="fs-6 fw-6 text-center text-white">Knowing the score doesn't <span class="text-nowrap">just inform your vote.</span></p>
+				<p class="fs-6 fw-6 text-center text-white">It changes what politicians <span class="text-nowrap">dare to do with theirs.</span></p>
 
-				<p class="fs-4 fw-6 text-black text-center">Check Your <span class="text-nowrap">Legislators' Scores.</span></p>
+				<p class="fs-4 fw-6 text-white text-center">Check Your <span class="text-nowrap">Legislators' Scores.</span></p>
 				<form id="footer-legislator-search-form" class="mx-auto col-12 col-md-10 col-lg-9 col-xl-8 mt-4 mb-5" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>" role="search" novalidate>
 					<div class="input-group position-relative">
 						<input id="footer-legislator-search-input" class="form-control form-control-lg fs-7 bg-white" name="fi_search" type="search" placeholder="Enter ZIP code or legislator name" value="" aria-label="Enter ZIP code" autocomplete="off" minlength="3">

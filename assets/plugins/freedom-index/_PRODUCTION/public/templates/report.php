@@ -19,7 +19,7 @@ if (!$report) {
 }
 
 // Decode payload to get report content and options
-$payload = fi_report_payload_normalize($report->payload_json ?? null);
+$payload = fi_report_decode_payload($report->payload_json ?? null);
 //Check if pay load has report_pdf_url
 $report_pdf_url = $payload['report_pdf_url'] ?? '';
 

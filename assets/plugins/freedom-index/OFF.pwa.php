@@ -15,7 +15,7 @@ define('FI_PWA_NAME',        'Freedom Index'); //get_bloginfo('name')
 define('FI_PWA_SHORT_NAME',  'FreedomIndex.US'); 
 define('FI_PWA_THEME_COLOR', '#02275D');
 define('FI_PWA_ICON_DIR',    get_stylesheet_directory_uri() . '/assets/pwa/'); 
-define('FI_PWA_VERSION',     '260410'); // Increment this to force-clear cache
+define('FI_PWA_VERSION',     '260622'); // Increment this to force-clear cache
 define('FI_PWA_PROMPT', true);
 
 // Prompt strategy (all configurable for careful rollout/testing)
@@ -83,6 +83,12 @@ add_action('template_redirect', function() {
         // Stale-While-Revalidate Strategy
         self.addEventListener('fetch', (event) => {
             if (event.request.method !== 'GET') return;
+
+            // Never cache wp-admin — admin pages must always be fetched fresh from
+            // the network. Returning without calling event.respondWith() lets the
+            // browser handle the request normally, respecting Cache-Control headers.
+            const reqUrl = new URL(event.request.url);
+            if (reqUrl.pathname.startsWith('/wp-admin/')) return;
 
             event.respondWith(
                 caches.open(CACHE_NAME).then((cache) => {

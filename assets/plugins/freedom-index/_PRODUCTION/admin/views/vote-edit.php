@@ -87,12 +87,6 @@ $gov_name = fi_gov_name($gov);
 	<hr class="wp-header-end">
 
 	<?php settings_errors('fi_votes'); ?>
-	
-	<?php if (!empty($_GET['updated'])): ?>
-		<div class="notice notice-success is-dismissible">
-			<p>Vote saved successfully.</p>
-		</div>
-	<?php endif; ?>
 
 	<?php if (!empty($_GET['meta_fixed'])): ?>
 		<div class="notice notice-success is-dismissible">

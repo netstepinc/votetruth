@@ -17,6 +17,11 @@ function fi_admin_actions_handle(): void {
 		fi_admin_votes_handle_save($scope);
 		// On successful save the handler will redirect+exit; on error it returns so the page can render errors.
 	}
+	// Handle session form submissions early (before admin header output)
+	if (isset($_GET['page']) && $_GET['page'] === 'fi-sessions' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fi_session_nonce'])) {
+		$scope = fi_scope_get_current();
+		fi_admin_sessions_handle_save($scope);
+	}
 	// Handle report form submissions early (before admin header output)
 	if (isset($_GET['page']) && $_GET['page'] === 'fi-reports' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fi_report_nonce'])) {
 		$scope = fi_scope_get_current();
@@ -25,13 +30,10 @@ function fi_admin_actions_handle(): void {
 	if (!isset($_GET['page']) || $_GET['page'] === null || strpos($_GET['page'], 'fi-') !== 0) {
 		return;
 	}
-	
+
 	$action = $_GET['action'] ?? '';
-	
+
 	switch ($action) {
-		case 'delete':
-			fi_admin_actions_handle_delete();
-			break;
 		case 'recalculate_scores':
 			fi_admin_actions_handle_recalculate_scores();
 			break;
@@ -177,10 +179,8 @@ function fi_admin_post_legislator_session_save(): void {
 		}
 	}
 
-	// Summary: clear cached legislator lists/searches so UI reflects updates immediately.
-	if (function_exists('fi_cache_clear')) {
-		fi_cache_clear('legislators');
-	}
+	// Clear cached legislator lists/searches so UI reflects updates immediately.
+	fi_cache_clear('legislators');
 
 	// Redirect back without edit_ls_id so we are not stuck in edit-assignment mode.
 	$redirect = add_query_arg([
@@ -254,42 +254,49 @@ function fi_admin_post_legislator_session_delete(): void {
 add_action('admin_post_fi_legislator_session_delete', 'fi_admin_post_legislator_session_delete');
 
 /**
- * Handle delete action
+ * POST handler: delete vote (with nonce + capability check)
  */
-function fi_admin_actions_handle_delete(): void {
+function fi_admin_post_delete_vote(): void {
 	if (!current_user_can(FI_CAP_MANAGE)) {
-		return;
+		wp_die('Insufficient permissions.');
 	}
-	
-	$entity_type = $_GET['entity_type'] ?? '';
-	$entity_id = absint($_GET['entity_id'] ?? 0);
-	
-	if (!$entity_type || !$entity_id) {
-		return;
+
+	check_admin_referer('fi_delete_vote', 'fi_delete_vote_nonce');
+
+	$vote_id = absint($_POST['vote_id'] ?? 0);
+	if (!$vote_id) {
+		wp_die('Missing vote ID.');
 	}
-	
-	global $wpdb;
-	
-	switch ($entity_type) {
-		case 'session':
-			$wpdb->delete("{$wpdb->prefix}fi_sessions", ['id' => $entity_id], ['%d']);
-			break;
-		case 'legislator':
-			// Use proper delete function (clears related rows and cache).
-			fi_legislator_delete($entity_id);
-			break;
-		case 'vote':
-			// Use proper delete function which handles rollcalls
-			fi_vote_delete($entity_id);
-			break;
-		case 'report':
-			$wpdb->delete("{$wpdb->prefix}fi_reports", ['id' => $entity_id], ['%d']);
-			break;
-	}
-	
-	wp_redirect(remove_query_arg(['action', 'entity_type', 'entity_id']));
+
+	fi_vote_delete($vote_id);
+
+	wp_safe_redirect(fi_admin_url('fi-votes', ['deleted' => 1]));
 	exit;
 }
+add_action('admin_post_fi_delete_vote', 'fi_admin_post_delete_vote');
+
+/**
+ * POST handler: delete report (with nonce + capability check)
+ */
+function fi_admin_post_delete_report(): void {
+	if (!current_user_can(FI_CAP_MANAGE)) {
+		wp_die('Insufficient permissions.');
+	}
+
+	$report_id = absint($_POST['report_id'] ?? 0);
+	check_admin_referer('fi_delete_report_' . $report_id, 'fi_delete_report_nonce');
+
+	if (!$report_id) {
+		wp_die('Missing report ID.');
+	}
+
+	global $wpdb;
+	$wpdb->delete("{$wpdb->prefix}fi_reports", ['id' => $report_id], ['%d']);
+
+	wp_safe_redirect(fi_admin_url('fi-reports', ['deleted' => 1]));
+	exit;
+}
+add_action('admin_post_fi_delete_report', 'fi_admin_post_delete_report');
 
 /**
  * Handle recalculate scores

@@ -367,12 +367,9 @@ namespace FI\Admin {
 	add_action('admin_init', [Scope::class, 'handle_query_scope'], 1);
 
 	// Prevent browser/proxy caching on FI admin pages so scope switches and nonces are always fresh.
-	// NOTE: `send_headers` is a front-end hook (fires inside wp()) and does NOT fire in wp-admin.
-	// We use `admin_init` at priority 20 (after WP's own wp_admin_headers() at priority 1) so the
-	// `no-store` directive is added, which disables browser bfcache (back/forward cache).
-	// Without `no-store`, browsers freeze edit pages in bfcache and restore stale nonces on Back.
-	// Priority -10 ensures headers fire before the save handler (priority 0) exits on POST,
-	// so the 302 redirect response also carries no-store (not just the subsequent GET).
+	// Priority -10 ensures these fire on POST requests (save handlers) before they exit via wp_safe_redirect(),
+	// so the 302 redirect response carries no-store. Without no-store on the redirect, some browsers
+	// treat the 302 as cacheable and reuse the destination URL from a prior visit.
 	add_action('admin_init', static function (): void {
 		$page = sanitize_key((string) ($_GET['page'] ?? ''));
 		if (str_starts_with($page, 'fi-')) {
@@ -381,6 +378,16 @@ namespace FI\Admin {
 			header('Expires: 0');
 		}
 	}, -10);
+
+	// WordPress's nocache_headers() (called in admin-header.php during page render) overwrites the
+	// Cache-Control header above, dropping `no-store`. Re-assert at admin_head, which fires after
+	// admin-header.php but before any body output, so headers are still modifiable.
+	add_action('admin_head', static function (): void {
+		$page = sanitize_key((string) ($_GET['page'] ?? ''));
+		if (str_starts_with($page, 'fi-') && !headers_sent()) {
+			header('Cache-Control: no-cache, no-store, must-revalidate');
+		}
+	}, 1);
 
 }
 

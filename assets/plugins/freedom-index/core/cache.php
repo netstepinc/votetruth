@@ -75,7 +75,7 @@ function fi_cache($key,$data='',$expires=1){ //default time = 1 day.
 		// file_put_contents returns the number of bytes written on success, or false on failure.
 //TEMP DISABLE		$result = file_put_contents($file, $data);
 		//fi_log('CACHE WRITE '. ($result === false ? 'FAIL' : 'SUCCESS').': '.$file, __FILE__, __LINE__);
-		return $result;
+		return false;
 	}
 }
 

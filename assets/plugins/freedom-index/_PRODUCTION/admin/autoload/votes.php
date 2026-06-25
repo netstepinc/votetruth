@@ -209,11 +209,15 @@ function fi_admin_votes_handle_save(array $scope): void {
 		$tag_ids = array_filter($tag_ids);
 		fi_vote_tags_set_tags($saved_id, $tag_ids);
 
-		$redirect = fi_admin_edit_vote_url($saved_id, ['updated' => 1]);
+		// Invalidate file cache so frontend/AJAX reflects the update immediately.
+		fi_cache_clear('votes');
+
+		// Use transient-based notice (WP standard) so redirect URL stays clean.
+		// A clean URL prevents the browser from disk-caching a stale ?updated=1 page.
+		add_settings_error('fi_votes', 'vote_saved', 'Vote saved successfully.', 'updated');
+
+		$redirect = fi_admin_edit_vote_url($saved_id);
 		if (!$redirect || empty($redirect)) {
-			//fi_log('Vote save: Redirect URL is empty or invalid. saved_id=' . $saved_id, __FILE__, __LINE__);
-			add_settings_error('fi_votes', 'save_error', 'Vote saved but redirect URL could not be generated.', 'error');
-			// Redirect to list page as fallback
 			$redirect = fi_admin_url('fi-votes');
 		}
 

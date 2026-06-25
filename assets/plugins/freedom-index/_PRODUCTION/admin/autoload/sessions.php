@@ -144,10 +144,16 @@ function fi_admin_sessions_handle_save(array $scope): void {
 		wp_die('Unable to save session.' . (!empty($wpdb->last_error) ? '<br><br><code>' . esc_html($wpdb->last_error) . '</code>' : ''));
 	}
 
-	$redirect = fi_admin_edit_session_url($saved_id, ['updated' => 1]);
+	// Invalidate file cache so frontend/AJAX reflects the update immediately.
+	fi_cache_clear('sessions');
 
-	// Summary: If headers have already been sent (rare, but can happen with BOM/whitespace in other code),
-	// wp_redirect() will fail silently and the user sees a blank screen due to exit. Provide a JS fallback.
+	// Use transient-based notice (WP standard) so redirect URL stays clean.
+	add_settings_error('fi_sessions', 'session_saved', 'Session saved successfully.', 'updated');
+
+	$redirect = fi_admin_edit_session_url($saved_id);
+
+	// Summary: Session save is called from within the view render (not admin_init), so headers
+	// may already be sent. Provide a JS redirect fallback when that happens.
 	if (headers_sent()) {
 		echo '<script>window.location.href=' . wp_json_encode($redirect) . ';</script>';
 		echo '<noscript><meta http-equiv="refresh" content="0;url=' . esc_attr($redirect) . '"></noscript>';

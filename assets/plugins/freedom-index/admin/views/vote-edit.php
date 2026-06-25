@@ -25,8 +25,8 @@ $tag_options = fi_admin_votes_get_tag_options($scope['gov'] ?? null);
 $meta_fields = fi_admin_votes_get_meta_fields();
 
 $selected_tags = [];
-$tag_objects = $is_edit ? fi_vote_tags_get_tags_by_vote($vote_id) : [];
-foreach ($tag_objects as $tag) {
+$vote_tags = $is_edit ? fi_vote_tags_get_tags_by_vote($vote_id) : [];
+foreach ($vote_tags as $tag) {
 	$selected_tags[] = (int) ($tag['id'] ?? 0);
 }
 
@@ -70,16 +70,11 @@ $gov_name = fi_gov_name($gov);
 					onclick="return confirm('Discard changes and return to the list?');"
 				>Cancel</a>
 				<?php if ($is_edit): ?>
-					<a
-						href="<?php echo esc_url(add_query_arg([
-							'page' => 'fi-votes',
-							'action' => 'delete',
-							'entity_type' => 'vote',
-							'entity_id' => $vote_id,
-						], admin_url('admin.php'))); ?>"
+					<button
+						type="button"
 						class="btn btn-sm btn-outline-danger"
-						onclick="return confirm('Are you sure you want to delete this vote? This will also delete all related roll-call records. This action cannot be undone.');"
-					>Delete</a>
+						onclick="if (confirm('Are you sure you want to delete this vote? This will also delete all related roll-call records. This action cannot be undone.')) { document.getElementById('fi-vote-delete-form').submit(); }"
+					>Delete</button>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -88,11 +83,6 @@ $gov_name = fi_gov_name($gov);
 
 	<?php settings_errors('fi_votes'); ?>
 	
-	<?php if (!empty($_GET['updated'])): ?>
-		<div class="notice notice-success is-dismissible">
-			<p>Vote saved successfully.</p>
-		</div>
-	<?php endif; ?>
 
 	<?php if (!empty($_GET['meta_fixed'])): ?>
 		<div class="notice notice-success is-dismissible">
@@ -139,13 +129,13 @@ $gov_name = fi_gov_name($gov);
 								]); ?>
 							</div>
 							<div class="col-md-3">
-								<?php fi_form_field_chamber('chamber', $gov, [
-									'label' => 'Chamber',
-									'value' => $vote['chamber'] ?? '',
-									'required' => true,
+								<?php fi_form_field_status('status', [
+									'label' => 'Status',
+									'value' => $vote['status'] ?? 'publish'
 								]); ?>
 							</div>
-							<div class="col-md-3">
+
+							<div class="col-md-2">
 								<?php 
 								// Format date for HTML5 date input (requires Y-m-d format)
 								$date_value = '';
@@ -159,45 +149,67 @@ $gov_name = fi_gov_name($gov);
 									'value' => $date_value
 								]); ?>
 							</div>
-							<div class="col-md-3">
+							<div class="col-md-2">
+								<?php fi_form_field_chamber('chamber', $gov, [
+									'label' => 'Chamber',
+									'value' => $vote['chamber'] ?? '',
+									'required' => true,
+								]); ?>
+							</div>
+
+							<div class="col-md-2">
 								<?php fi_form_field('bill_number', [
 									'label' => 'Bill Number',
 									'value' => $vote['bill_number'] ?? ''
 								]); ?>
 							</div>
-							<div class="col-md-3">
+							<div class="col-md-2">
 								<?php fi_form_field('rollcall_number', [
 									'label' => 'Roll-call Number',
 									'value' => $vote['rollcall_number'] ?? ''
 								]); ?>
 							</div>
-							<div class="col-md-3">
-								<?php fi_form_field_status('status', [
-									'label' => 'Status',
-									'value' => $vote['status'] ?? 'publish'
-								]); ?>
+
+							<div class="col-md-4">
+							<?php
+							$ls_yea = isset($vote_meta['votes_yea']) ? (int) $vote_meta['votes_yea'] : null;
+							$ls_nay = isset($vote_meta['votes_nay']) ? (int) $vote_meta['votes_nay'] : null;
+							if ($ls_yea !== null || $ls_nay !== null){
+								$vote_outcome_text = '<div class="text-center"><span class="text-muted small">Yea: <strong>' . esc_html((string) ($ls_yea ?? '—')) . '</strong>&nbsp;·&nbsp;Nay: <strong>' . esc_html((string) ($ls_nay ?? '—')) . '</strong></span></div>';
+							}else{
+								$vote_outcome_text = '';
+							}
+							?>
+							<?php fi_form_field('meta_vote_outcome', [
+								'name'    => 'meta[vote_outcome]',
+								'label'   => 'Vote Outcome',
+								'type'    => 'radio-group',
+								'options' => ['1' => 'Passed', '0' => 'Rejected'],
+								'value'   => $vote_meta['vote_outcome'] ?? '',
+								'help'    => $vote_outcome_text,
+							]); ?>
 							</div>
 
-							<div class="col-md-6">
-								<?php fi_form_field('meta_url_bill', [
-									'name' => 'meta[url_bill]',
-									'label' => 'Bill URL',
-									'label_html' => ($vote_meta['url_bill'] != '' ? '<a href="' . $vote_meta['url_bill'] . '" target="_blank" rel="noopener">Bill URL</a>' : 'Bill URL'),
-									'type' => 'url',
-									'value' => $vote_meta['url_bill'] ?? '',
-									'help' => 'Official bill URL',
-								]);?>
-							</div>
-							<div class="col-md-6">
-								<?php fi_form_field('meta_url_rollcall', [
-									'name' => 'meta[url_rollcall]',
-									'label' => 'Roll-call URL',
-									'label_html' => ($vote_meta['url_rollcall'] != '' ? '<a href="' . $vote_meta['url_rollcall'] . '" target="_blank" rel="noopener">Roll-call URL</a>' : 'Roll-call URL'),
-									'type' => 'url',
-									'value' => $vote_meta['url_rollcall'] ?? '',
-									'help' => 'Official roll-call URL',
-								]);?>
-							</div>
+						<div class="col-md-6">
+							<?php fi_form_field('meta_url_bill', [
+								'name' => 'meta[url_bill]',
+								'label' => 'Bill URL',
+								'label_html' => ($vote_meta['url_bill'] != '' ? '<a href="' . $vote_meta['url_bill'] . '" target="_blank" rel="noopener">Bill URL</a>' : 'Bill URL'),
+								'type' => 'url',
+								'value' => $vote_meta['url_bill'] ?? '',
+								'help' => 'Official bill URL',
+							]);?>
+						</div>
+						<div class="col-md-6">
+							<?php fi_form_field('meta_url_rollcall', [
+								'name' => 'meta[url_rollcall]',
+								'label' => 'Roll-call URL',
+								'label_html' => ($vote_meta['url_rollcall'] != '' ? '<a href="' . $vote_meta['url_rollcall'] . '" target="_blank" rel="noopener">Roll-call URL</a>' : 'Roll-call URL'),
+								'type' => 'url',
+								'value' => $vote_meta['url_rollcall'] ?? '',
+								'help' => 'Official roll-call URL',
+							]);?>
+						</div>
 						</div>
 					</div>
 				</div>
@@ -209,7 +221,7 @@ $gov_name = fi_gov_name($gov);
 					</div>
 					<div class="card-body">
 						<div class="row g-3">
-							<div class="col-md-6">
+							<div class="col-md-3">
 								<?php fi_form_field_constitutional('constitutional', [
 									'label' => 'Constitutional Position',
 									'value' => $vote['constitutional'] ?? 'U',
@@ -217,7 +229,7 @@ $gov_name = fi_gov_name($gov);
 								]); ?>
 							</div>
 							
-							<div class="col-md-6">
+							<div class="col-md-2">
 								<?php 
 								fi_form_field('meta_cost', [
 									'name' => 'meta[cost]',
@@ -227,21 +239,71 @@ $gov_name = fi_gov_name($gov);
 								]);
 								?>
 							</div>
+							<div class="col-md-7">
+							<?php
+							// Parse existing value: may be array (new), JSON string, or legacy plain text (ignored).
+							$_citation_raw = $vote_meta['citation'] ?? [];
+							if (is_string($_citation_raw)) {
+								$_decoded = json_decode($_citation_raw, true);
+								$_citation_keys = (is_array($_decoded)) ? $_decoded : [];
+							} else {
+								$_citation_keys = is_array($_citation_raw) ? $_citation_raw : [];
+							}
+							?>
+							<label class="form-label fw-semibold" for="meta_citation">Constitutional Citation</label>
+							<select id="meta_citation" name="meta[citation][]" multiple
+								class="form-select"
+								placeholder="Select citations...">
+								<?php foreach (FI_CONSTITUTION_LINKS as $_ckey => $_cval): ?>
+									<?php if (is_array($_cval)): ?>
+									<optgroup label="<?php echo esc_attr($_cval['title']); ?>">
+										<option value="<?php echo esc_attr($_ckey); ?>"<?php echo in_array($_ckey, $_citation_keys, true) ? ' selected' : ''; ?>>
+											<?php echo esc_html($_cval['title']); ?>
+										</option>
+										<?php foreach ($_cval['sections'] as $_skey => $_slabel): ?>
+										<option value="<?php echo esc_attr($_skey); ?>"<?php echo in_array($_skey, $_citation_keys, true) ? ' selected' : ''; ?>>
+											<?php echo esc_html($_slabel); ?>
+										</option>
+										<?php endforeach; ?>
+									</optgroup>
+									<?php else: ?>
+									<option value="<?php echo esc_attr($_ckey); ?>"<?php echo in_array($_ckey, $_citation_keys, true) ? ' selected' : ''; ?>>
+										<?php echo esc_html($_cval); ?>
+									</option>
+									<?php endif; ?>
+								<?php endforeach; ?>
+							</select>
+						</div>
 							<div class="col-12">
-								<?php fi_form_field('meta_description_short', [
-									'name' => 'meta[description_short]',
-									'label' => 'Short Description',
-									'type' => 'wysiwyg',
-									'value' => $vote_meta['description_short'] ?? '',
-									'help' => 'Brief summary used in cards.',
-									'editor_settings' => [
-										'textarea_rows' => 3,
-										'media_buttons' => false,
-										'teeny' => 1,
-										'tinymce' => ['height' => 75]
-									],
-								]); ?>
-							</div>
+							<?php fi_form_field('meta_impact_summary', [
+								'name'            => 'meta[impact_summary]',
+								'label'           => 'Impact Summary',
+								'type'            => 'wysiwyg',
+								'value'           => $vote_meta['impact_summary'] ?? '',
+								'help'            => "Answer the user's question: Why should this matter to me?",
+								'editor_settings' => [
+									'textarea_rows' => 2,
+									'media_buttons' => false,
+									'teeny'         => 1,
+									'tinymce'       => ['height' => 50],
+								],
+							]); ?>
+						</div>
+						<div class="col-12">
+							<?php fi_form_field('meta_description_short', [
+								'name' => 'meta[description_short]',
+								'label' => 'Short Description (legacy)',
+								'type' => 'wysiwyg',
+								'value' => $vote_meta['description_short'] ?? '',
+								'help' => 'Fallback text used on cards when Impact Summary is empty.',
+								'editor_settings' => [
+									'textarea_rows' => 3,
+									'media_buttons' => false,
+									'teeny' => 1,
+									'tinymce' => ['height' => 75]
+								],
+							]); ?>
+						</div>
 							<div class="col-12">
 								<?php fi_form_field('meta_description_medium', [
 									'name' => 'meta[description_medium]',
@@ -459,25 +521,16 @@ $gov_name = fi_gov_name($gov);
 					<h2 class="h5 mb-0 pb-0">Tags / Issues</h2>
 				</div>
 				<div class="card-body">
-					<?php if (!empty($assigned_tags)): ?>
-						<strong>Currently Assigned:</strong>
-						<div class="d-flex flex-wrap gap-2 mt-2">
-							<?php foreach ($assigned_tags as $tag): ?>
-								<span class="badge bg-secondary"><?php echo esc_html((string) ($tag->name ?? $tag->slug ?? '')); ?></span>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-					<div class="mt-2 pt-2 border-top">
-					<?php fi_form_field('vote_tags[]', [
-						'label' => '',
-						'type' => 'select',
-						'options' => $tag_options,
-						'multiple' => true,
-						'value' => $selected_tags,
-						'size' => 12,
-						'help' => 'Hold Ctrl (Windows) or Cmd (Mac) to select multiple tags.'
-					]); ?>
-					</div>
+					<label class="form-label fw-semibold" for="vote_tags_select">Issues</label>
+					<select id="vote_tags_select" name="vote_tags[]" multiple
+						class="form-select" 
+						placeholder="Select issues…">
+						<?php foreach ($tag_options as $_tid => $_tlabel): ?>
+						<option value="<?php echo esc_attr($_tid); ?>"<?php echo in_array((int) $_tid, $selected_tags, true) ? ' selected' : ''; ?>>
+							<?php echo esc_html($_tlabel); ?>
+						</option>
+						<?php endforeach; ?>
+					</select>
 				</div>
 			</div>
 
@@ -535,4 +588,15 @@ if($gov == 'US' && $vote['session_id'] && $vote_meta['url_rollcall']){
 	</form>
 <?php endif; ?>
 
-<?php //echo '<div class="m-5"><textarea style="width: 100%; height: 400px;">'; print_r($vote); echo "\n\n=========VOTE META=========\n\n"; print_r($vote_meta); echo '</textarea></div>'; ?>
+<?php if ($is_edit && $vote_id): ?>
+	<form
+		id="fi-vote-delete-form"
+		method="post"
+		action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
+		style="display:none;"
+	>
+		<?php wp_nonce_field('fi_delete_vote', 'fi_delete_vote_nonce'); ?>
+		<input type="hidden" name="action" value="fi_delete_vote">
+		<input type="hidden" name="vote_id" value="<?php echo esc_attr($vote_id); ?>">
+	</form>
+<?php endif; ?>

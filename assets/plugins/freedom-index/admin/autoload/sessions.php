@@ -17,8 +17,8 @@ function fi_admin_sessions_render_form(array $scope, string $action): void {
 /**
  * Default session blueprint for new entries
  */
-function fi_admin_sessions_get_defaults(array $scope): object {
-	return (object) [
+function fi_admin_sessions_get_defaults(array $scope): array {
+	return [
 		'id' => null,
 		'parent_id' => null,
 		'legiscan_id' => null,
@@ -73,7 +73,7 @@ function fi_admin_sessions_get_parent_options(string $gov, ?int $exclude_id = nu
 /**
  * Meta entries not surfaced via the form
  */
-function fi_admin_sessions_get_extra_meta(object $session): array {
+function fi_admin_sessions_get_extra_meta(array $session): array {
 	$meta = is_array($session['meta'] ?? null) ? $session['meta'] : [];
 	return $meta;
 }
@@ -137,24 +137,16 @@ function fi_admin_sessions_handle_save(array $scope): void {
 		'status' => $status,
 	];
 
-	// Sessions::save() will handle unsetting other current sessions automatically
 	$saved_id = fi_session_save($data, $session_id);
 	if (!$saved_id) {
 		global $wpdb;
 		wp_die('Unable to save session.' . (!empty($wpdb->last_error) ? '<br><br><code>' . esc_html($wpdb->last_error) . '</code>' : ''));
 	}
 
-	$redirect = fi_admin_edit_session_url($saved_id, ['updated' => 1]);
+	fi_cache_clear('sessions');
+	add_settings_error('fi_sessions', 'session_saved', 'Session saved successfully.', 'updated');
 
-	// Summary: If headers have already been sent (rare, but can happen with BOM/whitespace in other code),
-	// wp_redirect() will fail silently and the user sees a blank screen due to exit. Provide a JS fallback.
-	if (headers_sent()) {
-		echo '<script>window.location.href=' . wp_json_encode($redirect) . ';</script>';
-		echo '<noscript><meta http-equiv="refresh" content="0;url=' . esc_attr($redirect) . '"></noscript>';
-		exit;
-	}
-
-	wp_safe_redirect($redirect);
+	wp_safe_redirect(fi_admin_edit_session_url($saved_id));
 	exit;
 }
 

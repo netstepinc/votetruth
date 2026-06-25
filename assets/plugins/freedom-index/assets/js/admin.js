@@ -28,6 +28,8 @@ window.addEventListener('pageshow', function(e) {
             this.initFilters();
             this.initNotifications();
             this.initImageMediaPicker();
+            this.initCitationSelect();
+            this.initTagSelect();
 
             // Root breadcrumb: confirms FIAdmin.init ran.
             var rid = this.newRid('init');
@@ -82,6 +84,14 @@ window.addEventListener('pageshow', function(e) {
             $(document).on('click', '#fi-legislator-image-fetch', function(e) {
                 FIAdmin.handleImageFetchUrl(e);
             });
+            // Sync TinyMCE editors to their textareas before vote form submits.
+            // External submit buttons (outside <form>) don't always trigger TinyMCE's own sync.
+            $(document).on('submit', '#fi-vote-form', function () {
+                if (typeof tinyMCE !== 'undefined') {
+                    tinyMCE.triggerSave();
+                }
+            });
+
             // Vote image picker (media library select/remove only); use class so scoped to picker container
             $(document).on('click', '.fi-vote-image-media-picker .fi-vote-image-select-btn', function(e) {
                 FIAdmin.handleVoteImageSelect(e);
@@ -782,6 +792,40 @@ window.addEventListener('pageshow', function(e) {
         initImageMediaPicker: function() {
             // Media picker is initialized via event handlers
             // This method can be used for any setup needed
+        },
+
+        initTomSelect: function(id, opts) {
+            var el = document.getElementById(id);
+            console.log('[FI] initTomSelect', id, el ? 'found' : 'NOT FOUND', 'TomSelect:', typeof TomSelect);
+            if (!el || typeof TomSelect === 'undefined') { return; }
+            // Guard: skip if already initialized (prevents double-init on bfcache restore).
+            if (el.tomselect) {
+                console.log('[FI] initTomSelect', id, 'already initialized — skipping');
+                return;
+            }
+            var preSelected = Array.prototype.slice.call(el.options)
+                .filter(function(o) { return o.selected; })
+                .map(function(o) { return o.value; });
+            console.log('[FI] initTomSelect', id, 'preSelected:', preSelected);
+            try {
+                new TomSelect(el, Object.assign({
+                    plugins: ['remove_button'],
+                    create: false,
+                    items: preSelected,
+                    onItemAdd: function() { this.setTextboxValue(''); },
+                }, opts || {}));
+                console.log('[FI] initTomSelect', id, 'OK');
+            } catch (e) {
+                console.error('[FI] initTomSelect', id, 'FAILED:', e);
+            }
+        },
+
+        initCitationSelect: function() {
+            this.initTomSelect('meta_citation', { maxOptions: 200, placeholder: 'Select citations\u2026' });
+        },
+
+        initTagSelect: function() {
+            this.initTomSelect('vote_tags_select', { maxOptions: 500, placeholder: 'Select issues\u2026' });
         },
 
         // Handle image select button click

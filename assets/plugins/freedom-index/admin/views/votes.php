@@ -353,7 +353,7 @@ $sessions_for_filter = $sessions_for_filter ?? [];
 								<?php else: ?>
 									<div class="d-flex flex-wrap gap-1">
 										<?php foreach ($tags as $tag): ?>
-											<span class="badge bg-secondary"><?php echo esc_html($tag['tag_name'] ?? $tag['tag_slug'] ?? ''); ?></span>
+											<span class="badge bg-secondary"><?php echo esc_html($tag['tag_name'] ?? ''); ?></span>
 										<?php endforeach; ?>
 									</div>
 								<?php endif; ?>

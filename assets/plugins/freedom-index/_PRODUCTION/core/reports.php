@@ -642,7 +642,7 @@ namespace {
 	*/
 
 	/* Decode and normalize report payload_json */
-	function fi_report_payload_normalize($payload_json): array {
+	function fi_report_decode_payload($payload_json): array {
 		return \FI\Core\ReportsPayload::normalize($payload_json);
 	}
 

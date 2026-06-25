@@ -58,7 +58,7 @@ $form_action   = $is_edit
 $page_title    = $is_edit ? 'Edit Legislator' : 'Add Legislator';
 
 $view_url      = $legislator_id ? fi_get_legislator_url($legislator_id) : '';
-$updated       = isset($_GET['updated']) ? (int) $_GET['updated'] : 0;
+$updated       = 0; // Kept for backwards-compat; success notice now via settings_errors transient.
 
 
 $api_sources = [
@@ -156,11 +156,7 @@ foreach ($state_options_for_template as $value => $label) {
 	</div>
 	<hr class="wp-header-end">
 
-	<?php if ($updated): ?>
-		<div class="notice notice-success is-dismissible">
-			<p>Legislator saved successfully.</p>
-		</div>
-	<?php endif; ?>
+	<?php settings_errors('fi_legislator'); ?>
 	<?php if (!empty($_GET['session_deleted'])): ?>
 		<div class="notice notice-<?php echo ((int) $_GET['session_deleted'] === 1) ? 'success' : 'error'; ?> is-dismissible">
 			<p><?php echo ((int) $_GET['session_deleted'] === 1) ? 'Session assignment deleted.' : 'Failed to delete session assignment.'; ?></p>

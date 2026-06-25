@@ -51,6 +51,15 @@ window.addEventListener('pageshow', function(e) {
             // Form submissions
             $(document).on('submit', '#fi-scope-form', this.handleScopeSubmit);
             $(document).on('submit', '#fi-address-form', this.handleAddressSubmit);
+
+            // Sync TinyMCE editors to their textareas before vote form submits.
+            // The Save button is outside <form> (uses form= attribute), so TinyMCE's
+            // native sync may not fire. triggerSave() forces all editors to flush.
+            $(document).on('submit', '#fi-vote-form', function () {
+                if (typeof tinyMCE !== 'undefined') {
+                    tinyMCE.triggerSave();
+                }
+            });
             
             // Actions
             $(document).on('click', '.fi-recalculate-scores', this.handleRecalculateScores);
