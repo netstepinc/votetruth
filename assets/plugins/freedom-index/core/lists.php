@@ -108,7 +108,7 @@ function fi_lists_get(array $args = []): array|int {
  * Get a single list by ID.
  *
  * @param int $list_id List ID.
- * @return object|null
+ * @return array|null
  */
 function fi_list_get_by_id(int $list_id): ?array {
 	$results = fi_lists_get([

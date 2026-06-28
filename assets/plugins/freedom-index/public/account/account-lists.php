@@ -50,23 +50,23 @@ $user_lists = fi_lists_get_by_user($user_id);
 			</div>
 	<?php if (!empty($user_lists)): ?>
 		<?php foreach ($user_lists as $list):
-			$legislator_ids = json_decode($list->legislators, true);
+			$legislator_ids = json_decode($list['legislators'] ?? '', true);
 			$legislator_count = is_array($legislator_ids) ? count($legislator_ids) : 0;
-			$list_manage_url = home_url('/account/lists/' . $list->id . '/');
+			$list_manage_url = home_url('/account/lists/' . $list['id'] . '/');
 			?>
 			<div class="col-12 col-md-6 col-lg-4">
 				<div class="card h-100 rounded-4 shadow h-100">
 					<div class="card-body pb-1">
 						<h4 class="card-title">
 							<a href="<?php echo esc_url($list_manage_url); ?>" class="text-decoration-none">
-								<?php echo esc_html($list->name ?? 'Unnamed List'); ?>
+								<?php echo esc_html($list['name'] ?? 'Unnamed List'); ?>
 							</a>
 						</h4>
 						<p class="card-text text-muted small mb-2">
 							<?php echo esc_html($legislator_count); ?> legislator<?php echo $legislator_count !== 1 ? 's' : ''; ?>
 						</p>
 						<p class="card-text text-muted small mb-3">
-							Created <?php echo esc_html(date('M j, Y', strtotime($list->date_created))); ?>
+							Created <?php echo esc_html(date('M j, Y', strtotime($list['date_created'] ?? ''))); ?>
 						</p>
 						<div class="d-flex gap-2">
 							<a href="<?php echo esc_url($list_manage_url); ?>"
@@ -80,7 +80,7 @@ $user_lists = fi_lists_get_by_user($user_id);
 							</a>
 							<button type="button"
 									class="btn btn-sm btn-outline-danger fi-delete-list"
-									data-list-id="<?php echo esc_attr($list->id); ?>"
+									data-list-id="<?php echo esc_attr($list['id']); ?>"
 									title="Delete">
 								<i class="bi bi-trash"></i>
 							</button>

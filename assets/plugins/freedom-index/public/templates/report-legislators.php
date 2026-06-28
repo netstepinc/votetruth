@@ -196,7 +196,7 @@ if ($filter_party_slug !== null && $filter_party_slug !== '' && !isset($parties[
 
 <div id="fi-report-legislators-results" class="row g-4">
     <?php foreach ($legislator_data as $data): 
-        fi_get_template('legislator-card-vote', [
+        fi_get_template('report-legislator-card', [
             'legislator' => $data['legislator'],
             'report_score' => $data['report_score'],
             'votes' => $data['votes'],

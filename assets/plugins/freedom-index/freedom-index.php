@@ -56,7 +56,6 @@ define('FI_DIR_LEGISCAN_ZIP', FI_DIR_LEGISCAN . '_zip' . DIRECTORY_SEPARATOR);
 // NOTE: historically FI_DIR_IMAGES was used as a URL. Keep it for backward compatibility.
 define('FI_URL_IMAGES', site_url() . '/assets/files/fi/');
 define('FI_PATH_IMAGES', ABSPATH . 'assets/files/fi/');
-define('FI_DIR_IMAGES', FI_URL_IMAGES);
 
 // Default local image directory lookup used by migration + queued image importer.
 /*
@@ -117,7 +116,7 @@ define('FI_PRIVACY_PROMISE', 'We will <b>NEVER</b> share your information with a
 
 
 $governments = [
-	'US' => 'Congress',
+	'US' => 'U.S. Congress',
 	'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas', 'CA' => 'California',
 	'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware', 'FL' => 'Florida', 'GA' => 'Georgia',
 	'HI' => 'Hawaii', 'ID' => 'Idaho', 'IL' => 'Illinois', 'IN' => 'Indiana', 'IA' => 'Iowa',

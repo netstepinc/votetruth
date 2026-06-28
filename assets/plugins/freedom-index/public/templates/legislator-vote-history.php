@@ -15,7 +15,7 @@ $initial_tag_desc    = (string) ($initial_group['description'] ?? '');
 // Card HTML pre-rendered in compile pass — concatenate directly, no template call needed.
 $initial_votes_html = '';
 if (!empty($display_votes)) {
-	$initial_votes_html = '<div class="d-flex flex-column gap-2" id="fi-vote-cards-container">';
+	$initial_votes_html = '<div id="fi-vote-cards-container">';
 	foreach ($display_votes as $card_html) {
 		$initial_votes_html .= $card_html;
 	}
@@ -83,51 +83,46 @@ foreach ($votes_map as $vote_id => $vote) {
 	</div>
 </section>
 
-<div class="container py-3">
-	<div class="card rounded-4 shadow-sm">
-		<div class="card-header rounded-top-4 bg-white border-bottom">
-			<div class="row align-items-center g-2">
-				<div class="col">
-					<h3 class="h5 mb-0" id="fi-vote-list-title"><?php echo esc_html($initial_title); ?></h3>
-					<div id="fi-vote-list-subtitle" class="text-muted small mt-1"><?php echo esc_html($initial_group['subtitle'] ?? ''); ?></div>
+<div class="container-fluid bg-light border-top">
+	<div class="container py-2">
+		<div class="row align-items-center g-2 mb-4">
+			<div class="col">
+				<h3 class="h2 fs-6 mb-0" id="fi-vote-list-title"><?php echo esc_html($initial_title); ?></h3>
+				<div id="fi-vote-list-subtitle" class="text-muted fs-8 lh-1 mt-1"><?php echo esc_html($initial_group['subtitle'] ?? ''); ?></div>
+			</div>
+			<div class="col-auto">
+				<div id="fi-vote-score-container"<?php echo ($initial_score !== null && $default_view !== 'all') ? '' : ' style="display:none;"'; ?>>
+					<div class="btn-group btn-group-sm rounded-3" role="group" id="fi-vote-score-action">
+						<button type="button" class="btn btn-outline-danger fs-7 fw-bold" id="fi-vote-pdf-btn" style="display:none;" data-bs-toggle="modal" data-bs-target="#fi-print-modal">PDF</button>
+						<span id="fi-vote-score-btn" class="btn btn-primary fs-7 fw-bold" style="pointer-events:none;cursor:default;">
+							Score:&nbsp;<span id="fi-vote-score-value"><?php echo is_numeric($initial_score) ? (int) $initial_score : 'N/A'; ?></span>
+						</span>
+					</div>
 				</div>
-				<div class="col-auto">
-					<div id="fi-vote-score-container"<?php echo ($initial_score !== null && $default_view !== 'all') ? '' : ' style="display:none;"'; ?>>
-						<div class="btn-group btn-group-sm" role="group" id="fi-vote-score-action">
-							<a href="#" class="btn btn-outline-danger fs-7 fw-bold" target="_blank" id="fi-vote-pdf-btn" style="display:none;">PDF</a>
-							<a href="#" class="btn btn-outline-danger fs-7 fw-bold" target="_blank" id="fi-vote-pdf-portrait-btn" style="display:none;">PDF</a>
-							<a href="#" class="btn btn-outline-danger fs-7 fw-bold" target="_blank" id="fi-vote-pdf-bifold-btn" style="display:none;">PDF Bi-Fold</a>
-							<span id="fi-vote-score-btn" class="btn btn-primary fs-7 fw-bold" style="pointer-events:none;cursor:default;">
-								Score:&nbsp;<span id="fi-vote-score-value"><?php echo is_numeric($initial_score) ? (int) $initial_score : 'N/A'; ?></span>
-							</span>
-						</div>
-					</div>
-					<div id="fi-vote-search-container"<?php echo ($default_view === 'all') ? '' : ' style="display:none;"'; ?>>
-						<input type="search" class="form-control form-control-sm" id="fi-vote-search"
-							placeholder="Search votes…" aria-label="Search votes" style="min-width:200px;">
-					</div>
+				<div id="fi-vote-search-container"<?php echo ($default_view === 'all') ? '' : ' style="display:none;"'; ?>>
+					<input type="search" class="form-control form-control-sm" id="fi-vote-search"
+						placeholder="Search votes…" aria-label="Search votes" style="min-width:200px;">
 				</div>
 			</div>
 		</div>
 
-		<div class="card-body p-3 pt-2">
-			<div id="fi-vote-list-content" class="mb-3 fs-7"<?php echo $initial_content ? '' : ' style="display:none;"'; ?>>
-				<?php echo $initial_content ? wp_kses_post($initial_content) : ''; ?>
-			</div>
-			<div id="fi-tag-description" class="mb-3 text-muted small"<?php echo $initial_tag_desc ? '' : ' style="display:none;"'; ?>>
-				<?php echo $initial_tag_desc ? esc_html($initial_tag_desc) : ''; ?>
-			</div>
-			<div id="fi-vote-list-container">
-				<?php if ($initial_votes_html): ?>
-					<?php echo $initial_votes_html; ?>
-				<?php else: ?>
-					<div class="alert alert-info" id="no-votes-found">No votes found for this selection.</div>
-				<?php endif; ?>
-			</div>
-			<div class="text-center mt-3" id="fi-vote-load-more-wrap" style="display:none;">
-				<button type="button" class="btn btn-outline-primary btn-sm" id="fi-vote-load-more">Load More</button>
-			</div>
+		<div id="fi-vote-list-content" class="mb-3 fs-7"<?php echo $initial_content ? '' : ' style="display:none;"'; ?>>
+			<?php echo $initial_content ? wp_kses_post($initial_content) : ''; ?>
 		</div>
+		<div id="fi-tag-description" class="mb-3 text-muted small"<?php echo $initial_tag_desc ? '' : ' style="display:none;"'; ?>>
+			<?php echo $initial_tag_desc ? esc_html($initial_tag_desc) : ''; ?>
+		</div>
+		<div id="fi-vote-list-container">
+			<?php if ($initial_votes_html): ?>
+				<?php echo $initial_votes_html; ?>
+			<?php else: ?>
+				<div class="alert alert-info" id="no-votes-found">No votes found for this selection.</div>
+			<?php endif; ?>
+		</div>
+		<div class="text-center mt-3" id="fi-vote-load-more-wrap" style="display:none;">
+			<button type="button" class="btn btn-outline-primary btn-sm" id="fi-vote-load-more">Load More</button>
+		</div>
+
 	</div>
 </div>
 
@@ -308,7 +303,7 @@ foreach ($votes_map as $vote_id => $vote) {
 		var slice = ids.slice(0, visibleLimit);
 		var html = '';
 		if (slice.length) {
-			html = '<div class="d-flex flex-column gap-2" id="fi-vote-cards-container">';
+			html = '<div id="fi-vote-cards-container">';
 			slice.forEach(function(id) {
 				var vote = votesData[id];
 				html += (vote && vote.card_html) ? vote.card_html : '';
@@ -335,9 +330,7 @@ foreach ($votes_map as $vote_id => $vote) {
 		$searchWrap.toggle(!!actions.search);
 		$scoreWrap.toggle(hasControls || !!actions.score);
 
-		$('#fi-vote-pdf-btn').toggle(!!actions.pdf).attr('href', actions.pdf || '#');
-		$('#fi-vote-pdf-portrait-btn').toggle(!!actions.pdfa).attr('href', actions.pdfa || '#');
-		$('#fi-vote-pdf-bifold-btn').toggle(!!actions.pdfb).attr('href', actions.pdfb || '#');
+		$('#fi-vote-pdf-btn').toggle(!!(actions.pdf || actions.pdfa || actions.pdfb));
 
 		if (actions.score && typeof actions.score === 'string') {
 			$scoreAction.find('#fi-vote-score-btn').replaceWith(actions.score);
@@ -471,13 +464,13 @@ foreach ($votes_map as $vote_id => $vote) {
 		showVoteDetailModal(voteId);
 	});
 
-	$(document).on('click', '.fi-vote-card--interactive', function(e) {
+	$(document).on('click', '.fi-vote-card', function(e) {
 		if ($(e.target).closest('a.fi-vote-title-link, .fi-vote-readmore').length) return;
 		e.preventDefault();
 		showVoteDetailModal(Number($(this).data('vote-id')));
 	});
 
-	$(document).on('keydown', '.fi-vote-card--interactive', function(e) {
+	$(document).on('keydown', '.fi-vote-card', function(e) {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
 			showVoteDetailModal(Number($(this).data('vote-id')));

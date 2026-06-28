@@ -194,7 +194,7 @@ function fi_constitution_link_options(): array {
 }
 
 //Build the link based on the key
-function fi_constitution_link_get($key){
+function fi_constitution_url($key){
     return home_url('/constitution/').'#'.$key;
 }
 

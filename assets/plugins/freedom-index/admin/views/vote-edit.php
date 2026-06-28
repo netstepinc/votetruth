@@ -135,7 +135,7 @@ $gov_name = fi_gov_name($gov);
 								]); ?>
 							</div>
 
-							<div class="col-md-2">
+							<div class="col-md-3">
 								<?php 
 								// Format date for HTML5 date input (requires Y-m-d format)
 								$date_value = '';
@@ -165,29 +165,26 @@ $gov_name = fi_gov_name($gov);
 							</div>
 							<div class="col-md-2">
 								<?php fi_form_field('rollcall_number', [
-									'label' => 'Roll-call Number',
+									'label' => 'Roll-call#',
 									'value' => $vote['rollcall_number'] ?? ''
 								]); ?>
 							</div>
 
-							<div class="col-md-4">
+							<div class="col-md-3">
 							<?php
 							$ls_yea = isset($vote_meta['votes_yea']) ? (int) $vote_meta['votes_yea'] : null;
 							$ls_nay = isset($vote_meta['votes_nay']) ? (int) $vote_meta['votes_nay'] : null;
-							if ($ls_yea !== null || $ls_nay !== null){
-								$vote_outcome_text = '<div class="text-center"><span class="text-muted small">Yea: <strong>' . esc_html((string) ($ls_yea ?? '—')) . '</strong>&nbsp;·&nbsp;Nay: <strong>' . esc_html((string) ($ls_nay ?? '—')) . '</strong></span></div>';
-							}else{
-								$vote_outcome_text = '';
-							}
+							if ($ls_yea !== null || $ls_nay !== null):
+								$ls_outcome = ($ls_yea > $ls_nay) ? 'Passed' : (($ls_yea < $ls_nay) ? 'Rejected' : 'Tied');
+								$ls_outcome_class = ($ls_outcome === 'Passed') ? 'text-success' : (($ls_outcome === 'Rejected') ? 'text-danger' : 'text-muted');
 							?>
-							<?php fi_form_field('meta_vote_outcome', [
-								'name'    => 'meta[vote_outcome]',
-								'label'   => 'Vote Outcome',
-								'type'    => 'radio-group',
-								'options' => ['1' => 'Passed', '0' => 'Rejected'],
-								'value'   => $vote_meta['vote_outcome'] ?? '',
-								'help'    => $vote_outcome_text,
-							]); ?>
+							<div class="mb-3">
+								<label class="form-label fw-semibold">Vote Outcome</label>
+								<div class="<?= $ls_outcome_class; ?> fw-bold"><?= esc_html($ls_outcome); ?></div>
+								<div class="text-muted small">Yea: <strong><?= esc_html((string) $ls_yea); ?></strong> &nbsp;·&nbsp; Nay: <strong><?= esc_html((string) $ls_nay); ?></strong></div>
+								<div class="form-text">Derived from Legiscan vote counts.</div>
+							</div>
+							<?php endif; ?>
 							</div>
 
 						<div class="col-md-6">

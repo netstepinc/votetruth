@@ -67,6 +67,8 @@ function vt_customizer_styles() {
 	--bs-text-color:#111111;
 	--bs-red: #c41425;
     --bs-red-rgb: 196, 20, 37;
+	--bs-red-lt: #e9bec2;
+	--bs-red-lt-rgb: 233, 190, 194;
     --bs-reddk: #761318;
     --bs-reddk-rgb: 118, 19, 24;
 	--bs-blue: #1F5FAF;	/* Primary blue #0055a4 */
@@ -77,6 +79,8 @@ function vt_customizer_styles() {
 	--bs-green-rgb: 20, 108, 67;
 	--bs-greendk: #157347;
 	--bs-greendk-rgb: 21, 115, 71;
+	--bs-green-lt: #D1E7DD;
+	--bs-green-lt-rgb: 209, 231, 221;
 	--bs-orange: #E8934A;	/* Amber accent #E8934A */
 	--bs-orange-rgb: 232, 147, 74;
 	--bs-yellow: #F5C87A;	/* Amber light #F5C87A */
@@ -85,6 +89,8 @@ function vt_customizer_styles() {
     --bs-primary-rgb: 0, 85, 164;
     --bs-secondary: #666666;
     --bs-secondary-rgb: 102, 102, 102;
+	--bs-secondary-lt: #CCCCCC;
+	--bs-secondary-lt-rgb: 204, 204, 204;
 	--bs-dark: #333333;
 	--bs-dark-rgb: 51, 51, 51;
 	--bs-teal: #087990;
@@ -92,6 +98,18 @@ function vt_customizer_styles() {
 	--bs-navlink-color-hover: #333;
 	--bs-info: #0d6efd;
 
+	--bs-success: var(--bs-green);
+	--bs-success-rgb: 20, 108, 67;
+	--bs-success-lt: var(--bs-green-lt);
+	--bs-success-lt-rgb: 209, 231, 221;
+	--bs-danger: var(--bs-red);
+	--bs-danger-rgb: 220, 53, 69;
+	--bs-danger-lt: var(--bs-red-lt);
+	--bs-danger-lt-rgb: 255, 224, 229;
+	--bs-secondary-lt: #F8F9FA;
+	--bs-secondary-lt-rgb: 248, 249, 250;
+
+	
     --bs-primary-text: var(--bs-blue);
     --bs-secondary-text: var(--bs-secondary);
     --bs-success-text: var(--bs-green);

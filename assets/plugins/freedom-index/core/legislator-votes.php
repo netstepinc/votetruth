@@ -325,31 +325,6 @@ function fi_legislator_votes_sort_ids_by_date(array $vote_ids, array $votes): ar
 	return $vote_ids;
 }
 
-/** Format a raw date_voted string for card display (n/j/Y). */
-/**
- * Format citation meta for display: array of keys → 'Art. I, Sec. 8, 10th Amendment'.
- * Handles array (new), JSON-encoded array, or plain text (legacy).
- */
-function fi_legislator_votes_format_citation($raw): string {
-	if (is_array($raw)) {
-		$keys = $raw;
-	} elseif (is_string($raw) && $raw !== '') {
-		$decoded = json_decode($raw, true);
-		$keys    = is_array($decoded) ? $decoded : [$raw]; // legacy plain text → treat as single value
-	} else {
-		return '';
-	}
-	$labels = [];
-	foreach ($keys as $key) {
-		$key = (string) $key;
-		if ($key === '') {
-			continue;
-		}
-		$labels[] = function_exists('fi_constitution_citation') ? fi_constitution_citation($key) : $key;
-	}
-	return implode(', ', $labels);
-}
-
 function fi_legislator_votes_format_date(string $date_voted): string {
 	if ($date_voted === '') {
 		return '';
@@ -416,7 +391,7 @@ function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_
 
 		$vote_groups['tags'][$tag_id] = [
 			'menu'        => (string) ($tag['name'] ?? ''),
-			'title'       => 'Voting on ' . (string) ($tag['name'] ?? ''),
+			'title'       => 'Votes on ' . (string) ($tag['name'] ?? ''),
 			'description' => (string) ($tag['description'] ?? ''),
 			'subtitle'    => null,
 			'content'     => null,
@@ -466,7 +441,7 @@ function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_
 				'id'          => $report_id,
 				'menu'        => $menu_title,
 				'title'       => $report_title,
-				'subtitle'    => trim((string) ($session['gov'] ?? '') . ' ' . (string) ($session['chamber_label'] ?? '')),
+				'subtitle'    => trim(fi_gov_name((string) ($session['gov'] ?? '')) . ': ' . fi_chamber_label((string) ($session['gov'] ?? ''), (string) ($session['chamber'] ?? ''))),
 				'content'     => $content,
 				'format'      => (string) ($report['format'] ?? 'scorecard'),
 				'actions'     => $actions,
@@ -480,7 +455,7 @@ function fi_legislator_votes_build_vote_groups(array $compiled, int $legislator_
 		$vote_groups['sessions'][$session_id] = [
 			'menu'        => (string) ($session['session_name'] ?? ''),
 			'title'       => (string) ($session['session_name'] ?? ''),
-			'subtitle'    => trim((string) ($session['gov'] ?? '') . ' ' . (string) ($session['chamber_label'] ?? '') . ' ' . (string) ($session['chamber_title'] ?? '')),
+			'subtitle'    => trim(fi_gov_name((string) ($session['gov'] ?? '')) . ': ' . fi_chamber_label((string) ($session['gov'] ?? ''), (string) ($session['chamber'] ?? ''))),
 			'content'     => null,
 			'actions'     => ['share' => true, 'score' => $ss['button'] ?? ''],
 			'score'       => $ss['score'] ?? null,
@@ -633,16 +608,17 @@ function fi_legislator_votes_query(int $legislator_id): array {
 			'title'            => (string) ($vote_row['title'] ?? ''),
 			'bill_number'      => (string) ($vote_row['bill_number'] ?? ''),
 			'bill_url'         => (string) ($meta['url_bill'] ?? ''),
+		'rollcall_number'  => (string) ($vote_row['rollcall_number'] ?? ''),
 			'constitutional'   => $constitutional,
 			'date_voted'       => (string) ($vote_row['date_voted'] ?? ''),
 			'date_formatted'   => fi_legislator_votes_format_date((string) ($vote_row['date_voted'] ?? '')),
 			'text'             => $description,
 			'text_more'        => $text_more,
 			'impact_summary'   => (string) ($meta['impact_summary'] ?? ''),
-			'vote_outcome'     => (string) ($meta['vote_outcome'] ?? ''),
+			'vote_outcome'     => ($votes_for !== '' && $votes_against !== '') ? ($votes_for > $votes_against ? '1' : ($votes_for < $votes_against ? '0' : '')) : '',
 			'votes_yea'        => $votes_for,
 			'votes_nay'        => $votes_against,
-			'citation'         => fi_legislator_votes_format_citation($meta['citation'] ?? ''),
+			'citation'         => $meta['citation'] ?? [],
 			'cost_value'       => (string) ($meta['cost'] ?? ''),
 			'url_vote'         => $url_vote,
 			'cost_badge'       => $cost_badge,
@@ -801,6 +777,7 @@ function fi_legislator_votes_query(int $legislator_id): array {
 				'cost_value'       => $vote['cost_value'],
 				'bill_number'      => $vote['bill_number'],
 				'bill_url'         => $vote['bill_url'],
+				'rollcall_number'  => $vote['rollcall_number'],
 				'constitutional'   => $vote['constitutional'],
 				'date_voted'       => $vote['date_voted'],
 				'date_formatted'   => $vote['date_formatted'],

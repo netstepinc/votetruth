@@ -25,6 +25,8 @@ p{color: var(--bs-post-color);}
 	line-height: 1.65em;
 	font-size: 1.1875em;
 }
+.lead {font-size: 1.25rem !important; font-weight: 400 !important;}
+
 .wp-block-quote {font-size: 1.1875rem;line-height: 1.3;}
 .text-bluedk{color:var(--bs-bluedk) !important;}
 @media(max-width:576px){

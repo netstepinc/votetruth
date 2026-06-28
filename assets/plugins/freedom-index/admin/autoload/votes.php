@@ -295,13 +295,6 @@ function fi_admin_votes_get_meta_fields(): array {
 			'cols' => 'col-12',
 			'help' => 'Official bill description from Legiscan',
 		],
-		'vote_outcome' => [
-			'label'   => 'Vote Outcome',
-			'type'    => 'radio-group',
-			'options' => ['1' => 'Passed', '0' => 'Rejected'],
-			'cols'    => 'col-md-3',
-			'help'    => '',
-		],
 		'citation' => [
 			'label' => 'Constitutional Citation',
 			'type'  => 'multiselect',

@@ -177,17 +177,17 @@ function fi_vote_format(array $args = []): array {
 	if ($is_no_vote) {
 		$cast_class  = 'text-muted';
 		$cast_bg     = 'bg-secondary text-white';
-		$table_sym   = '<i class="bi bi-ban"></i>';
+		$table_sym   = '<i class="bi bi-dash-square-fill"></i>';
 		$table_class = 'text-muted';
 	} elseif ($is_match) {
 		$cast_class  = 'text-success';
 		$cast_bg     = 'bg-success text-white';
-		$table_sym   = '<i class="bi bi-check-circle-fill"></i>';
+		$table_sym   = '<i class="bi bi-check-square-fill"></i>';
 		$table_class = 'text-success';
 	} else {
 		$cast_class  = 'text-danger';
 		$cast_bg     = 'bg-danger text-white';
-		$table_sym   = '<i class="bi bi-x-circle-fill"></i>';
+		$table_sym   = '<i class="bi bi-x-square-fill"></i>';
 		$table_class = 'text-danger';
 	}
 
