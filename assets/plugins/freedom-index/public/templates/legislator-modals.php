@@ -5,7 +5,7 @@
  * Modal IDs must match data-bs-target values in the toolbar.
  *
  * Variables passed from legislator.php controller:
- *   $legislator, $contact, $base_url, $current_url, $current_session,
+ *   $legislator, $contact, $base_url, $current_url, $selected_session,
  *   $session_reports, $current_report_id, $user_lists, $pdf_contacts,
  *   $pdf_default_idx, $current_user_id, $legislator_id, $gov
  */
@@ -17,7 +17,7 @@ $fi_score      = is_numeric($legislator['score'] ?? null) ? (int) $legislator['s
 $fi_is_logged  = is_user_logged_in();
 
 /* Resolve current session's latest report for the print modal */
-$fi_session_id  = (int) ($current_session['session_id'] ?? 0);
+$fi_session_id  = (int) ($selected_session['session_id'] ?? 0);
 $fi_scorecard   = null;
 if ($fi_session_id && !empty($session_reports[$fi_session_id])) {
 	$fi_sess_rpts = $session_reports[$fi_session_id];

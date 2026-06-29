@@ -1028,7 +1028,7 @@ if( ! class_exists('sis_image_sizes_resizer') ){
                 if( ! is_wp_error( $image_editor ) ){
                     // maybe do face detection crop
                     if( $crop === 'face' ){
-                        require_once(DIR_SCORECARD_SRC.'resizer/face-detector.php');
+                        require_once(DIR_SAM_RESIZER.'face-detector.php');
                         if( $this->detector === false ){
                             $this->detector = new FaceDetector();
                         }

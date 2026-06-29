@@ -30,24 +30,26 @@ $url_tag_id      = fi_public_get_legislator_tag_id();
 $sessions = $legislator['sessions'];
 unset($legislator['sessions']);
 
-$current_session = null;
+// Legislator identity — always from the legislator row, never from a selected session
+$gov     = $legislator['gov'];
+$chamber = $legislator['chamber'];
+
+// URL-selected session — only for vote history context (gov/chamber may differ for historical sessions)
+$selected_session = null;
 
 if ($url_session_id) {
 	foreach ($sessions as $s) {
 		if ((int) $s['session_id'] === $url_session_id) {
-			$current_session = $s;
+			$selected_session = $s;
 			break;
 		}
 	}
 }
 
-if (!$current_session && !empty($sessions)) {
-	$current_session = $sessions[0];
+if (!$selected_session && !empty($sessions)) {
+	$selected_session = $sessions[0];
 }
-$current_session_id = $current_session ? (int) $current_session['session_id'] : 0;
-
-$chamber            = $current_session ? (string) ($current_session['chamber'] ?? '') : '';
-$gov                = $current_session ? (string) ($current_session['gov'] ?? '') : ($legislator['gov'] ?? '');
+$current_session_id = $selected_session ? (int) $selected_session['session_id'] : 0;
 
 // Single compile pass — votes, vote_groups, issue scores
 $votes_payload = fi_legislator_votes_cache_get($legislator_id);
@@ -117,15 +119,6 @@ foreach ($sessions as $session) {
 
 $base_url = home_url("/legislator/{$legislator_id}/");
 
-$meta    = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
-$contact = [
-	'phone'   => $meta['contact']['phone'] ?? ($meta['phone'] ?? ''),
-	'email'   => $meta['contact']['email'] ?? ($meta['email'] ?? ''),
-	'website' => is_array($meta['website'] ?? null) ? (string) ($meta['website'][0] ?? '') : (string) ($meta['website'] ?? ''),
-	'social'  => is_array($meta['social']  ?? null) ? $meta['social']  : [],
-	'offices' => is_array($meta['address'] ?? null) ? $meta['address'] : [],
-];
-
 $current_url = $base_url;
 if ($url_tag_id) {
 	$current_url = home_url('/legislator/' . $legislator_id . '/issue/' . $url_tag_id . '/');
@@ -136,21 +129,33 @@ if ($url_tag_id) {
 	}
 }
 
+$meta    = is_array($legislator['meta'] ?? null) ? $legislator['meta'] : [];
+$contact = [
+	'phone'   => $meta['contact']['phone'] ?? ($meta['phone'] ?? ''),
+	'email'   => $meta['contact']['email'] ?? ($meta['email'] ?? ''),
+	'website' => is_array($meta['website'] ?? null) ? (string) ($meta['website'][0] ?? '') : (string) ($meta['website'] ?? ''),
+	'social'  => is_array($meta['social']  ?? null) ? $meta['social']  : [],
+	'offices' => is_array($meta['address'] ?? null) ? $meta['address'] : [],
+];
+
+
 $current_user_id = get_current_user_id();
 $user_lists      = $current_user_id ? (fi_lists_get_by_user($current_user_id) ?: []) : [];
 $pdf_contacts    = $current_user_id ? fi_pdf_contacts_get($current_user_id) : [];
 $pdf_default_idx = $current_user_id ? fi_pdf_contacts_default_index_get($current_user_id) : null;
 
-// SEO — canonical always base URL; og:url matches active variant
-$score      = $legislator['score'];
-$page_title = ($legislator['display_name'] ?? 'Legislator') . ' | Freedom Index';
+// SEO — identity fields always from legislator row
+$score       = $legislator['score'];
+$score_text  = $score !== null ? $score . '%' : 'N/A';
+$page_title  = $legislator['display_name'] . ' | ' . $legislator['chamber_label'] . ' | Freedom Index';
 $description = sprintf(
 	'%s (%s, %s) — Freedom Score: %s. View full voting record, issue scores, and session reports.',
-	$legislator['display_name'] ?? '',
-	$current_session['chamber_label'] ?? ($legislator['chamber_label'] ?? ''),
-	$legislator['party_name'] ?? '',
-	$score !== null ? $score . '%' : 'N/A'
+	$legislator['display_name'],
+	$legislator['chamber_label'],
+	$legislator['party_name'],
+	$score_text
 );
+$image_url = $legislator['image_url'] ?? '';
 
 fi_seo_tags([
 	'title'       => $page_title,
@@ -162,19 +167,65 @@ fi_seo_tags([
 		'og:description' => $description,
 		'og:url'         => $current_url,
 		'og:type'        => 'profile',
+		'og:image'       => $image_url,
+		'og:image:alt'   => $legislator['display_name'],
+	],
+	'twitter'     => [
+		'twitter:card'        => 'summary',
+		'twitter:title'       => $legislator['display_name'] . ' | ' . $legislator['chamber_label'],
+		'twitter:description' => $description,
+		'twitter:image'       => $image_url,
 	],
 ]);
 
-// JSON-LD: Person + Issue Scores ItemList
+// JSON-LD — Person + BreadcrumbList + Issue Scores for AI and structured search
 $json_ld = [
 	'@context' => 'https://schema.org',
 	'@graph'   => [
 		[
-			'@type'       => 'Person',
-			'name'        => $legislator['display_name'] ?? '',
-			'url'         => $base_url,
-			'jobTitle'    => $current_session['chamber_title'] ?? ($legislator['chamber_title'] ?? ''),
-			'affiliation' => $legislator['party_name'] ?? '',
+			'@type'      => 'Person',
+			'name'       => $legislator['display_name'],
+			'url'        => $base_url,
+			'image'      => $image_url,
+			'jobTitle'   => $legislator['chamber_title'],
+			'affiliation' => [
+				'@type' => 'Organization',
+				'name'  => $legislator['party_name'],
+			],
+			'memberOf'   => [
+				'@type' => 'GovernmentOrganization',
+				'name'  => $legislator['gov_name'],
+			],
+			'homeLocation' => [
+				'@type' => 'State',
+				'name'  => $legislator['state_name'],
+			],
+			'additionalProperty' => array_filter([
+				$score !== null ? [
+					'@type'    => 'PropertyValue',
+					'name'     => 'Freedom Score',
+					'value'    => (string) $score,
+					'unitText' => 'percent',
+				] : null,
+				$legislator['score_grade'] !== null ? [
+					'@type' => 'PropertyValue',
+					'name'  => 'Freedom Grade',
+					'value' => $legislator['score_grade'],
+				] : null,
+				[
+					'@type' => 'PropertyValue',
+					'name'  => 'District',
+					'value' => $legislator['district_name'],
+				],
+			]),
+		],
+		[
+			'@type'           => 'BreadcrumbList',
+			'itemListElement' => [
+				['@type' => 'ListItem', 'position' => 1, 'name' => $legislator['gov_name'], 'item' => home_url('/' . $legislator['gov_slug'] . '/')],
+				['@type' => 'ListItem', 'position' => 2, 'name' => 'Legislators',           'item' => home_url('/' . $legislator['gov_slug'] . '/legislators/')],
+				['@type' => 'ListItem', 'position' => 3, 'name' => $legislator['display_name']],
+			],
 		],
 	],
 ];
@@ -185,16 +236,16 @@ if (!empty($tag_scores)) {
 		$issue_items[] = [
 			'@type'    => 'ListItem',
 			'position' => $i + 1,
-			'name'     => $tag['name'] ?? '',
+			'name'     => $tag['name'],
 			'additionalProperty' => [
-				['@type' => 'PropertyValue', 'name' => 'score', 'value' => (string) ($tag['score'] ?? '')],
+				['@type' => 'PropertyValue', 'name' => 'score',      'value' => (string) ($tag['score'] ?? ''), 'unitText' => 'percent'],
 				['@type' => 'PropertyValue', 'name' => 'vote_count', 'value' => (string) ($tag['vote_count'] ?? 0)],
 			],
 		];
 	}
 	$json_ld['@graph'][] = [
 		'@type'           => 'ItemList',
-		'name'            => 'Issue Scores',
+		'name'            => 'Issue Scores for ' . $legislator['display_name'],
 		'numberOfItems'   => count($issue_items),
 		'itemListElement' => $issue_items,
 	];
@@ -217,21 +268,18 @@ foreach ($sessions_meta as $sid => $smeta) {
 get_header();
 
 fi_get_template('legislator-header', [
-	'legislator'      => $legislator,
-	'sessions'        => $sessions,
-	'current_session' => $current_session,
-	'tag_scores'      => $all_tags,
-	'base_url'        => $base_url,
-	'legislator_id'   => $legislator_id,
-	'gov'             => $gov,
-	'contact'         => $contact,
+	'legislator'    => $legislator,  // identity always from legislator row
+	'tag_scores'    => $all_tags,
+	'base_url'      => $base_url,
+	'legislator_id' => $legislator_id,
+	'contact'       => $contact,
 ]);
 
 fi_get_template('legislator-vote-history', [
 	'legislator'                      => $legislator,
 	'sessions'                        => $sessions,
 	'sessions_meta'                   => $sessions_meta,
-	'current_session'                 => $current_session,
+	'selected_session'                => $selected_session,  // URL-selected session for vote history context
 	'display_votes'                   => $display_votes,
 	'votes_map'                       => $votes_map,
 	'vote_groups'                     => $vote_groups,
@@ -246,15 +294,16 @@ fi_get_template('legislator-vote-history', [
 	'initial_vote_ids'                => $initial_vote_ids,
 	'default_print_modal_report_base' => $default_print_modal_report_base,
 	'base_url'                        => $base_url,
-	'gov'                             => $gov,
-	'chamber'                         => $chamber,
+	// session-specific gov/chamber for historical context — may differ from legislator identity
+	'gov'                             => $selected_session['gov'] ?? $gov,
+	'chamber'                         => $selected_session['chamber'] ?? $chamber,
 	'legislator_id'                   => $legislator_id,
 ]);
 
 fi_get_template('legislator-modals', [
 	'legislator'        => $legislator,
 	'base_url'          => $base_url,
-	'current_session'   => $current_session,
+	'selected_session'  => $selected_session,
 	'contact'           => $contact,
 	'session_reports'   => $session_reports,
 	'current_report_id' => $url_report_id,

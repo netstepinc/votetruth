@@ -59,3 +59,11 @@ Format: YYMMDD: Description by effect.
 260628: Grade background colors (`fi-grade-a` through `fi-grade-f`) switched from hardcoded hex values to `--vt-g-*` CSS tokens from `customizer.php`.
 
 260628: Removed 38 compatibility shims across 14 files (`meta.php`, `media.php`, `governments.php`, `scope.php`, `urls.php`, `validation.php`, `reports.php`, `votes.php`, `votes-meta.php`, `votes-stats.php`, `ajax-lists.php`, `legiscan.php`, `legislators.php`, `sessions.php`). Call sites updated to canonical function names; self-referential definitions deleted.
+
+260628: `fi_legislator_query()` now returns a fully hydrated array — added `gov_slug`, `score_grade`, `district_name`; fixed `state_name` (was resolving empty for US legislators due to reading from `FI_GOVERNMENTS` instead of `fi_state_name($state)`). All display-ready fields computed once at query time and cached with the array.
+
+260628: Legislator page identity decoupled from selected session. `$gov`/`$chamber` in `legislator.php` now always come from the legislator row. `$current_session` renamed `$selected_session` — clarifies it is URL navigation state for vote history, not the legislator's current identity. SEO and JSON-LD no longer pull identity fields from the selected session.
+
+260628: SEO upgraded on legislator page — title format matches production (`Name | Chamber | Freedom Index`), added `og:image` and Twitter card. JSON-LD `Person` expanded with `memberOf`, `homeLocation`, `additionalProperty` (score, grade, district) and `BreadcrumbList` for AI-crawler comprehension.
+
+260628: `legislator-header.php` hydration block removed. All display fields (`chamber_label`, `state_name`, `district_name`, `party_name`, `score_grade`) read directly from the pre-hydrated `$legislator` array. Back-button URL uses `$legislator['gov_slug']` — no longer affected by which session is selected.

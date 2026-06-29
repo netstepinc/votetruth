@@ -195,11 +195,11 @@ function fi_legislator_sessions_get_history(int $legislator_id): array {
 		$gov = $row['gov'] ?? '';
 		$row['session_id']    = (int) $row['session_id'];
 		$row['image_id']      = (int) ($row['image_id'] ?? 0);
-		$row['gov_name']      = FI_GOVERNMENTS[$gov]['name'] ?? $gov;
-		$row['state_name']    = FI_GOVERNMENTS[$gov]['state_name'] ?? '';
+		$row['gov_name']      = FI_GOVERNMENTS[$gov] ?? $gov;
+		$row['state_name']    = fi_state_name($row['state'] ?? '');
 		$row['party_name']    = fi_party_name($row['party'] ?? '');
-		$row['chamber_label'] = FI_CHAMBERS[$row['chamber']]['label'] ?? $row['chamber'];
-		$row['chamber_title'] = FI_CHAMBERS[$row['chamber']]['title'] ?? '';
+		$row['chamber_label'] = fi_chamber_label($gov, $row['chamber'] ?? '');
+		$row['chamber_title'] = fi_chamber_title($gov, $row['chamber'] ?? '');
 	}
 	unset($row);
 

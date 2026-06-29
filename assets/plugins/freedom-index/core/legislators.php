@@ -37,17 +37,61 @@ function fi_legislator_query(int $id, bool $with_sessions = false): ?array {
 		return null;
 	}
 
-	//Enhance Legislator array
-	$legislator['image_id']       = (int) ($legislator['image_id'] ?? 0);
-	$legislator['meta']           = !empty($legislator['meta']) ? json_decode($legislator['meta'], true) : [];
-	$legislator['sessions']       = [];
-	$legislator['score']          = isset($legislator['score']) && $legislator['score'] !== null && $legislator['score'] !== '' ? (int) $legislator['score'] : null;
-	$legislator['session_id']    = (int) ($legislator['session_id'] ?? 0);
-	$legislator['gov_name']      = isset($legislator['gov']) && !empty(FI_GOVERNMENTS[$legislator['gov']]['name']) ? FI_GOVERNMENTS[$legislator['gov']]['name'] : $legislator['gov'];
-	$legislator['state_name']    = isset($legislator['gov']) && !empty(FI_GOVERNMENTS[$legislator['gov']]['state_name']) ? FI_GOVERNMENTS[$legislator['gov']]['state_name'] : '';
+//print_r($legislator);exit;
+/*
+Array
+(
+    [id] => 1414
+    [legacy_id] => US-142971
+    [first_name] => Thomas
+    [middle_name] => 
+    [last_name] => Massie
+    [display_name] => Thomas Massie
+    [bioguide_id] => M001184
+    [lis_id] => 
+    [legiscan_id] => 14026
+    [govtrack_id] => 412503
+    [votesmart_id] => 132068
+    [ballotpedia_id] => Thomas Massie
+    [openstates_id] => 
+    [image_id] => 15676
+    [image_url] => https://freedomindex.us/assets/sites/5/img/15676/1414_Massie_Thomas_119th_Congress_28cropped_229-200x250-f50_0.jpg
+    [session_id] => 14
+    [gov] => US
+    [state] => KY
+    [chamber] => H
+    [district] => 361
+    [party] => R
+    [score] => 99
+    [score_data] => {"score":99,"total":250,"good":240,"bad":3,"not":7,"scored":243}
+    [score_date] => 2026-05-18 12:54:38
+    [audit_log] => 
+    [meta] => {"legacy_post": {"id": 142971, "post_name": "M001184", "image_url": ""}, "contact": {"phone": "(202) 225-3465"}, "address": [{"name": "Capitol Office", "type": "capitol", "address": "2371 Rayburn House Office Building", "state": "DC", "zip": "20515-1704"}, {"name": "Crescent Springs Office", "type": "district", "address": "541 Buttermilk Pike", "city": "Crescent Springs", "state": "KY", "zip": "41017", "phone": "859-426-0080"}, {"name": "LaGrange Office", "type": "district", "address": "110 W. Jefferson St.", "city": "LaGrange", "state": "KY", "zip": "40031", "phone": "502-265-9119"}], "website": ["https:\/\/massie.house.gov"], "hometown": "Garrison", "opensecrets_id": "N00034041", "legiscan_data": {"people_id": 14026, "person_hash": "zz9y056y", "party_id": "2", "state_id": 52, "party": "R", "role_id": 1, "role": "Rep", "name": "Thomas Massie", "first_name": "Thomas", "middle_name": "", "last_name": "Massie", "suffix": "", "nickname": "", "district": "HD-KY-4", "ftm_eid": 9195688, "votesmart_id": 132068, "opensecrets_id": "N00034041", "knowwho_pid": 391510, "ballotpedia": "Thomas_Massie", "bioguide_id": "M001184", "committee_sponsor": 0, "committee_id": 0, "state_federal": 0, "bio": {"social": {"capitol_phone": "202-225-3465", "district_phone": "", "email": "", "webmail": "https:\/\/massie.house.gov", "biography": "https:\/\/clerk.house.gov\/members\/M001184", "image": "https:\/\/clerk.house.gov\/content\/assets\/img\/members\/M001184", "ballotpedia": "https:\/\/ballotpedia.org\/Thomas_Massie", "votesmart": "https:\/\/justfacts.votesmart.org\/candidate\/biography\/132068"}, "capitol_address": {"address1": "2371 Rayburn House Office Building", "address2": "", "city": "Washington", "state": "DC", "zip": "20515"}, "links": {"official": {"bluesky": "", "facebook": "https:\/\/www.facebook.com\/RepThomasMassie", "instagram": "https:\/\/www.instagram.com\/repthomasmassie\/", "linkedin": "", "tiktok": "", "twitter": "https:\/\/www.twitter.com\/RepThomasMassie", "website": "https:\/\/clerk.house.gov\/members\/M001184", "youtube": "https:\/\/www.youtube.com\/user\/RepThomasMassie\/"}, "personal": {"bluesky": "", "facebook": "https:\/\/www.facebook.com\/thomas.massie.31", "instagram": "", "linkedin": "", "tiktok": "", "twitter": "", "website": "", "youtube": ""}}}}, "knowwho_pid": 391510, "ftm_eid": 9195688, "social": {"facebook": "https:\/\/www.facebook.com\/RepThomasMassie", "instagram": "https:\/\/www.instagram.com\/repthomasmassie", "twitter": "https:\/\/www.x.com\/RepThomasMassie", "youtube": "https:\/\/www.youtube.com\/user\/repthomasmassie"}, "url_wikipedia": "https:\/\/en.wikipedia.org\/wiki\/Thomas_Massie", "url_wikidata": "https:\/\/www.wikidata.org\/wiki\/Q2426031", "birth_date": "1971-01-13", "gender": "male", "phone": "202-225-3465", "legacy": {"hometown": "Garrison"}}
+    [date_created] => 2026-01-25 22:03:45
+    [date_updated] => 2026-06-14 15:19:05
+    [legacy_image_url] => 
+)
+
+*/
+
+	// Type-cast raw DB fields
+	$legislator['image_id']   = (int) $legislator['image_id'];
+	$legislator['session_id'] = (int) $legislator['session_id'];
+	$legislator['score']      = ($legislator['score'] !== null && $legislator['score'] !== '') ? (int) $legislator['score'] : null;
+	$legislator['meta']       = !empty($legislator['meta']) ? json_decode($legislator['meta'], true) : [];
+	$legislator['sessions']   = [];
+
+	// Display-ready fields — computed once here, cached with the array
+	$gov     = $legislator['gov'];
+	$chamber = $legislator['chamber'];
+	$legislator['gov_slug']      = strtolower($gov);
+	$legislator['gov_name']      = FI_GOVERNMENTS[$gov] ?? $gov;            // flat string lookup
+	$legislator['state_name']    = fi_state_name($legislator['state'] ?? ''); // from state code, not gov
 	$legislator['party_name']    = fi_party_name($legislator['party'] ?? '');
-	$legislator['chamber_label'] = isset($legislator['chamber']) && !empty(FI_CHAMBERS[$legislator['chamber']]['label']) ? FI_CHAMBERS[$legislator['chamber']]['label'] : ($legislator['chamber'] ?? '');
-	$legislator['chamber_title'] = isset($legislator['chamber']) && !empty(FI_CHAMBERS[$legislator['chamber']]['title']) ? FI_CHAMBERS[$legislator['chamber']]['title'] : '';
+	$legislator['chamber_label'] = fi_chamber_label($gov, $chamber);          // FI_CHAMBERS[$gov][$chamber]
+	$legislator['chamber_title'] = fi_chamber_title($gov, $chamber);
+	$legislator['district_name'] = fi_district_name((int) ($legislator['district'] ?? 0));
+	$legislator['score_grade']   = $legislator['score'] !== null ? fi_score_calculate_grade($legislator['score']) : null;
 
 
 	// Full session history — delegated to legislator-sessions.php.

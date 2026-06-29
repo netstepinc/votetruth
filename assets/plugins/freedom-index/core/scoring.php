@@ -80,9 +80,9 @@ function fi_score_display($score,$location='ribbon'): string {
 
 	switch($location):
 		case 'legislator':
-			$html = '<div class="fi-grade fi-bg-'.$key.' p-3 text-center w-100 rounded-3" style="aspect-ratio:4/5">';
+			$html = '<div class="fi-grade fi-bg-'.$key.' p-2 text-center w-100 rounded-3" style="aspect-ratio:4/5">';
 			if($has_score){
-				$html .= '<div class="fs-1 text-white fw-8 lh-1">'.$grade.'</div>';
+				$html .= '<div class="fs-grade-xl text-white fw-8 lh-1">'.$grade.'</div>';
 				$html .= '<div class="fs-3 text-white fw-6 lh-1">'.$score.'%</div>';
 				$html .= '<div class="text-white">Freedom Score</div>';
 			}else{
@@ -96,7 +96,7 @@ function fi_score_display($score,$location='ribbon'): string {
 				return '<div class="fi-grade fi-bg-na"><span class="text-white">N/A</span></div>';
 			}
 			return '<div class="fi-grade fi-bg-' . $key . ' p-1 text-center w-100 rounded-start-2">'
-				. '<span class="text-white lh-1 fw-7 fs-6">' . esc_html($grade) . '</span>'
+				. '<span class="text-white lh-1 fw-7 fs-7">' . esc_html($grade) . '</span>'
 				. '<span class="text-white lh-1 fw-6 small">' . $score . '%</span>'
 				. '</div>';
 			break;

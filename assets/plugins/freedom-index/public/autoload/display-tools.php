@@ -55,7 +55,7 @@ function fi_legislator_image(?int $image_id, ?int $session_image_id = null, arra
 	}
 
 	//Use Custom Better Image Sizes method
-	$image_html = sis_get_attachment_image($use_image_id, $args['size'], false, [
+	$image_html = sis_get_attachment_image($use_image_id, $args['size'], 'face', [
 		'class' => $args['class'],
 		'alt' => $args['alt'],
 	]);

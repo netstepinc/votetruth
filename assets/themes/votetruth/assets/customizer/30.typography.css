@@ -51,8 +51,11 @@ p{color: var(--bs-post-color);}
 .text-gray-dark a{color: var(--bs-gray-dark) !important;}
 
 small, .small {font-size: .875em !important;}
+.xsmall {font-size: .75em !important;}
 
 /* XXL=1440 */
+.fs-grade-xl{font-size:8rem !important;}
+.fs-score-xl{font-size:4rem !important;}
 .fs-1 {font-size: 6.5rem !important;}
 .fs-2 {font-size: 4.5rem !important;}
 .fs-3 {font-size: 3.5rem !important;}
@@ -63,6 +66,8 @@ small, .small {font-size: .875em !important;}
 .fs-8 {font-size: 1.25rem !important;}
 .fs-sub {font-size: .8125rem !important;}
 @media (max-width: 1200px) {
+	.fs-grade-xl{font-size:7rem !important;}
+	.fs-score-xl{font-size:3.5rem !important;}
 	.fs-1 {font-size: 5.75rem !important;}
 	.fs-2 {font-size: 3.5rem !important;}
 	.fs-3 {font-size: 3rem !important;}
@@ -73,6 +78,8 @@ small, .small {font-size: .875em !important;}
 	.fs-8 {font-size: 1.1875rem !important;}
 }
 @media (max-width: 992px) {
+	.fs-grade-xl{font-size:6.5rem !important;}
+	.fs-score-xl{font-size:3.25rem !important;}
 	.fs-1 {font-size: 5rem !important;}
 	.fs-2 {font-size: 3.5rem !important;}
 	.fs-3 {font-size: 2.5rem !important;}
@@ -83,6 +90,8 @@ small, .small {font-size: .875em !important;}
 	.fs-8 {font-size: 1.125rem !important;}
 }
 @media (max-width: 768px) {
+	.fs-grade-xl{font-size:5.5rem !important;}
+	.fs-score-xl{font-size:2.75rem !important;}
 	.fs-1 {font-size: 4.5rem !important;}
 	.fs-2 {font-size: 3rem !important;}
 	.fs-3 {font-size: 2.5rem !important;}
@@ -93,6 +102,8 @@ small, .small {font-size: .875em !important;}
 	.fs-8 {font-size: 1.0625rem !important;}
 }
 @media (max-width: 576px) {
+	.fs-grade-xl{font-size:5rem !important;}
+	.fs-score-xl{font-size:2.5rem !important;}
 	.fs-1 {font-size: 4.5rem !important;}
 	.fs-2 {font-size: 3.5rem !important;}
 	.fs-3 {font-size: 3rem !important;}

@@ -6,7 +6,7 @@
 if (!defined('ABSPATH')) exit;
 
 $party               = $legislator['party'] ?? '';
-$current_session_id  = $current_session ? (int) $current_session['session_id'] : 0;
+$current_session_id  = $selected_session ? (int) $selected_session['session_id'] : 0;
 $initial_title       = (string) ($initial_group['title'] ?? 'Votes');
 $initial_score       = $initial_group['score'] ?? null;
 $initial_content     = (string) ($initial_group['content'] ?? '');
@@ -47,8 +47,7 @@ foreach ($votes_map as $vote_id => $vote) {
 				class="btn btn-sm btn-link text-decoration-none p-0 ms-auto fw-semibold fi-nav-item<?php echo ($default_view === 'all') ? ' d-none' : ''; ?>"
 				id="fi-view-all-votes"
 				data-view="all"
-				data-session-id="">
-				View<span class="d-none d-md-inline"> / Search</span> all Votes
+				data-session-id="">View<span class="d-none d-md-inline"> / Search</span> all Votes
 			</button>
 		</div>
 
@@ -60,9 +59,7 @@ foreach ($votes_map as $vote_id => $vote) {
 					$sname = (string) ($smeta['session_name'] ?? ($session['session_name'] ?? 'Session'));
 					$sscore = $smeta['score'] ?? null;
 				?>
-				<?php
-					$session_chip_active = ($sid === $active_session_id && $default_view !== 'all' && $default_view !== 'tag');
-				?>
+				<?php $session_chip_active = ($sid === $active_session_id && $default_view !== 'all' && $default_view !== 'tag');?>
 				<button type="button"
 					class="btn fi-scroll-rail-item fi-vh-session-cell fi-nav-item border rounded-3 py-2 px-3 text-start fw-semibold<?php echo $session_chip_active ? ' btn-primary border-primary' : ' btn-light'; ?>"
 					data-view="session"

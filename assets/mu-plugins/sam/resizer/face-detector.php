@@ -9,7 +9,7 @@ class FaceDetector{
 	private $reduced_canvas;
 
 	public function __construct(){
-		$handle = fopen( DIR_JBSN_SRC . 'resizer/dataset.dat', 'rb' );
+		$handle = fopen( DIR_SAM_RESIZER . 'dataset.dat', 'rb' );
 		$dataset = stream_get_contents( $handle );
 		fclose( $handle );
 		$this->detection_data = unserialize( $dataset );
