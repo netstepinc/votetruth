@@ -19,7 +19,7 @@ foreach ($sessions as $session) {
 }
 
 $chamber_options = fi_chamber_options($scope['gov'] ?? 'US');
-$status_options = fi_admin_votes_get_status_options();
+$status_options = fi_vote_get_status_options();
 $constitutional_options = ['Y' => 'Constitutional (Y)', 'N' => 'Unconstitutional (N)'];
 $tag_options = fi_admin_votes_get_tag_options($scope['gov'] ?? null);
 $meta_fields = fi_admin_votes_get_meta_fields();
@@ -30,7 +30,7 @@ foreach ($vote_tags as $tag) {
 	$selected_tags[] = (int) ($tag['id'] ?? 0);
 }
 
-$vote_meta = fi_admin_votes_decode_meta($vote);
+$vote_meta = fi_vote_decode_meta($vote);
 
 // Ensure vote_meta is always an array
 if (!is_array($vote_meta)) {

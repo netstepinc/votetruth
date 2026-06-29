@@ -37,7 +37,7 @@ $child_sessions = [];
 
 foreach ($sessions as $session) {
 	$session_id = (int) $session['id'];
-	$session_stats[$session_id] = fi_admin_sessions_get_stats($session_id);
+	$session_stats[$session_id] = fi_session_get_stats($session_id);
 
 	if (empty($session['parent_id'])) {
 		$parent_sessions[] = $session;

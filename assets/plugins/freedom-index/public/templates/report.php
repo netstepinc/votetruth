@@ -295,7 +295,7 @@ fi_get_template('template-header', $header_args);
 				// Format cost
 				$cost_html = '';
 				if (!empty($vote_meta['cost']) && $vote_meta['cost'] != 0) {
-					$cost = fi_vote_cost_format($vote_meta['cost']);
+					$cost = fi_vote_format_cost($vote_meta['cost']);
 					$cost_html = $cost['html'] ?? '';
 				}
 				

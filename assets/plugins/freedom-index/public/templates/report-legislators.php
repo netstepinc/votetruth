@@ -211,7 +211,7 @@ if ($filter_party_slug !== null && $filter_party_slug !== '' && !isset($parties[
     
     var $ = jQuery;
     var filterForm = $('#fi-report-legislator-filter');
-    var resultsContainer = $('#fi-report-legislators-results');
+    var resultscontainer-xl = $('#fi-report-legislators-results');
     var nameInput = $('#fi-report-name-filter');
     var stateSelect = $('#fi-report-state-filter');
     var partySelect = $('#fi-report-party-filter');

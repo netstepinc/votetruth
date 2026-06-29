@@ -45,24 +45,6 @@ function fi_govs(): array {
 }
 
 /**
- * Get all government codes.
- *
- * @return array Government codes.
- */
-function fi_gov_codes(): array {
-	return array_keys(FI_GOVERNMENTS);
-}
-
-/**
- * Get all government names.
- *
- * @return array Government names.
- */
-function fi_gov_names(): array {
-	return array_values(FI_GOVERNMENTS);
-}
-
-/**
  * Get government name from code.
  *
  * @param string $gov Government code.
@@ -82,26 +64,6 @@ function fi_state_name(string $state): string {
 	$govs = fi_govs();
 	$state = fi_gov_normalize($state);
 	return $govs[$state] ?? '';
-}
-
-/**
- * Check if government is US Congress.
- *
- * @param string $gov Government code.
- * @return bool
- */
-function fi_gov_is_us(string $gov): bool {
-	return fi_gov_normalize($gov) === fi_gov_us_code();
-}
-
-/**
- * Check if government is a state.
- *
- * @param string $gov Government code.
- * @return bool
- */
-function fi_gov_is_state(string $gov): bool {
-	return in_array(fi_gov_normalize($gov), FI_STATES, true);
 }
 
 /**

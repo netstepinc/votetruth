@@ -1045,7 +1045,7 @@ function fi_admin_ajax_handle_sub_action(string $sub_action): void {
 
 		case 'search_legislators':
 			$query = sanitize_text_field((string) wp_unslash($_POST['query'] ?? ''));
-			$results = function_exists('fi_admin_legislators_search') ? fi_admin_legislators_search($query) : [];
+			$results = fi_legislators_search($query, 20);
 			wp_send_json_success($results);
 			break;
 

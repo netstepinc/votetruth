@@ -245,7 +245,7 @@ $all_votes = empty($tag_slug) && empty($chamber);
 					]);
 					
 					// Format cost
-					$cost = !empty($vote_meta['cost']) ? fi_vote_cost_format($vote_meta['cost']) : ['html' => ''];
+					$cost = !empty($vote_meta['cost']) ? fi_vote_format_cost($vote_meta['cost']) : ['html' => ''];
 
 					// Build URLs
 					$url_vote = fi_vote_get_url($vote['gov'], $vote['id']);
@@ -277,7 +277,7 @@ $all_votes = empty($tag_slug) && empty($chamber);
 						'show_link_title' => true,
 					];
 
-					// Wrap vote card in a container that can be hidden
+					// Wrap vote card in a container-xl that can be hidden
 					echo '<div class="fi-vote-wrapper' . esc_attr($hidden_class) . '">';
 					fi_get_template('vote-card', $vote_data);
 					echo '</div>';

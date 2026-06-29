@@ -214,38 +214,3 @@ function fi_vote_format(array $args = []): array {
 	];
 }
 
-/**
- * Update vote meta (wrapper for unified meta handling)
- * 
- * @param int $vote_id Vote ID
- * @param string $meta_key Meta key
- * @param mixed $meta_value Meta value
- * @return bool True on success, false on failure
- */
-function fi_vote_update_meta(int $vote_id, string $meta_key, $meta_value): bool {
-	return update_metadata('fi_vote', $vote_id, $meta_key, $meta_value);
-}
-
-/**
- * Get vote meta (wrapper for unified meta handling)
- * 
- * @param int $vote_id Vote ID
- * @param string $meta_key Meta key
- * @param bool $single Return single value
- * @return mixed Meta value
- */
-function fi_vote_get_meta(int $vote_id, string $meta_key = '', bool $single = true) {
-	return get_metadata('fi_vote', $vote_id, $meta_key, $single);
-}
-
-/**
- * Delete vote meta (wrapper for unified meta handling)
- * 
- * @param int $vote_id Vote ID
- * @param string $meta_key Meta key
- * @param mixed $meta_value Optional specific value to delete
- * @return bool True on success, false on failure
- */
-function fi_vote_delete_meta(int $vote_id, string $meta_key, $meta_value = ''): bool {
-	return delete_metadata('fi_vote', $vote_id, $meta_key, $meta_value);
-}

@@ -49,3 +49,13 @@ Format: YYMMDD: Description by effect.
 260628: Removed title link (`url_vote`) from legacy vote card — navigation to vote detail page is through the modal only.
 
 260628: Removed manual `vote_outcome` (Passed/Rejected) toggle. Outcome is now derived from `votes_yea` vs `votes_nay` at compile time. Admin edit page shows a read-only derived outcome display instead of the radio toggle.
+
+260628: Rebuilt site header (v2606) — single row: Logo | Search (flex-grow, max 480px centered) | ≡ Menu. Replaces two-row navbar + search-bar layout. Mobile: VT compact logo, icon-only search button, "Menu" label hidden. Nav links moved into a BS5 dropdown panel with My Account CTA.
+
+260628: Toolbar buttons on legislator header changed from `row-cols-1 row-cols-sm-2` to `row-cols-2` — 2-per-row from xs up.
+
+260628: Grade panel in legislator hero set to `aspect-ratio: 4/5` to match photo proportions. Removed non-functional `h-100`.
+
+260628: Grade background colors (`fi-grade-a` through `fi-grade-f`) switched from hardcoded hex values to `--vt-g-*` CSS tokens from `customizer.php`.
+
+260628: Removed 38 compatibility shims across 14 files (`meta.php`, `media.php`, `governments.php`, `scope.php`, `urls.php`, `validation.php`, `reports.php`, `votes.php`, `votes-meta.php`, `votes-stats.php`, `ajax-lists.php`, `legiscan.php`, `legislators.php`, `sessions.php`). Call sites updated to canonical function names; self-referential definitions deleted.

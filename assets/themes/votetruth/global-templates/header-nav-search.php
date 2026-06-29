@@ -1,235 +1,184 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 /**
- * Header Template — v2605
+ * Header Template — v2606
  *
- * Streamlined header for the redesigned site. Replaces the legacy two-bar
- * desktop sidebar layout with a single top navigation matching the
- * "freedom-index-home-v2" design.
- *
- *   - Top navbar: U.S. Congress · Select State · App · About · Help · Account
- *   - Mobile: BS5 hamburger collapse for primary navigation
- *   - Legislator search remains visible below the navbar at every breakpoint
- *   - PWA bottom nav retained from v2603
- *   - Admin-bar offset retained
- *
- * Notes for inner pages:
- *   - The legacy desktop "Government Sidebar" is intentionally NOT rendered
- *     here. State/government selection is now handled via the front-page
- *     hero chips and (future) a state-selector modal. Inner pages that
- *     still depend on the sidebar should be updated; until then, there is
- *     no `has-desktop-sidebar` body class to push content over.
- *
- * @package bootnews
+ * Single-row: Logo | Search (flex-grow, always visible) | ≡ Menu dropdown
+ *   - Logo: full text on sm+, "VT" abbreviation on xs
+ *   - Search: primary feature, always visible, takes all remaining space
+ *   - Menu: hamburger icon + "Menu" label (label hidden on xs)
+ *   - Nav links in a BS5 dropdown panel (right-aligned)
+ *   - Admin-bar top offset retained
  */
 
-$logged_in = is_user_logged_in();
-
-// Build a redirect-aware account URL for unauthenticated users
+$logged_in   = is_user_logged_in();
 $current_url = ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 $account_url = $logged_in
 	? esc_url( home_url( '/account/' ) )
 	: esc_url( home_url( '/account/' ) . '?redirect_to=' . urlencode( $current_url ) );
 
-
-// Get governments from Freedom Index plugin - core/references.php
-$gov_links = function_exists('get_fi_gov_links') ? get_fi_gov_links() : '';
-
-// Check if Freedom Index page
-$is_fi_page = get_query_var('fi_view') || get_query_var('fi_gov') || get_query_var('fi_entity');
-
-// Check if admin bar is showing and get its height
-$admin_bar_top = '';
-if (is_admin_bar_showing()) {
-	// Admin bar is typically 32px on desktop (lg+), 46px on smaller screens
-	// Since sidebar is position: fixed with top: 0, we need to adjust top position
-	$admin_bar_top = ' style="top: 32px; height: calc(100vh - 32px);"';
-	echo '<style>@media (min-width: 992px) {.sidebar-toggle {top: 44px;}}</style>';
+// Admin bar offset for sticky header
+$header_style = '';
+if ( is_admin_bar_showing() ) {
+	$header_style = ' style="top:32px"';
 }
 
+// Build nav links
 $nav_links = [];
-//Show Federal and State Select modal triggers when not on home page
-//<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#fi-modal-federal">Federal Legislators</button>
-//<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#fi-modal-state">State Legislators</button>
 
 if ( ! is_front_page() ) {
 	$nav_links[] = [
 		'label' => 'U.S. Congress',
-		'url' => '#',
+		'url'   => '#',
 		'attrs' => 'data-bs-toggle="bottom-sheet" data-content="federal"',
-		'class' => 'btn btn-link fw-bold nav-link',
 	];
-
 	$nav_links[] = [
-		'label' => 'Select State',
-		'url' => '#',
+		'label' => 'Select a State',
+		'url'   => '#',
 		'attrs' => 'data-bs-toggle="bottom-sheet" data-content="state"',
-		'class' => 'btn btn-link fw-bold nav-link',
 	];
 }
 
-$nav_links[] = [
-	'label' => 'App',
-	'url' => esc_url( home_url( '/app/' ) ),
-];
+$nav_links[] = [ 'label' => 'Get the App', 'url' => esc_url( home_url( '/app/' ) ) ];
+$nav_links[] = [ 'label' => 'About',       'url' => esc_url( home_url( '/about/' ) ) ];
+$nav_links[] = [ 'label' => 'Help',        'url' => esc_url( home_url( '/help/' ) ) ];
 
-$nav_links[] = [
-	'label' => 'About',
-	'url' => esc_url( home_url( '/about/' ) ),
-];
-
-$nav_links[] = [
-	'label' => 'Help',
-	'url' => esc_url( home_url( '/help/' ) ),
-];
-
-$nav_links[] = [
-	'label' => $logged_in ? 'My Account' : 'Login',
-	'url' => $account_url,
-	'class' => 'fi-nav-cta ms-1 px-3 py-2 rounded',
-];
-
+// Separate "secondary" links (shown after divider)
+$secondary_start = ( ! is_front_page() ) ? 3 : 1; // After congress/state/app on inner pages; after app on home
 ?>
-<header class="fi-header sticky-top" role="banner">
-	<nav class="navbar navbar-expand-lg navbar-dark py-0 fi-navbar" aria-label="Main navigation">
-		<div class="container-xl d-flex justify-content-between">
-			<a class="navbar-brand flex-shrink-0 p-0" rel="home" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
-				<div class="text-logo"><span class="text-action">Vote</span><span class="text-white">Truth</span></div>
-			</a>
+<header class="fi-header sticky-top"<?php echo $header_style; ?> role="banner">
+	<nav class="fi-navbar py-2" aria-label="Main navigation">
+	<div class="container-xl d-flex align-items-center gap-2 gap-sm-3">
 
+		<!-- ── Logo ── -->
+		<a class="fi-logo flex-shrink-0 text-decoration-none"
+		   rel="home"
+		   href="<?php echo esc_url( home_url( '/' ) ); ?>"
+		   title="<?php echo esc_attr( get_bloginfo( 'name', 'display' ) ); ?>">
+			<!-- Full logo: sm and up -->
+			<span class="text-logo lh-1 d-none d-sm-block">
+				<span class="text-action">Vote</span><span class="text-white">Truth</span>
+			</span>
+			<!-- Compact logo: xs only -->
+			<span class="fi-logo-compact d-sm-none">
+				<span class="text-action">V</span><span class="text-white">T</span>
+			</span>
+		</a>
 
-			<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-					data-bs-target="#fiNavMain" aria-controls="fiNavMain"
-					aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
+		<!-- ── Search — always visible, centered, max 480px ── -->
+		<form id="header-legislator-search-form"
+			  class="fi-header-search-form flex-grow-1 position-relative"
+			  method="get"
+			  action="<?php echo esc_url( home_url( '/' ) ); ?>"
+			  role="search"
+			  novalidate>
+			<div class="input-group fi-search-group">
+				<span class="input-group-text fi-search-prefix bg-warm pe-1 d-none d-sm-flex">
+					<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+				</span>
+				<input id="header-legislator-search-input"
+					   class="form-control search-box bg-warm ps-2"
+					   name="fi_search"
+					   type="search"
+					   placeholder="<?php echo esc_attr( FI_SEARCH_PLACEHOLDER ); ?>"
+					   value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? wp_unslash( $_GET['fi_search'] ) : '' ); ?>"
+					   aria-label="Enter ZIP code or legislator name"
+					   autocomplete="off"
+					   minlength="3">
+				<button id="header-search-clear-btn"
+						class="btn fi-search-clear bg-warm px-2 d-none"
+						type="button"
+						aria-label="Clear search">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+				</button>
+				<button class="btn fi-search-submit fw-bold" type="submit" aria-label="Search">
+					<!-- Icon only on xs -->
+					<i class="bi bi-search d-sm-none" aria-hidden="true"></i>
+					<!-- Text on sm+ -->
+					<span class="d-none d-sm-inline">Search</span>
+				</button>
+			</div>
+			<!-- Autocomplete suggestions -->
+			<div id="header-search-suggestions"
+				 class="position-absolute top-100 start-0 w-100 bg-white border rounded-bottom shadow-lg d-none"
+				 style="z-index:1050;max-height:400px;overflow-y:auto;"></div>
+		</form>
+
+		<!-- ── Menu dropdown ── -->
+		<div class="dropdown flex-shrink-0">
+			<button class="fi-menu-btn btn d-flex align-items-center gap-1 gap-sm-2"
+					type="button"
+					data-bs-toggle="dropdown"
+					aria-expanded="false"
+					aria-label="Toggle navigation">
+				<!-- Hamburger icon (hidden when open) -->
+				<svg class="fi-menu-icon-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+					<path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+				</svg>
+				<!-- X icon (shown when open) -->
+				<svg class="fi-menu-icon-close" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+					<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+				</svg>
+				<span class="fi-menu-label d-none d-sm-inline fw-bold">Menu</span>
 			</button>
 
-			<div class="collapse navbar-collapse justify-content-end flex-shrink-0" id="fiNavMain">
-				<ul class="navbar-nav align-items-lg-center">
-				<?php foreach ( $nav_links as $link ){
-					$li_class = '';
-					if(isset($link['class']) && !empty($link['class']) && is_string($link['class'])){
-						$li_class = $link['class'];
-					}
-					echo '<li class="nav-item">';
-					if($link['url'] === '#'){
-						echo '<button type="button" class="' . ( !empty($li_class) ? ' ' . $li_class : '' ) . '"' . ( isset( $link['attrs'] ) ? ' ' . $link['attrs'] : '' ) . '>' . esc_html( $link['label'] ) . '</button>';
-					}else{
-						echo '<a class="nav-link' . ( !empty($li_class) ? ' ' . $li_class : '' ) . '" href="' . esc_url( $link['url'] ) . '"' . ( isset( $link['attrs'] ) ? ' ' . $link['attrs'] : '' ) . '>' . esc_html( $link['label'] ) . '</a>';
-					}
-					echo '</li>';
-				} ?>
-				</ul>
-			</div>
+			<ul class="dropdown-menu dropdown-menu-end fi-nav-dropdown shadow mt-1">
+				<?php
+				$divider_added = false;
+				foreach ( $nav_links as $i => $link ) :
+					// Add divider before secondary links (About, Help)
+					if ( ! $divider_added && in_array( $link['label'], [ 'About', 'Help' ] ) ) :
+						$divider_added = true;
+						echo '<li><hr class="dropdown-divider my-1"></li>';
+					endif;
+				?>
+				<li>
+					<?php if ( $link['url'] === '#' ) : ?>
+						<button type="button"
+								class="dropdown-item"
+								<?php echo isset( $link['attrs'] ) ? $link['attrs'] : ''; ?>>
+							<?php echo esc_html( $link['label'] ); ?>
+						</button>
+					<?php else : ?>
+						<a class="dropdown-item" href="<?php echo esc_url( $link['url'] ); ?>">
+							<?php echo esc_html( $link['label'] ); ?>
+						</a>
+					<?php endif; ?>
+				</li>
+				<?php endforeach; ?>
+				<li><hr class="dropdown-divider my-1"></li>
+				<li class="px-3 py-1">
+					<a class="btn btn-primary w-100 fw-bold"
+					   href="<?php echo $account_url; ?>">
+						<?php echo $logged_in ? 'My Account' : 'Login'; ?>
+					</a>
+				</li>
+			</ul>
 		</div>
+
+	</div><!-- /.container-xl -->
 	</nav>
-
-	<!-- Primary site action: always-visible legislator search -->
-	<div class="fi-header-search bg-action-light border-bottom border-dark py-2">
-		<div class="container-xl">
-			<form id="header-legislator-search-form"
-				  class="fi-header-search-form d-flex align-items-center gap-3 mx-auto"
-				  method="get"
-				  action="<?php echo esc_url( home_url( '/' ) ); ?>"
-				  role="search"
-				  novalidate>
-				<label class="fi-header-search-label flex-shrink-0 fw-bold text-nowrap d-none d-md-inline" for="header-legislator-search-input">
-					Find Legislators
-				</label>
-
-				<div class="input-group position-relative flex-grow-1">
-					<input id="header-legislator-search-input"
-						   class="form-control search-box bg-warm"
-						   name="fi_search"
-						   type="search"
-						   placeholder="<?php echo esc_attr( FI_SEARCH_PLACEHOLDER ); ?>"
-						   value="<?php echo esc_attr( isset( $_GET['fi_search'] ) ? wp_unslash( $_GET['fi_search'] ) : '' ); ?>"
-						   aria-label="Enter ZIP code or legislator name"
-						   autocomplete="off"
-						   minlength="3">
-
-					<div id="header-search-suggestions"
-						 class="position-absolute top-100 start-0 w-100 bg-white border rounded-bottom shadow-lg d-none"
-						 style="z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
-
-					<button id="header-search-clear-btn"
-							class="btn btn-outline-secondary d-none"
-							type="button"
-							aria-label="Clear search"
-							title="Clear search">
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<line x1="18" y1="6" x2="6" y2="18"></line>
-							<line x1="6" y1="6" x2="18" y2="18"></line>
-						</svg>
-					</button>
-
-					<button class="btn btn-primary fw-bold fi-header-search-submit"
-							type="submit">
-						Search
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
 </header>
-<?php
-/**
- * Bottom Navigation Bar — Mobile / Standalone PWA only (hidden on lg+)
- * Carried over from v2603. Hidden when running as installed PWA via
- * window.FI_PWA.isStandalone (the App tab specifically; full bar still
- * visible to give thumb-friendly nav on phones).
- */
 
-/* HIDE FOR NOW - CONSIDERING DELETION
-?>
-<nav id="fi-bottom-nav" class="d-lg-none" aria-label="Mobile primary">
-	<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="fi-bnav-item" data-match="home">
-		<i class="bi bi-house-door" aria-hidden="true"></i>
-		<span>Home</span>
-	</a>
-	<a id="fi-bnav-app" href="<?php echo esc_url( home_url( '/app/' ) ); ?>" class="fi-bnav-item" data-match="/app">
-		<i class="bi bi-download" aria-hidden="true"></i>
-		<span>App</span>
-	</a>
-	<a href="<?php echo esc_url( home_url( '/about/' ) ); ?>" class="fi-bnav-item" data-match="/about">
-		<i class="bi bi-info-circle" aria-hidden="true"></i>
-		<span>About</span>
-	</a>
-	<a href="<?php echo esc_url( home_url( '/help/' ) ); ?>" class="fi-bnav-item" data-match="/help">
-		<i class="bi bi-question-circle" aria-hidden="true"></i>
-		<span>Help</span>
-	</a>
-	<?php if ( $logged_in ) : ?>
-		<a href="<?php echo esc_url( home_url( '/account/' ) ); ?>" class="fi-bnav-item" data-match="/account">
-			<i class="bi bi-person-circle" aria-hidden="true"></i>
-			<span>Account</span>
-		</a>
-	<?php else : ?>
-		<a href="<?php echo $account_url; ?>" class="fi-bnav-item" data-match="/account">
-			<i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-			<span>Login</span>
-		</a>
-	<?php endif; ?>
-</nav>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-	// Hide the App tab when already running as an installed PWA.
-	var appTab = document.getElementById('fi-bnav-app');
-	if (appTab && window.FI_PWA && window.FI_PWA.isStandalone) {
-		appTab.style.display = 'none';
-	}
+/* Swap hamburger ↔ X icon based on menu state */
+(function () {
+	document.addEventListener('DOMContentLoaded', function () {
+		var btn = document.querySelector('.fi-menu-btn');
+		if (!btn) return;
+		btn.addEventListener('shown.bs.dropdown', function () { btn.setAttribute('aria-expanded', 'true'); });
+		btn.addEventListener('hidden.bs.dropdown', function () { btn.setAttribute('aria-expanded', 'false'); });
 
-	// Mark the active tab by matching the current path.
-	var path = window.location.pathname.replace(/\/$/, '') || '/';
-	document.querySelectorAll('#fi-bottom-nav .fi-bnav-item').forEach(function(el) {
-		var match = el.getAttribute('data-match');
-		if (!match) return;
-		var active = (match === 'home')
-			? (path === '/' || path === '')
-			: path === match || path.startsWith(match + '/');
-		if (active) el.classList.add('active');
+		/* Swap placeholder on small screens */
+		var input = document.getElementById('header-legislator-search-input');
+		if (!input) return;
+		function updatePlaceholder() {
+			input.placeholder = window.innerWidth < 576
+				? 'ZIP code / name'
+				: '<?php echo esc_js( FI_SEARCH_PLACEHOLDER ); ?>';
+		}
+		updatePlaceholder();
+		window.addEventListener('resize', updatePlaceholder);
 	});
-});
+})();
 </script>
-
-*/

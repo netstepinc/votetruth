@@ -402,27 +402,13 @@ function fi_admin_votes_get_tag_options(?string $gov): array {
  * Extra meta not surfaced in the form
  */
 function fi_admin_votes_get_extra_meta(array $vote, array $meta_fields): array {
-	$meta = fi_admin_votes_decode_meta($vote);
+	$meta = fi_vote_decode_meta($vote);
 	if (empty($meta)) {
 		return [];
 	}
 
 	$exclude = array_merge(array_keys($meta_fields), fi_admin_votes_get_preserved_meta_keys());
 	return array_diff_key($meta, array_flip($exclude));
-}
-
-/**
- * Vote status options
- */
-function fi_admin_votes_get_status_options(): array {
-	return fi_vote_get_status_options();
-}
-
-/**
- * Decode vote meta safely
- */
-function fi_admin_votes_decode_meta(array $vote): array {
-	return fi_vote_decode_meta($vote);
 }
 
 /**
@@ -452,7 +438,7 @@ function fi_admin_votes_build_meta_payload(?int $vote_id, array $meta_fields, ar
 	if ($vote_id) {
 		$existing = fi_vote_get($vote_id);
 		if ($existing) {
-			$meta = fi_admin_votes_decode_meta($existing);
+			$meta = fi_vote_decode_meta($existing);
 		}
 	}
 

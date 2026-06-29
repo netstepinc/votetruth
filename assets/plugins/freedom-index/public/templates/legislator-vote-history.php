@@ -39,22 +39,21 @@ foreach ($votes_map as $vote_id => $vote) {
 ?>
 
 <section id="fi-legislator-vote-history" class="bg-white border-bottom py-3" aria-label="Voting record">
-	<div class="container">
+	<div class="container-xl">
 
-		<div class="d-flex align-items-baseline flex-wrap mb-3">
-			<h2 class="h5 mb-0">Voting Record</h2>
+		<div class="d-flex flex-wrap mb-0">
+			<h2 class="h5 text-muted mb-0"><span class="d-none d-md-inline">Session </span>Voting Records</h2>
 			<button type="button"
-				class="btn btn-sm btn-link text-decoration-none p-0 ms-5 fw-semibold fi-nav-item<?php echo ($default_view === 'all') ? ' d-none' : ''; ?>"
+				class="btn btn-sm btn-link text-decoration-none p-0 ms-auto fw-semibold fi-nav-item<?php echo ($default_view === 'all') ? ' d-none' : ''; ?>"
 				id="fi-view-all-votes"
 				data-view="all"
 				data-session-id="">
-				View/Search all Votes
+				View<span class="d-none d-md-inline"> / Search</span> all Votes
 			</button>
 		</div>
 
 		<div class="mb-2">
-			<div class="text-muted small text-uppercase fw-bold mb-0">Sessions</div>
-			<div class="fi-scroll-rail mx-n3 px-3 py-1" id="fi-session-rail" role="tablist" aria-label="Sessions">
+			<div class="fi-scroll-rail mx-n3 py-1" id="fi-session-rail" role="tablist" aria-label="Sessions">
 				<?php foreach ($sessions as $session):
 					$sid = (int) ($session['session_id'] ?? 0);
 					$smeta = $sessions_meta[$sid] ?? $session;
@@ -84,8 +83,8 @@ foreach ($votes_map as $vote_id => $vote) {
 </section>
 
 <div class="container-fluid bg-light border-top">
-	<div class="container py-2">
-		<div class="row align-items-center g-2 mb-4">
+	<div class="container-xl py-2">
+		<div class="row align-items-center g-2 mb-3">
 			<div class="col">
 				<h3 class="h2 fs-6 mb-0" id="fi-vote-list-title"><?php echo esc_html($initial_title); ?></h3>
 				<div id="fi-vote-list-subtitle" class="text-muted fs-8 lh-1 mt-1"><?php echo esc_html($initial_group['subtitle'] ?? ''); ?></div>

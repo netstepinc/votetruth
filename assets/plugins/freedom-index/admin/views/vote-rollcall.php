@@ -281,7 +281,7 @@ ksort($party_filters);
 ksort($chamber_filters);
 
 $rollcall_summary = fi_rollcall_summary($vote_id);
-$vote_meta = fi_admin_votes_decode_meta($vote);
+$vote_meta = fi_vote_decode_meta($vote);
 $legiscan_meta = array_filter(
 	$vote_meta,
 	static fn($value, $key) => str_starts_with((string) $key, 'legiscan'),

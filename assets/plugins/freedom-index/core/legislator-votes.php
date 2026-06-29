@@ -589,7 +589,7 @@ function fi_legislator_votes_query(int $legislator_id): array {
 			$compact          = fi_vote_cost_compact_badge($cost_value);
 			$cost_badge       = $compact['badge'];
 			$cost_badge_class = $compact['class'];
-			$cost_fmt         = fi_vote_cost_format($cost_value);
+			$cost_fmt         = fi_vote_format_cost($cost_value);
 			$cost_sentence    = is_array($cost_fmt) ? (string) ($cost_fmt['sentence'] ?? '') : '';
 		}
 

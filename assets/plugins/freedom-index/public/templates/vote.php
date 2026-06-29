@@ -80,7 +80,7 @@ $text_more = $descriptions['long'] ?? '';
 $subtitle = $vote_meta['subtitle'] ?? '';
 
 // Format cost HTML
-$cost = !empty($vote_meta['cost']) ? fi_vote_cost_format($vote_meta['cost']) : ['html' => ''];
+$cost = !empty($vote_meta['cost']) ? fi_vote_format_cost($vote_meta['cost']) : ['html' => ''];
 $cost_html = $cost['html'] ?? '';
 
 $url_source = $vote_meta['url_source'] ?? $vote_meta['url'] ?? '';

@@ -549,15 +549,3 @@ add_action('admin_head', static function (): void {
 		header('Cache-Control: no-cache, no-store, must-revalidate');
 	}
 }, 1);
-
-/* -------------------------------------------------------------------------
- * Compatibility aliases.
- * ---------------------------------------------------------------------- */
-
-function fi_scope_get_available_govs(): array {
-	return fi_scope_get_available_governments();
-}
-
-function fi_scope_get_display_name(string $gov): string {
-	return fi_scope_get_gov_display_name($gov);
-}

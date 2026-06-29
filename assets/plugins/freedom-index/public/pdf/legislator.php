@@ -236,7 +236,7 @@ foreach($vote_ids as $vid){
 		'constitutional' => $constitutional,
 		'format' => 'full'
 	]);
-	$vote_cost = fi_vote_cost_format($cost);
+	$vote_cost = fi_vote_format_cost($cost);
 
 	//How many significant cost values do we have?
 	//if(!$vote_cost['minor']){

@@ -82,7 +82,7 @@ $is_federal = !empty($args['is_federal']);
     'use strict';
     var $ = jQuery;
     var filterForm = $('#fi-report-legislator-filter');
-    var resultsContainer = $('#fi-report-legislators-results');
+    var resultscontainer-xl = $('#fi-report-legislators-results');
     var nameInput = $('#fi-report-name-filter');
     var stateSelect = $('#fi-report-state-filter');
     var partySelect = $('#fi-report-party-filter');

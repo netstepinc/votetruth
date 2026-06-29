@@ -160,7 +160,7 @@ if (isset($_GET['zip']) && !empty($_GET['zip'])) {
 	function initForm() {
 		// Handle form submission via AJAX
 		const form = document.getElementById('find-representatives-form');
-		const resultsContainer = document.getElementById('find-representatives-results');
+		const resultscontainer-xl = document.getElementById('find-representatives-results');
 		const submitButton = document.getElementById('find-officials-btn');
 		const clearFormLink = document.getElementById('clear-form-link');
 		const clearFormLinkMobile = document.getElementById('clear-form-link-mobile');
@@ -169,7 +169,7 @@ if (isset($_GET['zip']) && !empty($_GET['zip'])) {
 		const toggleText = toggleButton ? toggleButton.querySelector('.toggle-text') : null;
 		const toggleIcon = toggleButton ? toggleButton.querySelector('.fas') : null;
 		
-		if (!form || !resultsContainer || !submitButton) {
+		if (!form || !resultscontainer-xl || !submitButton) {
 			console.error('Form elements not found:', {
 				form: !!form,
 				resultsContainer: !!resultsContainer,
@@ -179,7 +179,7 @@ if (isset($_GET['zip']) && !empty($_GET['zip'])) {
 		}
 		
 		// Store initial hero content
-		const initialHeroContent = resultsContainer ? resultsContainer.innerHTML : '';
+		const initialHeroContent = resultscontainer-xl ? resultsContainer.innerHTML : '';
 		
 		// Handle collapse toggle button text/icon
 		if (collapseElement && toggleButton && toggleText && toggleIcon) {
@@ -204,7 +204,7 @@ if (isset($_GET['zip']) && !empty($_GET['zip'])) {
 			document.getElementById('state').value = '';
 			document.getElementById('zip').value = '';
 			// Restore hero if it exists
-			if (resultsContainer && initialHeroContent) {
+			if (resultscontainer-xl && initialHeroContent) {
 				resultsContainer.innerHTML = initialHeroContent;
 				// Scroll to top smoothly
 				window.scrollTo({ top: 0, behavior: 'smooth' });

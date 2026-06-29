@@ -230,7 +230,7 @@ if ($structured) {
 
 
 	<div class="row">
-		<div class="col-12 col-md-11">
+		<div class="col-12 col-md-10 col-lg-11">
 			<div class="card-body">
 				<h3 class="fs-6 lh-1"><?= esc_html($config['title']); ?></h3>
 				<div class="fs-8"><?= wp_kses_post($config['text']); ?> <button type="button" class="btn btn-link btn-sm lh-1 fw-bold" data-vote-id="<?= $vote_id; ?>">Read More</button></div>
@@ -266,7 +266,7 @@ if ($structured) {
 				<?php endif; ?>
 			</div>
 		</div>
-		<div class="col-12 col-md-1">
+		<div class="col-12 col-md-2 col-lg-1">
 			<div class="h-100 fi-vote-status d-none d-md-block d-md-flex align-items-center">
 				<?= $status_icon; ?>
 			</div>

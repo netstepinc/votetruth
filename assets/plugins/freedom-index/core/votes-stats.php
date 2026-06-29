@@ -111,11 +111,6 @@ function fi_vote_format_cost(string $cost): array {
 	return $cost_data;
 }
 
-/** Alias for production-compatible cost formatting. */
-function fi_vote_cost_format(string $cost): array {
-	return fi_vote_format_cost($cost);
-}
-
 /**
  * Compact cost badge for vote list cards.
  * + = benefit to household = good (green); - = cost to household = bad (red).

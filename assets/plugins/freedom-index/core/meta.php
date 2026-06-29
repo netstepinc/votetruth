@@ -266,27 +266,3 @@ function fi_meta_is_assoc(array $array): bool {
 
 	return array_keys($array) !== range(0, count($array) - 1);
 }
-
-/* -------------------------------------------------------------------------
- * Compatibility aliases for old trait-style naming in refactored files.
- * ---------------------------------------------------------------------- */
-
-function fi_get_meta($record, string $key, $default = null) {
-	return fi_meta_get($record, $key, $default);
-}
-
-function fi_get_all_meta($record): array {
-	return fi_meta_get_all($record);
-}
-
-function fi_update_meta(int $record_id, string $table, array $meta_updates): bool {
-	return fi_meta_update($record_id, $table, $meta_updates);
-}
-
-function fi_delete_meta(int $record_id, string $table, $keys): bool {
-	return fi_meta_delete($record_id, $table, $keys);
-}
-
-function fi_set_all_meta(int $record_id, string $table, array $meta): bool {
-	return fi_meta_set_all($record_id, $table, $meta);
-}

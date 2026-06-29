@@ -23,7 +23,7 @@ $sessions = fi_sessions_get_by_gov($scope['gov'] ?? 'US', [
 	'order' => 'DESC',
 ]);
 
-$selected_vote_ids = fi_admin_reports_decode_selected_votes($report);
+$selected_vote_ids = fi_report_decode_selected_votes($report);
 $session_for_votes = $report['session_id']
 	?: ($scope['session_id'] ?? null)
 	?: (!empty($sessions) ? (int) ($sessions[0]->id ?? null) : null);

@@ -67,16 +67,6 @@ function fi_url_legislator($id): string {
 }
 
 /**
- * Get public legislator URL by ID.
- *
- * @param int $legislator_id Legislator ID.
- * @return string URL.
- */
-function fi_url_legislator_by_id(int $legislator_id): string {
-	return fi_url_legislator($legislator_id);
-}
-
-/**
  * Get public report URL.
  *
  * @param string $gov Government code.
@@ -283,23 +273,3 @@ function fi_api_url(string $endpoint = ''): string {
 /* -------------------------------------------------------------------------
  * Conservative compatibility wrappers for old names.
  * ---------------------------------------------------------------------- */
-
-/**
- * Backward-compatible alias for old class helper behavior.
- *
- * @param int|string $id Legislator ID.
- * @return string URL.
- */
-function fi_get_admin_helper_legislator_url($id): string {
-	return fi_url_legislator($id);
-}
-
-/**
- * Backward-compatible alias for old list URL behavior.
- *
- * @param int|string $id List ID.
- * @return string URL.
- */
-function fi_get_admin_helper_list_url($id): string {
-	return fi_list_url($id);
-}

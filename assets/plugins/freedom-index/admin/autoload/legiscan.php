@@ -111,10 +111,6 @@ function fi_legiscan_cache(string $key, $data = '', int $expires_days = 7) {
 		
 }
 
-function fi_legiscan_get_api_key() : ?string {
-			return fi_get_api_key('legiscan_key', 'API_KEY_LEGISCAN');
-		
-}
 
 function fi_legiscan_get_state_list() : array {
 	// LegiScan state IDs are 1-based against this stable list.
@@ -957,7 +953,7 @@ Therefore we will not throw an error if we miss a mapping and just ignore the mi
 }
 
 function fi_legiscan_api_request(array $args) : array|false {
-	$api_key = fi_legiscan_get_api_key();
+	$api_key = fi_get_api_key('legiscan_key', 'API_KEY_LEGISCAN');
 	if (!$api_key) {
 		return false;
 	}

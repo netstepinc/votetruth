@@ -629,10 +629,3 @@ function fi_admin_legislators_apply_api_updates(int $legislator_id, string $sour
 	return $updated_count;
 }
 
-/**
- * Search legislators
- */
-function fi_admin_legislators_search(string $query): array {
-	return fi_legislators_search($query, 20);
-}
-

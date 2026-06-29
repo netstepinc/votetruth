@@ -63,7 +63,7 @@ $votes = [];
 $tags_by_vote = [];
 $rollcall_counts = [];
 $chamber_options = fi_chamber_options($gov ?: 'US');
-$status_options = fi_admin_votes_get_status_options();
+$status_options = fi_vote_get_status_options();
 $constitutional_options = ['Y' => 'Constitutional (Y)', 'N' => 'Unconstitutional (N)', 'U' => 'Unknown (U)'];
 $tag_filter_options = fi_admin_votes_get_filter_tags($scope);
 $stats = fi_votes_stats($gov ?: null, $session_id ?: null);

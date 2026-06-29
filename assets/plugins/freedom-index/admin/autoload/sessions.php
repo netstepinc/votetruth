@@ -151,13 +151,6 @@ function fi_admin_sessions_handle_save(array $scope): void {
 }
 
 /**
- * Get session statistics
- */
-function fi_admin_sessions_get_stats(int $session_id): array {
-	return fi_session_get_stats($session_id);
-}
-
-/**
  * Handle session deletion. Must run on admin_init (before any output) so wp_safe_redirect() works.
  */
 function fi_admin_sessions_maybe_handle_delete(): void {

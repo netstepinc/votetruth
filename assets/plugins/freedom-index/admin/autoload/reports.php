@@ -124,20 +124,6 @@ function fi_admin_reports_get_defaults(array $scope): array {
 }
 
 /**
- * Decode selected vote IDs
- */
-function fi_admin_reports_decode_selected_votes(array $report): array {
-	return fi_report_decode_selected_votes($report);
-}
-
-/**
- * Count selected votes for a report
- */
-function fi_admin_reports_count_selected_votes(array $report): int {
-	return fi_report_count_selected_votes($report);
-}
-
-/**
  * Vote IDs already used in other reports for the same session (exclude current report).
  * Used to show only "unassigned" votes in report-edit vote selection.
  *

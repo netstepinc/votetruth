@@ -17,72 +17,65 @@ if (empty($legislator)) {
 	return;
 }
 
+echo '<textarea style="width:100%;height:200px;">';print_r($legislator); echo '</textarea>';
+
+$gov = $legislator['gov_name'];
+$gov_name   = fi_gov_name($gov);
+
 $display_name   = $legislator['display_name'] ?? '';
-$party_name     = $legislator['party_name']   ?? '';
-$state_name     = $current_session['state_name']    ?? ($legislator['state_name']    ?? '');
-$chamber_label  = $current_session['chamber_label'] ?? ($legislator['chamber_label'] ?? '');
-$chamber_title  = $current_session['chamber_title'] ?? ($legislator['chamber_title'] ?? '');
-$district_name  = $current_session['district_name'] ?? '';
-$gov_name       = $current_session['gov_name']      ?? ($legislator['gov_name']      ?? '');
-$session_name   = $current_session['session_name']  ?? '';
-$freedom_score   = $legislator['score'];
-$freedom_grade   = ($freedom_score !== null && function_exists('fi_score_calculate_grade'))
-	? fi_score_calculate_grade((int) $freedom_score)
-	: null;
+$party_name     = isset($legislator['party']) && $legislator['party'] != '' ? fi_party_name($legislator['party']) : '';
+$state_name     = isset($legislator['state']) && $legislator['state'] != '' ? fi_state_name($legislator['state']) : '';
+$chamber_label  = isset($legislator['chamber']) && $legislator['chamber'] != '' ? fi_chamber_label($gov, $legislator['chamber']) : '';
+$chamber_title  = isset($legislator['chamber']) && $legislator['chamber'] != '' ? fi_chamber_title($gov, $legislator['chamber']) : '';
+$district_name  = isset($legislator['district']) && $legislator['district'] != '' ? fi_district_name($legislator['district']) : '';
+$session_name   = isset($legislator['session_name']) && $legislator['session_name'] != '' ? $legislator['session_name'] : '';
+$freedom_score   = isset($legislator['score']) && $legislator['score'] != '' ? (int) $legislator['score'] : null;
 $image_id       = (int) ($legislator['image_id'] ?? 0);
-$session_img_id = (int) ($current_session['image_id'] ?? 0);
+$website_url    = $legislator['website_url'] ?? 'meta www';
 
 $image_html = fi_legislator_image(
 	$image_id,
 	$session_img_id ?: null,
-	['size' => [120, 150], 'class' => 'img-fluid rounded-3 shadow', 'alt' => esc_attr($display_name)]
+	['size' => [200, 250], 'class' => 'img-fluid rounded-3 shadow', 'alt' => esc_attr($display_name)]
 );
 
-// Subtitle: Chamber · Party · State / District
-$subtitle_parts = array_filter([$chamber_label ? $chamber_title ?: $chamber_label : '', $party_name, $state_name ?: $gov_name]);
-$district_str   = $district_name ? ', ' . $district_name : '';
+/*
+Stack Legislator information with visual hierarchy:
+	Thomas Massie
+	U.S. Congress: Representative
+	Kentucky District: 4th
+	Republican
+	{icon} massie.house.gov
+*/
 ?>
-
-<!-- =====================================================================
-     HERO
-     ===================================================================== -->
-<section class="fi-legislator-hero bg-primary text-white" aria-label="Legislator profile">
-	<div class="container py-3 py-md-4">
-
+<section class="fi-legislator-hero" aria-label="Legislator profile">
+	<div class="container-xl py-3 py-md-4">
+		<h1 class="h3 fs-4 fw-bold mb-1 d-md-none"><?php echo esc_html($display_name); ?></h1>
 		<div class="row align-items-center g-3">
-
-			<!-- Photo -->
-			<div class="col-auto">
+			<div class="col-6 col-md-2">
 				<?php echo $image_html; ?>
 			</div>
-
-			<!-- Identity + scores -->
-			<div class="col">
-				<h1 class="h3 fw-bold mb-1"><?php echo esc_html($display_name); ?></h1>
-
-				<p class="mb-2 opacity-75 small">
-					<?php echo esc_html(implode(' &bull; ', $subtitle_parts)); ?>
-					<?php echo esc_html($district_str); ?>
-				</p>
-
-			<?php if ($freedom_score !== null && $freedom_grade !== null): ?>
-			<div class="d-flex align-items-center gap-3 mt-1">
-				<!-- Big grade badge — same format as the legislator card, scaled up -->
+			<div class="col-6 col-md-2 order-md-last">
+				<?php if ($freedom_score !== null && $freedom_grade !== null): ?>
 				<?php $grade_key = strtolower($freedom_grade); ?>
-				<div class="fi-grade fi-grade--<?php echo esc_attr($grade_key); ?>"
-				     style="min-width:72px; padding:10px 14px; border-radius:8px;">
-					<span class="fi-gl" style="font-size:2.2rem;"><?php echo esc_html($freedom_grade); ?></span>
-					<span class="fi-gs" style="font-size:1.2rem; margin-top:4px;"><?php echo (int) $freedom_score; ?>%</span>
+				<div class="fi-grade fi-bg-<?php echo esc_attr($grade_key); ?> p-3 text-center w-100 rounded-3" style="aspect-ratio:4/5">
+					<div class="fs-1 text-white fw-8 lh-1"><?php echo esc_html($freedom_grade); ?></div>
+					<div class="fs-3 text-white fw-6 lh-1"><?php echo (int) $freedom_score; ?>%</div>
+					<div class="text-white">Freedom Score</div>
 				</div>
-				<div class="lh-sm text-white">
-					<div class="fw-bold fs-5">Freedom Score</div>
-					<div class="opacity-75 small">Career</div>
-				</div>
+				<?php endif; ?>
 			</div>
-			<?php endif; ?>
-			</div><!-- /col identity -->
+			<div class="col-12 col-md-8">
+				<h1 class="h3 fs-3 fw-bold mb-1 d-none d-md-block"><?php echo esc_html($display_name); ?></h1>
+				<div class="fs-6 text-muted"><?php echo esc_html($gov_name); ?></div>
+				<div class="fs-6 text-muted"><?php echo esc_html($chamber_label); ?></div>
+				<div class="fs-6 text-muted"><?php echo esc_html($state_name); ?></div>
+				<div class="fs-6 text-muted"><?php echo esc_html($district_name); ?></div>
+				<div class="fs-6 text-muted"><?php echo esc_html($party_name); ?></div>
+				<div class="fs-6 text-muted"><?php echo esc_html($website_url); ?></div>
+			</div>
 
-		</div><!-- /row -->
+		</div>
 	</div>
 </section>
 
@@ -98,9 +91,9 @@ $toolbar_buttons = [
 ];
 ?>
 <div class="fi-action-toolbar bg-white border-bottom">
-	<div class="container py-2">
+	<div class="container-xl py-2">
 
-		<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-auto g-2 justify-content-lg-end">
+		<div class="row row-cols-2 row-cols-md-3 row-cols-lg-auto g-2 justify-content-lg-end">
 			<div class="col order-first order-lg-first me-lg-auto">
 				<a href="<?php echo esc_url($back_url); ?>"
 					class="btn btn-sm btn-outline-secondary text-nowrap w-100">
@@ -122,27 +115,25 @@ $toolbar_buttons = [
 </div>
 
 <?php if (!empty($tag_scores)): ?>
-<!-- =====================================================================
-     ISSUE SCORES — horizontal ribbon, nowrap cells
-     ===================================================================== -->
+<!-- ISSUE SCORES — horizontal ribbon, nowrap cells -->
 <section class="bg-light border-bottom py-3" aria-label="Issue scores">
-	<div class="container">
+	<div class="container-xl">
 
 		<h2 class="h6 text-muted mb-0">Issue Scores</h2>
 
 		<div class="fi-scroll-rail mx-n3 px-3 py-1" id="fi-issue-rail" role="list" aria-label="Issue score filters">
 			<?php foreach ($tag_scores as $tag): ?>
 			<button type="button"
-				class="btn fi-scroll-rail-item fi-issue-tile-filter d-inline-flex align-items-center gap-2 bg-white border rounded p-2 text-start"
+				class="btn fi-scroll-rail-item fi-issue-tile-filter d-inline-flex align-items-center p-0 bg-white border rounded text-start"
 				data-tag-id="<?php echo (int) $tag['id']; ?>"
 				title="View <?php echo esc_attr($tag['name']); ?> Votes"
 				role="listitem">
 
-				<span class="flex-shrink-0"><?php echo fi_score_badge($tag['score']); ?></span>
+				<span class="flex-shrink-0"><?php echo fi_score_display($tag['score'],'ribbon'); ?></span>
 
-				<span class="lh-sm text-nowrap">
+				<span class="lh-sm text-nowrap px-2 py-2">
 					<span class="small fw-semibold d-block"><?php echo esc_html($tag['name']); ?></span>
-					<span class="text-muted d-block" style="font-size:.7rem;">
+					<span class="text-muted d-block small">
 						<?php echo (int) $tag['vote_count']; ?> vote<?php echo $tag['vote_count'] === 1 ? '' : 's'; ?>
 					</span>
 				</span>

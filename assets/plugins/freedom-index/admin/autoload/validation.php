@@ -1056,19 +1056,3 @@ function fi_admin_data_validation_get_summary(int $limit = 100): array {
 
 	return $summary;
 }
-
-/* -------------------------------------------------------------------------
- * Compatibility aliases for old shorter names, if templates/tools expect them.
- * ---------------------------------------------------------------------- */
-
-function fi_data_validation_validate_all(int $limit = 100): array {
-	return fi_admin_data_validation_validate_all($limit);
-}
-
-function fi_data_validation_get_summary(int $limit = 100): array {
-	return fi_admin_data_validation_get_summary($limit);
-}
-
-function fi_data_validation_fix_data_issues(array $issue_types): int {
-	return fi_admin_data_validation_fix_data_issues($issue_types);
-}

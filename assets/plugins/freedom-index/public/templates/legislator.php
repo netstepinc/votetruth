@@ -21,11 +21,15 @@ if (!$legislator) {
 	exit;
 }
 
-$sessions = $legislator['sessions'];
-
 $url_session_id  = fi_public_get_legislator_session_id();
 $url_report_id   = fi_public_get_legislator_report_id();
 $url_tag_id      = fi_public_get_legislator_tag_id();
+
+
+//SESSIONS 
+$sessions = $legislator['sessions'];
+unset($legislator['sessions']);
+
 $current_session = null;
 
 if ($url_session_id) {
@@ -40,8 +44,8 @@ if ($url_session_id) {
 if (!$current_session && !empty($sessions)) {
 	$current_session = $sessions[0];
 }
-
 $current_session_id = $current_session ? (int) $current_session['session_id'] : 0;
+
 $chamber            = $current_session ? (string) ($current_session['chamber'] ?? '') : '';
 $gov                = $current_session ? (string) ($current_session['gov'] ?? '') : ($legislator['gov'] ?? '');
 
@@ -87,6 +91,7 @@ if ($default_view !== 'report') {
 	$initial_vote_ids = fi_legislator_votes_sort_ids_by_date($initial_vote_ids, $votes_map);
 }
 $initial_limit    = ($default_view === 'all') ? 25 : count($initial_vote_ids);
+
 // Card HTML is pre-rendered in compile pass; no per-request formatting calls needed.
 $display_votes = [];
 foreach (array_slice($initial_vote_ids, 0, $initial_limit) as $vote_id) {

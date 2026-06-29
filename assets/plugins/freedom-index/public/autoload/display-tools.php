@@ -8,24 +8,72 @@ function fi_qr_code($url, $size = 50,$alt = 'QR Code') {
 }
 
 
+function fi_content_stats(): array {
+	return [
+		'tracked' => number_format(fi_legislators_count_all()),
+		'scored'  => number_format((int) fi_votes_get(['count' => true, 'status' => 'publish'])),
+		'counted' => number_format((int) fi_rollcalls_query(['count' => true])),
+	];
+}
+
+
 /**
- * Render a compact grade/score badge for use in legislator cards and lists.
- * CSS lives in 99.freedomindex.css under .fi-grade.
- *
- * @param int|string|null $score Numeric score 0-100, or null/'' if unscored.
- * @return string HTML badge.
+ * Get legislator image HTML
+ * 
+ * @param int|null $image_id Main legislator image ID
+ * @param int|null $session_image_id Session-specific image ID
+ * @param array $args Optional arguments
+ * @return string Image HTML
  */
-function fi_score_badge($score): string {
-	if ($score === null || $score === '') {
-		return '<div class="fi-grade fi-grade--none"><span class="fi-gl">N/A</span></div>';
+function fi_legislator_image(?int $image_id, ?int $session_image_id = null, array $args = []): string {
+	$defaults = [
+		'size' => [200, 250],
+		'class' => 'img-fluid',
+		'alt' => '',
+		'image_url' => '',
+	];
+	$args = wp_parse_args($args, $defaults);
+
+	//Do we have an image URL?...this tends to get stale. Use the image generator unless we really need more caching.
+	/*
+	//Get width and height from size
+	$width = $args['size'][0];
+	$height = $args['size'][1];
+
+	if (!empty($args['image_url'])) {
+		//We need to make sure this image exists
+		return '<img src="' . esc_url($args['image_url']) . '" width="' . esc_attr($width) . '" height="' . esc_attr($height) . '" class="' . esc_attr($args['class']) . '" alt="' . esc_attr($args['alt']) . '">';
 	}
-	$score_int = (int) $score;
-	$grade     = fi_score_calculate_grade((float) $score_int);
-	$key       = strtolower($grade[0]);
-	return '<div class="fi-grade fi-grade--' . esc_attr($key) . '">'
-		. '<span class="fi-gl">' . esc_html($grade) . '</span>'
-		. '<span class="fi-gs">' . $score_int . '%</span>'
-		. '</div>';
+	*/
+
+	// Prefer session-specific image if available
+	$use_image_id = $session_image_id ?: $image_id;
+	
+	if (!$use_image_id) {
+		// Return placeholder
+		return '<div class="legislator-placeholder ' . esc_attr($args['class']) . '"><i class="bi bi-person-fill"></i></div>';
+	}
+
+	//Use Custom Better Image Sizes method
+	$image_html = sis_get_attachment_image($use_image_id, $args['size'], false, [
+		'class' => $args['class'],
+		'alt' => $args['alt'],
+	]);
+
+	//If that fails, try regular wp_get_attachment_image
+	if (empty($image_html)) {
+		$image_html = wp_get_attachment_image($use_image_id, $args['size'], false, [
+			'class' => $args['class'],
+			'alt' => $args['alt'],
+		]);
+	}
+
+	//No Image placeholder
+	if (empty($image_html)) {
+		$image_html = '<div class="legislator-placeholder ' . esc_attr($args['class']) . '"><i class="bi bi-person-fill"></i></div>';
+	}
+
+	return $image_html;
 }
 
 
@@ -37,6 +85,7 @@ function fi_score_badge($score): string {
 * @param int $height Height in pixels (default: 32)
 * @return string HTML for progress bar
 */
+/*
 function fi_score_bar($score, string $title = 'Score', int $height = 32): string {
 	if ($score === null || $score === '') {
 		return '';
@@ -64,6 +113,7 @@ function fi_score_bar($score, string $title = 'Score', int $height = 32): string
 	
 	return $html;
 }
+*/
 
 /**
 * Display score as CSS donut chart (responsive SVG-based)
@@ -76,6 +126,7 @@ function fi_score_bar($score, string $title = 'Score', int $height = 32): string
 * @param int|string $stroke_width Stroke width in pixels (default: 16) or percentage of size (e.g., "13%")
 * @return string HTML for donut chart
 */
+/*
 function fi_score_donut(int $good, string $title = 'Score', ?int $bad = null, ?int $none = null, int|string $size = 120, int|string $stroke_width = 16): string {
 	if ($good === null || $good === '') {
 		return '';
@@ -189,133 +240,4 @@ function fi_score_donut(int $good, string $title = 'Score', ?int $bad = null, ?i
 	
 	return $html;
 }
-
-
-function fi_legislator_modal(array $args = array()) {
-	$id = $args['id'];
-	$button_class = $args['button_class'] ?? 'btn btn-sm btn-outline-primary shadow-sm col-12 fw-bold mb-2 fs-7';
-	$button_text = $args['button_text'];
-	$button_icon = $args['button_icon'];
-	$modal_title = $args['modal_title'];
-	$modal_body = $args['modal_body'];
-	$modal_size = $args['modal_size'] ?? ''; // Accept 'modal-lg' or empty
-	$modal_dialog_class = 'modal-dialog modal-dialog-centered modal-dialog-scrollable';
-	if ($modal_size) {
-		$modal_dialog_class .= ' ' . $modal_size;
-	}
-	$button_attrs = isset($args['legislator_id']) ? ' data-legislator-id="' . esc_attr((string) $args['legislator_id']) . '"' : '';
-	?>
-	<button type="button" class="<?= $button_class; ?>" data-bs-toggle="modal" data-bs-target="#<?= $id; ?>Modal"<?= $button_attrs; ?>>
-		<i class="<?= $button_icon; ?> me-2"></i><?= $button_text; ?>
-	</button>
-	<div class="mt-4 modal fade" id="<?= $id; ?>Modal" tabindex="-1" aria-labelledby="<?= $id; ?>ModalLabel" aria-hidden="true">
-		<div class="<?= $modal_dialog_class; ?>">
-			<div class="modal-content rounded-4">
-			<div class="modal-header py-2">
-				<h3 class="modal-title fs-6" id="<?= $id; ?>ModalLabel"><?= $modal_title; ?></h3>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body" style="max-height: calc(100vh - 150px);">
-				<?= $modal_body; ?>
-			</div>
-			<div class="modal-footer p-0 border-0">
-				<button type="button" class="btn btn-sm btn-dark w-100 rounded-bottom-4 m-0 fs-6 fw-bold" data-bs-dismiss="modal" style="border-top-left-radius: 0; border-top-right-radius: 0;">
-					Close
-				</button>
-			</div>
-			</div>
-		</div>
-	</div>
-	<?php
-}
-
-
-function fi_content_stats(): array {
-	return [
-		'tracked' => number_format(fi_legislators_count_all()),
-		'scored'  => number_format((int) fi_votes_get(['count' => true, 'status' => 'publish'])),
-		'counted' => number_format((int) fi_rollcalls_query(['count' => true])),
-	];
-}
-
-
-
-/**
- * Get score CSS class
- * 
- * @param float|int $score Score value
- * @param string $type Type of class: 'text' or 'bg'
- * @return string CSS class name
- */
-function fi_score_class($score, string $type = 'text'): string {
-	$score = (float) $score;
-	
-	if ($score >= 90) {
-		return $type === 'bg' ? 'bg-success' : 'text-success';
-	} elseif ($score >= 70) {
-		return $type === 'bg' ? 'bg-info' : 'text-info';
-	} elseif ($score >= 50) {
-		return $type === 'bg' ? 'bg-warning' : 'text-warning';
-	} else {
-		return $type === 'bg' ? 'bg-danger' : 'text-danger';
-	}
-}
-
-/**
- * Get legislator image HTML
- * 
- * @param int|null $image_id Main legislator image ID
- * @param int|null $session_image_id Session-specific image ID
- * @param array $args Optional arguments
- * @return string Image HTML
- */
-function fi_legislator_image(?int $image_id, ?int $session_image_id = null, array $args = []): string {
-	$defaults = [
-		'size' => [200, 250],
-		'class' => 'img-fluid',
-		'alt' => '',
-		'image_url' => '',
-	];
-	$args = wp_parse_args($args, $defaults);
-
-	//Do we have an image URL?...this tends to get stale. Use the image generator unless we really need more caching.
-	/*
-	//Get width and height from size
-	$width = $args['size'][0];
-	$height = $args['size'][1];
-
-	if (!empty($args['image_url'])) {
-		//We need to make sure this image exists
-		return '<img src="' . esc_url($args['image_url']) . '" width="' . esc_attr($width) . '" height="' . esc_attr($height) . '" class="' . esc_attr($args['class']) . '" alt="' . esc_attr($args['alt']) . '">';
-	}
-	*/
-
-	// Prefer session-specific image if available
-	$use_image_id = $session_image_id ?: $image_id;
-	
-	if (!$use_image_id) {
-		// Return placeholder
-		return '<div class="legislator-placeholder ' . esc_attr($args['class']) . '"><i class="bi bi-person-fill"></i></div>';
-	}
-
-	//Use Custom Better Image Sizes method
-	$image_html = sis_get_attachment_image($use_image_id, $args['size'], false, [
-		'class' => $args['class'],
-		'alt' => $args['alt'],
-	]);
-
-	//If that fails, try regular wp_get_attachment_image
-	if (empty($image_html)) {
-		$image_html = wp_get_attachment_image($use_image_id, $args['size'], false, [
-			'class' => $args['class'],
-			'alt' => $args['alt'],
-		]);
-	}
-
-	//No Image placeholder
-	if (empty($image_html)) {
-		$image_html = '<div class="legislator-placeholder ' . esc_attr($args['class']) . '"><i class="bi bi-person-fill"></i></div>';
-	}
-
-	return $image_html;
-}
+*/

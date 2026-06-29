@@ -648,11 +648,6 @@ function fi_report_decode_selected_votes(array $report): array {
 	return is_array($decoded) ? array_values(array_unique(array_filter(array_map('absint', $decoded)))) : [];
 }
 
-/** Count selected votes for a report. */
-function fi_report_count_selected_votes(array $report): int {
-	return count(fi_report_decode_selected_votes($report));
-}
-
 /** Check for duplicate reports. */
 function fi_report_check_duplicates(array $data, ?int $exclude_id = null): array {
 	global $wpdb;

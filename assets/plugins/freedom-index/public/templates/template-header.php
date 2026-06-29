@@ -126,7 +126,7 @@ if ($args['filter_enabled']):
 					<?php echo fi_breadcrumbs($breadcrumbs, $breadcrumbs_args); ?>
 				</div>
 			</div>
-			<!-- Legislator Search Results Container -->
+			<!-- Legislator Search Results container-xl -->
 			<div id="legislator-search-results"></div>
 
 			<div class="row">

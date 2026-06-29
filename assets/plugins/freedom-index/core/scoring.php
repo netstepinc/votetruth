@@ -55,6 +55,80 @@ function fi_score_log(string $message, string $file = '', int $line = 0, string 
 	// fi_log_area('score', $message, $file, $line, $level);
 }
 
+/**
+ * Calculate letter grade from numeric score.
+ *
+ * @param float $score Numeric score 0-100.
+ * @return string Letter grade.
+ */
+function fi_score_calculate_grade(float $score): string {
+	if(!is_numeric($score)){
+		return 'NA';
+	}
+	if ($score >= 90) return 'A';
+	if ($score >= 80) return 'B';
+	if ($score >= 70) return 'C';
+	if ($score >= 60) return 'D';
+	return 'F';
+}
+
+/** Format Grade and Score Display */
+function fi_score_display($score,$location='ribbon'): string {
+	$has_score = $score !== null && $score !== '' && is_numeric($score);
+	$grade = fi_score_calculate_grade($score);
+	$key = esc_attr(strtolower($grade));
+
+	switch($location):
+		case 'legislator':
+			$html = '<div class="fi-grade fi-bg-'.$key.' p-3 text-center w-100 rounded-3" style="aspect-ratio:4/5">';
+			if($has_score){
+				$html .= '<div class="fs-1 text-white fw-8 lh-1">'.$grade.'</div>';
+				$html .= '<div class="fs-3 text-white fw-6 lh-1">'.$score.'%</div>';
+				$html .= '<div class="text-white">Freedom Score</div>';
+			}else{
+				$html .= '<div class="fs-1 lh-1 text-white">N/A</div>';
+			}
+			$html .= '</div>';
+			return $html;
+			break;
+		case 'ribbon':
+			if (!$has_score) {
+				return '<div class="fi-grade fi-bg-na"><span class="text-white">N/A</span></div>';
+			}
+			return '<div class="fi-grade fi-bg-' . $key . ' p-1 text-center w-100 rounded-start-2">'
+				. '<span class="text-white lh-1 fw-7 fs-6">' . esc_html($grade) . '</span>'
+				. '<span class="text-white lh-1 fw-6 small">' . $score . '%</span>'
+				. '</div>';
+			break;
+
+	endswitch;
+}
+
+
+/**
+ * Render a compact grade/score badge for use in legislator cards and lists.
+ * CSS lives in 99.freedomindex.css under .fi-grade.
+ *
+ * @param int|string|null $score Numeric score 0-100, or null/'' if unscored.
+ * @return string HTML badge.
+ */
+/* Replace with fi_score_display()
+function fi_score_badge($score): string {
+	if ($score === null || $score === '') {
+		return '<div class="fi-grade fi-grade--none"><span class="fi-gl">N/A</span></div>';
+	}
+	$score_int = (int) $score;
+	$grade     = fi_score_calculate_grade((float) $score_int);
+	$key       = strtolower($grade[0]);
+	return '<div class="fi-grade fi-grade--' . esc_attr($key) . '">'
+		. '<span class="fi-gl">' . esc_html($grade) . '</span>'
+		. '<span class="fi-gs">' . $score_int . '%</span>'
+		. '</div>';
+}
+*/
+
+
+
 //Scoring function here to be shared with the API
 //Standardize the score calc with pre-determined vote counts.
 function fi_score_calc($votes_good, $votes_scored): int|null {
@@ -470,99 +544,6 @@ function fi_score_calculate_from_votes(array $votes, array $rollcalls): array {
 	];
 }
 
-/**
- * Calculate letter grade from numeric score.
- *
- * @param float $score Numeric score 0-100.
- * @return string Letter grade.
- */
-function fi_score_calculate_grade(float $score): string {
-	if ($score >= 90) return 'A';
-	if ($score >= 80) return 'B';
-	if ($score >= 70) return 'C';
-	if ($score >= 60) return 'D';
-	return 'F';
-}
-
-/**
- * Get background class for score.
- *
- * @param int $score Numeric score.
- * @return string CSS class.
- */
-function fi_score_class_bg(int $score): string {
-	return fi_score_grade_class_bg(fi_score_calculate_grade($score));
-}
-
-/**
- * Get readable text class for score background.
- *
- * @param int $score Numeric score.
- * @return string CSS class.
- */
-function fi_score_class_bg_text(int $score): string {
-	return fi_score_grade_class_bg_text(fi_score_calculate_grade($score));
-}
-
-/**
- * Get text color class for score.
- *
- * @param int $score Numeric score.
- * @return string CSS class.
- */
-function fi_score_class_text(int $score): string {
-	return fi_score_grade_class_text(fi_score_calculate_grade($score));
-}
-
-/**
- * Get CSS variable for score.
- *
- * @param int $score Numeric score.
- * @return string CSS variable name.
- */
-function fi_score_css_var(int $score): string {
-	return fi_score_grade_css_var(fi_score_calculate_grade($score));
-}
-
-/**
- * Get grade background class.
- *
- * @param string $grade Letter grade.
- * @return string CSS class.
- */
-function fi_score_grade_class_bg(string $grade): string {
-	return 'fi-bg-' . strtolower($grade) . ' ';
-}
-
-/**
- * Get grade background text class.
- *
- * @param string $grade Letter grade.
- * @return string CSS class.
- */
-function fi_score_grade_class_bg_text(string $grade): string {
-	return 'fi-bg-text-' . strtolower($grade) . ' ';
-}
-
-/**
- * Get grade text class.
- *
- * @param string $grade Letter grade.
- * @return string CSS class.
- */
-function fi_score_grade_class_text(string $grade): string {
-	return 'fi-text-' . strtolower($grade) . ' ';
-}
-
-/**
- * Get grade CSS variable.
- *
- * @param string $grade Letter grade.
- * @return string CSS variable name.
- */
-function fi_score_grade_css_var(string $grade): string {
-	return '--vt-' . strtolower($grade);
-}
 
 /**
  * Calculate score from a batch of pre-formatted vote data.
@@ -611,17 +592,6 @@ function fi_score_calculate_batch(array $votes): ?int {
 	}
 
 	return null;
-}
-
-/**
- * Standard score calculation with predetermined vote counts.
- *
- * @param int|float $votes_good Good votes.
- * @param int|float $votes_scored Scored votes.
- * @return int|null
- */
-function fi_score_calculate($votes_good, $votes_scored): int|null {
-	return fi_score_calc($votes_good, $votes_scored);
 }
 
 /**
